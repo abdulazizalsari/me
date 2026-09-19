@@ -30,7 +30,7 @@ Name: "desktopicon"; Description: "إنشاء اختصار على سطح الم�
 
 [Files]
 Source: "QuotationStudio\bin\Release\net48\QuotationStudio.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "QuotationStudio\bin\Release\net48\ZXing.Net.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "QuotationStudio\bin\Release\net48\*.dll"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "QuotationStudio\bin\Release\net48\QuotationStudio.exe.config"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 
 [Icons]
