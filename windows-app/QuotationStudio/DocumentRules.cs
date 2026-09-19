@@ -38,8 +38,9 @@ namespace QuotationStudio
                 return result;
             }
 
+            // Company identity is recommended, but it must never block PDF/printing.
             if (settings == null || string.IsNullOrWhiteSpace(settings.CompanyName) || settings.CompanyName.Trim() == "اسم الشركة")
-                result.Errors.Add("أدخل اسم الشركة من الإعدادات قبل إصدار PDF أو الطباعة.");
+                result.Warnings.Add("لم يتم إدخال اسم الشركة. سيصدر المستند بدون هوية شركة مكتملة ويمكنك تعديلها لاحقاً من الإعدادات.");
 
             if (string.IsNullOrWhiteSpace(document.Currency))
                 result.Errors.Add("حدد العملة.");
