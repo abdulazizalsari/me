@@ -29,7 +29,7 @@ namespace QuotationStudio
             {
                 try { MessageBox.Show((e.ExceptionObject as Exception)?.Message ?? "خطأ غير متوقع", "Quotation Studio", MessageBoxButtons.OK, MessageBoxIcon.Error); } catch { }
             };
-            Application.Run(new MainFormV3());
+            Application.Run(new MainFormV4());
         }
     }
 }
