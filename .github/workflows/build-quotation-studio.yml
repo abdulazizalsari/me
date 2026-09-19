@@ -68,6 +68,6 @@ jobs:
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: QuotationStudio-Windows-Installer-v3
-          path: windows-app/dist/QuotationStudio-Setup-3.0.0.exe
+          name: QuotationStudio-Windows-Installer-v31
+          path: windows-app/dist/QuotationStudio-Setup-*.exe
           if-no-files-found: error
