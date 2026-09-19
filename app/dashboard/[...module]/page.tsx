@@ -23,7 +23,15 @@ const routeModules: Record<string, DashboardTab> = {
   footer: "footer",
   forms: "form",
   redirects: "redirects",
-  trash: "trash"
+  trash: "trash",
+  cv: "cv",
+  education: "education",
+  qualifications: "qualification",
+  cta: "cta",
+  contact: "contact",
+  consultation: "consultation",
+  whatsapp: "whatsapp",
+  privacy: "privacy",
 };
 
 export const metadata: Metadata = {

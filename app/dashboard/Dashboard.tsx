@@ -11,7 +11,9 @@ import {
   Image as ImageIcon,
   LayoutDashboard,
   LogOut,
+  Menu,
   Plus,
+  X,
   RotateCcw,
   Save,
   Search,
@@ -22,6 +24,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CmsActivityLog, CmsContentItem, CmsContentType, CmsFormSubmission, CmsMediaAsset, CmsNotFoundHit, CmsRedirect, CmsRevision, CmsStatus, CmsUser } from "@/lib/cms/types";
+import { RichTextEditor } from "./RichTextEditor";
 
 const tabs: { type: "overview" | CmsContentType | "media" | "redirects" | "trash" | "settings"; label: string; icon: typeof LayoutDashboard }[] = [
   { type: "overview", label: "نظرة عامة", icon: LayoutDashboard },
@@ -52,11 +55,12 @@ const tabs: { type: "overview" | CmsContentType | "media" | "redirects" | "trash
 ];
 
 const navGroups: { label: string; items: typeof tabs }[] = [
-  { label: "Overview", items: tabs.filter((tab) => tab.type === "overview") },
-  { label: "Content", items: tabs.filter((tab) => ["article", "service", "course", "project", "experience", "skill", "homepage"].includes(tab.type)) },
-  { label: "Media", items: tabs.filter((tab) => tab.type === "media") },
-  { label: "Marketing & SEO", items: tabs.filter((tab) => ["seo", "integration", "redirects"].includes(tab.type)) },
-  { label: "System", items: tabs.filter((tab) => ["settings", "navigation", "footer", "form", "trash"].includes(tab.type)) }
+  { label: "الرئيسية", items: tabs.filter((tab) => tab.type === "overview") },
+  { label: "المحتوى", items: tabs.filter((tab) => ["article", "service", "course", "cv", "experience", "education", "qualification", "skill"].includes(tab.type)) },
+  { label: "الصفحات", items: tabs.filter((tab) => ["homepage", "contact", "consultation", "privacy", "cta"].includes(tab.type)) },
+  { label: "الوسائط", items: tabs.filter((tab) => tab.type === "media") },
+  { label: "الرسائل", items: tabs.filter((tab) => tab.type === "form") },
+  { label: "الإعدادات", items: tabs.filter((tab) => ["settings", "navigation", "footer", "whatsapp", "seo", "integration", "redirects", "trash"].includes(tab.type)) }
 ];
 
 const dashboardPaths: Partial<Record<DashboardTab, string>> = {
@@ -76,7 +80,15 @@ const dashboardPaths: Partial<Record<DashboardTab, string>> = {
   footer: "/dashboard/footer",
   redirects: "/dashboard/redirects",
   form: "/dashboard/forms",
-  trash: "/dashboard/trash"
+  trash: "/dashboard/trash",
+  cv: "/dashboard/cv",
+  education: "/dashboard/education",
+  qualification: "/dashboard/qualifications",
+  cta: "/dashboard/cta",
+  contact: "/dashboard/contact",
+  consultation: "/dashboard/consultation",
+  whatsapp: "/dashboard/whatsapp",
+  privacy: "/dashboard/privacy"
 };
 
 const emptyItem: CmsContentItem = {
@@ -268,6 +280,7 @@ export function Dashboard({
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mediaPicker, setMediaPicker] = useState<MediaPickerState | null>(null);
   const [mediaSearch, setMediaSearch] = useState("");
   const [mediaCategory, setMediaCategory] = useState<MediaCategoryFilter>("all");
@@ -314,6 +327,7 @@ export function Dashboard({
 
   function setActiveModule(type: DashboardTab) {
     setActive(type);
+    setSidebarOpen(false);
     if (typeof window !== "undefined") window.history.pushState(null, "", dashboardPaths[type] ?? "/dashboard");
   }
 
@@ -824,11 +838,14 @@ export function Dashboard({
 
   return (
     <main className="dashboard-shell cms-shell" dir="rtl">
-      <aside className="dashboard-sidebar cms-sidebar">
+      <aside className={`dashboard-sidebar cms-sidebar ${sidebarOpen ? "is-open" : ""}`}>
         <div className="dashboard-brand">
           <span className="dashboard-brand-mark">ع</span>
           <span><strong>عبدالعزيز الصاري</strong><small>نظام إدارة المحتوى</small></span>
         </div>
+        <button className="dashboard-close" type="button" aria-label="إغلاق القائمة" onClick={() => setSidebarOpen(false)}>
+          <X size={20} />
+        </button>
         <nav className="dashboard-nav" aria-label="تنقل لوحة التحكم">
           {navGroups.map((group) => (
             <div className="dashboard-nav-group" key={group.label}>
@@ -847,9 +864,13 @@ export function Dashboard({
           <span><strong>{user.email}</strong><small>مدير الموقع</small></span>
         </div>
       </aside>
+      <button className={`dashboard-overlay ${sidebarOpen ? "is-open" : ""}`} type="button" aria-label="إغلاق القائمة" onClick={() => setSidebarOpen(false)} />
 
       <section className="dashboard-main">
         <header className="dashboard-header cms-header">
+          <button className="dashboard-menu" type="button" aria-label="فتح قائمة لوحة التحكم" onClick={() => setSidebarOpen(true)}>
+            <Menu size={21} />
+          </button>
           <div className="dashboard-search">
             <Search size={18} />
             <input aria-label="بحث في المحتوى" placeholder="ابحث في العنوان أو الرابط أو التصنيف" value={query} onChange={(event) => setQuery(event.target.value)} />
@@ -859,10 +880,15 @@ export function Dashboard({
               <RotateCcw size={17} />
               استرجاع Autosave
             </button>
-            <button className="dashboard-primary" type="button" onClick={() => startNew()}>
-              <Plus size={18} />
-              عنصر جديد
-            </button>
+            <details className="cms-add-menu">
+              <summary className="dashboard-primary"><Plus size={18} /> إضافة محتوى</summary>
+              <div className="cms-add-menu-popover">
+                <button type="button" onClick={() => startNew("article")}>مقال جديد</button>
+                <button type="button" onClick={() => startNew("service")}>خدمة جديدة</button>
+                <button type="button" onClick={() => startNew("course")}>دورة جديدة</button>
+                <button type="button" onClick={() => setActiveModule("media")}>رفع صورة</button>
+              </div>
+            </details>
             <button className="cms-ghost-button" type="button" onClick={logout}>
               <LogOut size={18} />
               خروج
@@ -874,19 +900,30 @@ export function Dashboard({
           <div className="dashboard-intro">
             <div>
               <nav className="cms-breadcrumbs" aria-label="مسار لوحة التحكم">
-                <Link href="/dashboard">Dashboard</Link>
+                <Link href="/dashboard">لوحة التحكم</Link>
                 {active !== "overview" && <span>{tabs.find((tab) => tab.type === active)?.label}</span>}
                 {selected.id && activeIsContent && <span>{selected.titleAr || selected.titleEn || selected.slug}</span>}
-                {!selected.id && initialContentId === "new" && activeIsContent && <span>New</span>}
+                {!selected.id && initialContentId === "new" && activeIsContent && <span>جديد</span>}
               </nav>
-              <p className="dashboard-kicker">CMS عربي حقيقي</p>
+              <p className="dashboard-kicker">إدارة الموقع</p>
               <h1>{active === "overview" ? "لوحة إدارة المحتوى" : tabs.find((tab) => tab.type === active)?.label}</h1>
-              <p>{active === "overview" ? "نظرة عامة على حالة المحتوى والنشاط دون تحرير مباشر." : "هذا القسم مستقل ويعرض حقوله ومحتواه فقط مع حفظ دائم في قاعدة SQLite المحلية."}</p>
+              <p>{active === "overview" ? "نظرة عامة على حالة المحتوى والنشاط دون تحرير مباشر." : "هذا القسم مستقل ويعرض حقوله ومحتواه فقط مع حفظ دائم وآمن في Supabase."}</p>
               {lastAutosave && <p className="cms-form-note">آخر Autosave محلي: {lastAutosave}</p>}
             </div>
           </div>
 
           {message && <div className="cms-message">{message}</div>}
+
+          {active === "overview" && (
+            <section className="cms-quick-actions" aria-label="إجراءات سريعة">
+              <button type="button" onClick={() => startNew("article")}><FileText size={20} /><span><strong>إضافة مقال</strong><small>إنشاء رؤية جديدة</small></span></button>
+              <button type="button" onClick={() => setActiveModule("media")}><Upload size={20} /><span><strong>رفع صورة</strong><small>فتح مكتبة الوسائط</small></span></button>
+              <button type="button" onClick={() => startNew("service")}><BriefcaseBusiness size={20} /><span><strong>إضافة خدمة</strong><small>إنشاء خدمة جديدة</small></span></button>
+              <button type="button" onClick={() => startNew("course")}><BarChart3 size={20} /><span><strong>إضافة دورة</strong><small>إنشاء دورة جديدة</small></span></button>
+              <button type="button" onClick={() => setActiveModule("form")}><FileText size={20} /><span><strong>الرسائل</strong><small>{submissions.filter((submission) => submission.status === "new").length} جديدة</small></span></button>
+              <a href="/" target="_blank" rel="noreferrer"><LayoutDashboard size={20} /><span><strong>مشاهدة الموقع</strong><small>فتح الواجهة العامة</small></span></a>
+            </section>
+          )}
 
           <div className="dashboard-stats cms-stats">
             <article className="dashboard-stat"><div><span>منشور</span><strong>{counts.published}</strong></div></article>
@@ -972,25 +1009,23 @@ export function Dashboard({
                     <div className="cms-language-panel" role="tabpanel">
                       <label>العنوان العربي<input value={selected.titleAr} onChange={(event) => setSelected({ ...selected, titleAr: event.target.value })} required /></label>
                       <label>الملخص العربي<textarea rows={3} value={selected.summaryAr} onChange={(event) => setSelected({ ...selected, summaryAr: event.target.value })} /></label>
-                      <div className="cms-rich-toolbar" aria-label="أدوات تحرير النص العربي">
-                        <button type="button" onClick={() => applyRichFormat("bodyAr", "<h2>", "</h2>")}>H2</button>
-                        <button type="button" onClick={() => applyRichFormat("bodyAr", "<strong>", "</strong>")}>B</button>
-                        <button type="button" onClick={() => applyRichFormat("bodyAr", "<ul><li>", "</li></ul>")}>قائمة</button>
-                        <button type="button" onClick={() => applyRichFormat("bodyAr", "<blockquote>", "</blockquote>")}>اقتباس</button>
-                      </div>
-                      <label>المحتوى العربي<textarea rows={6} value={selected.bodyAr ?? ""} onChange={(event) => setSelected({ ...selected, bodyAr: event.target.value })} /></label>
+                      <RichTextEditor
+                        label="المحتوى العربي"
+                        value={selected.bodyAr ?? ""}
+                        dir="rtl"
+                        onChange={(bodyAr) => setSelected((current) => ({ ...current, bodyAr }))}
+                      />
                     </div>
                   ) : (
                     <div className="cms-language-panel" role="tabpanel" dir="ltr">
                       <label>English title<input dir="ltr" value={selected.titleEn} onChange={(event) => setSelected({ ...selected, titleEn: event.target.value })} /></label>
                       <label>English summary<textarea dir="ltr" rows={3} value={selected.summaryEn} onChange={(event) => setSelected({ ...selected, summaryEn: event.target.value })} /></label>
-                      <div className="cms-rich-toolbar" aria-label="English editor tools">
-                        <button type="button" onClick={() => applyRichFormat("bodyEn", "<h2>", "</h2>")}>H2</button>
-                        <button type="button" onClick={() => applyRichFormat("bodyEn", "<strong>", "</strong>")}>B</button>
-                        <button type="button" onClick={() => applyRichFormat("bodyEn", "<ul><li>", "</li></ul>")}>List</button>
-                        <button type="button" onClick={() => applyRichFormat("bodyEn", "<blockquote>", "</blockquote>")}>Quote</button>
-                      </div>
-                      <label>English body<textarea dir="ltr" rows={6} value={selected.bodyEn ?? ""} onChange={(event) => setSelected({ ...selected, bodyEn: event.target.value })} /></label>
+                      <RichTextEditor
+                        label="English body"
+                        value={selected.bodyEn ?? ""}
+                        dir="ltr"
+                        onChange={(bodyEn) => setSelected((current) => ({ ...current, bodyEn }))}
+                      />
                       <label>English translation status<select value={getEnglishStatus()} onChange={(event) => updateMetaField("englishStatus", event.target.value)}>
                         {Object.entries(englishStatusLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
                       </select></label>
