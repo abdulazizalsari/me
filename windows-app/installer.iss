@@ -1,5 +1,5 @@
 #define MyAppName "Quotation Studio"
-#define MyAppVersion "3.1.0"
+#define MyAppVersion "3.1.1"
 #define MyAppPublisher "AbdulAziz Alsari"
 #define MyAppExeName "QuotationStudio.exe"
 
@@ -16,7 +16,7 @@ DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 OutputDir=dist
-OutputBaseFilename=QuotationStudio-Setup-3.1.0
+OutputBaseFilename=QuotationStudio-Setup-3.1.1
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
