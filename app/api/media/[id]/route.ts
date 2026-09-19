@@ -7,7 +7,12 @@ export const runtime = "nodejs";
 
 function watermarkSvg(text: string, width: number, height: number) {
   const escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-  return Buffer.from(`<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><style>text{font-family:Arial,sans-serif;font-size:${Math.max(14, Math.round(width / 55))}px;font-weight:700;letter-spacing:1px}</style><text x="${width - 28}" y="${height - 28}" text-anchor="end" fill="white" fill-opacity="0.62" stroke="black" stroke-opacity="0.16" stroke-width="2">${escaped}</text></svg>`);
+  const fontSize = Math.max(13, Math.round(width / 72));
+  const patternWidth = Math.max(260, Math.round(width / 2.7));
+  const patternHeight = Math.max(140, Math.round(patternWidth * 0.46));
+  const cx = Math.round(patternWidth / 2);
+  const cy = Math.round(patternHeight / 2);
+  return Buffer.from(`<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="wm" width="${patternWidth}" height="${patternHeight}" patternUnits="userSpaceOnUse"><g transform="rotate(-24 ${cx} ${cy})"><text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" font-family="Arial,sans-serif" font-size="${fontSize}px" font-weight="700" letter-spacing="0.5px" fill="white" fill-opacity="0.28" stroke="black" stroke-opacity="0.10" stroke-width="1">${escaped}</text></g></pattern></defs><rect width="100%" height="100%" fill="url(#wm)"/></svg>`);
 }
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -35,9 +40,10 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const metadata = await source.metadata();
     const width = Math.min(metadata.width ?? 1600, 1600);
     let image = source.resize({ width, withoutEnlargement: true });
-    if (asset.watermarkEnabled) {
+    if (asset.isProtected || asset.watermarkEnabled) {
       const height = Math.max(1, Math.round((metadata.height ?? width) * width / (metadata.width ?? width)));
-      image = image.composite([{ input: watermarkSvg(asset.watermarkText, width, height), gravity: "southeast" }]);
+      const watermarkText = asset.watermarkText?.trim() || "AbdulAziz Alsari | abdulazizalsari.net";
+      image = image.composite([{ input: watermarkSvg(watermarkText, width, height), gravity: "center" }]);
     }
 
     const format = new URL(request.url).searchParams.get("format") === "avif" ? "avif" : "webp";
@@ -45,7 +51,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     return new NextResponse(new Uint8Array(output), {
       headers: {
         "Content-Type": format === "avif" ? "image/avif" : "image/webp",
-        "Cache-Control": "public, max-age=31536000, immutable",
+        "Cache-Control": "public, max-age=86400, s-maxage=604800",
         "Content-Disposition": "inline",
         "X-Content-Type-Options": "nosniff",
         "Cross-Origin-Resource-Policy": "same-site"
