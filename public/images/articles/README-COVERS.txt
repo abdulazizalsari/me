@@ -1,1 +1,0 @@
-Generated editorial covers are stored as WebP files alongside the SVG fallbacks.
