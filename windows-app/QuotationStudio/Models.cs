@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Serialization;
+using System.Text.Json.Serialization;
 
 namespace QuotationStudio
 {
-    [Serializable]
     public class AppState
     {
         public CompanySettings Settings { get; set; } = new CompanySettings();
@@ -14,7 +13,6 @@ namespace QuotationStudio
         public List<DocumentModel> Documents { get; set; } = new List<DocumentModel>();
     }
 
-    [Serializable]
     public class CompanySettings
     {
         public string CompanyName { get; set; } = "اسم الشركة";
@@ -29,9 +27,10 @@ namespace QuotationStudio
         public string PrimaryColorHex { get; set; } = "#0F3D46";
         public string AccentColorHex { get; set; } = "#F26A2E";
         public string FooterText { get; set; } = "شكراً لتعاملكم معنا";
+        public string TemplatePreset { get; set; } = "Modern";
+        public string FontName { get; set; } = "Segoe UI";
     }
 
-    [Serializable]
     public class Customer
     {
         public string Id { get; set; } = Guid.NewGuid().ToString("N");
@@ -43,7 +42,6 @@ namespace QuotationStudio
         public override string ToString() => string.IsNullOrWhiteSpace(Company) ? Name : Company;
     }
 
-    [Serializable]
     public class Product
     {
         public string Id { get; set; } = Guid.NewGuid().ToString("N");
@@ -55,7 +53,6 @@ namespace QuotationStudio
         public override string ToString() => Name;
     }
 
-    [Serializable]
     public class DocumentModel
     {
         public string Id { get; set; } = Guid.NewGuid().ToString("N");
@@ -77,26 +74,23 @@ namespace QuotationStudio
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
         public List<LineItem> Items { get; set; } = new List<LineItem>();
 
-        [XmlIgnore]
-        public decimal Subtotal => Items?.Sum(x => x.Subtotal) ?? 0m;
-        [XmlIgnore]
-        public decimal LineDiscounts => Items?.Sum(x => x.DiscountAmount) ?? 0m;
-        [XmlIgnore]
-        public decimal Taxes => Items?.Sum(x => x.TaxAmount) ?? 0m;
-        [XmlIgnore]
-        public decimal BeforeGlobalDiscount => Items?.Sum(x => x.Total) ?? 0m;
-        [XmlIgnore]
-        public decimal GlobalDiscountAmount => Math.Round(BeforeGlobalDiscount * GlobalDiscountPercent / 100m, 2, MidpointRounding.AwayFromZero);
-        [XmlIgnore]
-        public decimal GrandTotal => BeforeGlobalDiscount - GlobalDiscountAmount;
+        [JsonIgnore] public decimal Subtotal => Items?.Sum(x => x.Subtotal) ?? 0m;
+        [JsonIgnore] public decimal LineDiscounts => Items?.Sum(x => x.DiscountAmount) ?? 0m;
+        [JsonIgnore] public decimal TaxableTotal => Items?.Sum(x => x.Taxable) ?? 0m;
+        [JsonIgnore] public decimal GlobalDiscountAmount => Math.Round(TaxableTotal * Clamp(GlobalDiscountPercent) / 100m, 2, MidpointRounding.AwayFromZero);
+        [JsonIgnore] public decimal TaxAfterGlobalDiscount => Math.Round((Items?.Sum(x => x.TaxAmount) ?? 0m) * (1m - Clamp(GlobalDiscountPercent) / 100m), 2, MidpointRounding.AwayFromZero);
+        [JsonIgnore] public decimal Taxes => TaxAfterGlobalDiscount;
+        [JsonIgnore] public decimal BeforeGlobalDiscount => TaxableTotal + (Items?.Sum(x => x.TaxAmount) ?? 0m);
+        [JsonIgnore] public decimal GrandTotal => Math.Round(TaxableTotal - GlobalDiscountAmount + TaxAfterGlobalDiscount, 2, MidpointRounding.AwayFromZero);
+
+        private static decimal Clamp(decimal p) => p < 0 ? 0 : (p > 100 ? 100 : p);
     }
 
-    [Serializable]
     public class LineItem
     {
         public string Name { get; set; } = "";
         public decimal Quantity { get; set; } = 1m;
-        // Free-text carton format. Examples: 10*2, 12*6, 24*1. It is NOT restricted to an integer.
+        // Free-text carton format. Examples: 10*2, 12*6, 24*1. It is intentionally NOT numeric.
         public string Carton { get; set; } = "10*2";
         public decimal UnitPrice { get; set; }
         public decimal DiscountPercent { get; set; }
@@ -104,15 +98,12 @@ namespace QuotationStudio
         public string Note { get; set; } = "";
         public string Barcode { get; set; } = "";
 
-        [XmlIgnore]
-        public decimal Subtotal => Math.Round(Quantity * UnitPrice, 2, MidpointRounding.AwayFromZero);
-        [XmlIgnore]
-        public decimal DiscountAmount => Math.Round(Subtotal * DiscountPercent / 100m, 2, MidpointRounding.AwayFromZero);
-        [XmlIgnore]
-        public decimal Taxable => Subtotal - DiscountAmount;
-        [XmlIgnore]
-        public decimal TaxAmount => Math.Round(Taxable * TaxPercent / 100m, 2, MidpointRounding.AwayFromZero);
-        [XmlIgnore]
-        public decimal Total => Taxable + TaxAmount;
+        [JsonIgnore] public decimal Subtotal => Math.Round(Quantity * UnitPrice, 2, MidpointRounding.AwayFromZero);
+        [JsonIgnore] public decimal DiscountAmount => Math.Round(Subtotal * Clamp(DiscountPercent) / 100m, 2, MidpointRounding.AwayFromZero);
+        [JsonIgnore] public decimal Taxable => Subtotal - DiscountAmount;
+        [JsonIgnore] public decimal TaxAmount => Math.Round(Taxable * Clamp(TaxPercent) / 100m, 2, MidpointRounding.AwayFromZero);
+        [JsonIgnore] public decimal Total => Math.Round(Taxable + TaxAmount, 2, MidpointRounding.AwayFromZero);
+
+        private static decimal Clamp(decimal p) => p < 0 ? 0 : (p > 100 ? 100 : p);
     }
 }
