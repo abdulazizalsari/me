@@ -14,7 +14,7 @@ function isEditable(target: EventTarget | null) {
 export default function ContentProtection() {
   const pathname = usePathname();
   const [screenMask, setScreenMask] = useState(false);
-  const protectedPage = !pathname.startsWith("/dashboard");
+  const protectedPage = !(pathname ?? "").startsWith("/dashboard");
 
   const watermarkSvg = useMemo(() => {
     const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='360' height='220' viewBox='0 0 360 220'><g transform='rotate(-24 180 110)' fill='rgba(0,62,70,0.11)' font-family='Arial, sans-serif' text-anchor='middle'><text x='180' y='92' font-size='18' font-weight='700'>AbdulAziz Alsari</text><text x='180' y='119' font-size='12'>abdulazizalsari.net</text></g></svg>`;
@@ -33,7 +33,7 @@ export default function ContentProtection() {
       root.querySelectorAll("img").forEach((img) => {
         img.setAttribute("draggable", "false");
         img.setAttribute("data-protected-image", "true");
-        (img as HTMLImageElement).style.webkitUserDrag = "none";
+        (img as HTMLImageElement).style.setProperty("-webkit-user-drag", "none");
         (img as HTMLImageElement).style.userSelect = "none";
       });
     };
@@ -87,26 +87,26 @@ export default function ContentProtection() {
       if (event.key === "PrintScreen") {
         setScreenMask(true);
         window.setTimeout(() => setScreenMask(false), 1100);
-        navigator.clipboard?.writeText("Protected content — AbdulAziz Alsari").catch(() => undefined);
+        void navigator.clipboard?.writeText("Protected content — AbdulAziz Alsari").catch(() => undefined);
       }
     };
 
-    document.addEventListener("contextmenu", preventContextMenu, { capture: true });
-    document.addEventListener("copy", preventCopy, { capture: true });
-    document.addEventListener("cut", preventCopy, { capture: true });
-    document.addEventListener("dragstart", preventDrag, { capture: true });
-    document.addEventListener("click", preventImageDownload, { capture: true });
-    window.addEventListener("keydown", handleKeys, { capture: true });
+    document.addEventListener("contextmenu", preventContextMenu, true);
+    document.addEventListener("copy", preventCopy, true);
+    document.addEventListener("cut", preventCopy, true);
+    document.addEventListener("dragstart", preventDrag, true);
+    document.addEventListener("click", preventImageDownload, true);
+    window.addEventListener("keydown", handleKeys, true);
 
     return () => {
       observer.disconnect();
       document.body.classList.remove("content-protected");
-      document.removeEventListener("contextmenu", preventContextMenu, { capture: true } as EventListenerOptions);
-      document.removeEventListener("copy", preventCopy, { capture: true } as EventListenerOptions);
-      document.removeEventListener("cut", preventCopy, { capture: true } as EventListenerOptions);
-      document.removeEventListener("dragstart", preventDrag, { capture: true } as EventListenerOptions);
-      document.removeEventListener("click", preventImageDownload, { capture: true } as EventListenerOptions);
-      window.removeEventListener("keydown", handleKeys, { capture: true } as EventListenerOptions);
+      document.removeEventListener("contextmenu", preventContextMenu, true);
+      document.removeEventListener("copy", preventCopy, true);
+      document.removeEventListener("cut", preventCopy, true);
+      document.removeEventListener("dragstart", preventDrag, true);
+      document.removeEventListener("click", preventImageDownload, true);
+      window.removeEventListener("keydown", handleKeys, true);
     };
   }, [protectedPage]);
 
