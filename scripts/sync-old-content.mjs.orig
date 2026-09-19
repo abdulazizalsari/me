@@ -1,0 +1,64 @@
+import { DatabaseSync } from "node:sqlite";
+
+const db = new DatabaseSync(".data/abdulaziz-cms.sqlite");
+const now = new Date().toISOString();
+
+const upsert = db.prepare(`
+  insert into content_items (
+    id, type, slug, title_ar, title_en, summary_ar, summary_en, body_ar, body_en,
+    category, status, sort_order, meta_json, created_at, updated_at
+  ) values (lower(hex(randomblob(16))), ?, ?, ?, ?, ?, ?, ?, ?, ?, 'published', ?, ?, ?, ?)
+  on conflict(type, slug) do update set
+    title_ar = excluded.title_ar,
+    title_en = excluded.title_en,
+    summary_ar = excluded.summary_ar,
+    summary_en = excluded.summary_en,
+    body_ar = excluded.body_ar,
+    body_en = excluded.body_en,
+    category = excluded.category,
+    status = 'published',
+    sort_order = excluded.sort_order,
+    meta_json = excluded.meta_json,
+    updated_at = excluded.updated_at
+`);
+
+const services = [
+  ["seo", "تصدر نتائج البحث واسبق فيها", "SEO", "تحسين محركات البحث لزيادة ظهور موقعك ومحتواك في نتائج البحث والوصول إلى العملاء المناسبين.", "SEO foundations that increase visibility in search results.", "Marketing", 10, { icon: "Search" }],
+  ["website-development", "مواقع ويب تخطف الأنظار فوراً", "Website Development", "مواقع ويب احترافية وسريعة تمنح عملاءك تجربة سلسة وتعكس قوة علامتك الرقمية.", "Fast, clear websites that deliver a smooth client experience.", "Websites", 20, { icon: "Code2" }],
+  ["branding", "هوية بصرية ترسخ في الذاكرة", "Visual Identity", "إنشاء تصاميم بصرية معبرة وجذابة لتعزيز التواصل مع جمهورك باحترافية.", "Memorable visual identities and graphic design assets.", "Branding", 30, { icon: "Palette" }],
+  ["digital-marketing", "تسويق رقمي يترجم إلى نمو حقيقي", "Digital Marketing", "تطبيق استراتيجيات مبتكرة عبر الإنترنت لزيادة الوعي بالعلامة التجارية وجذب العملاء.", "Digital strategies that support awareness, acquisition, and growth.", "Marketing", 40, { icon: "Megaphone" }],
+  ["social-media", "إدارة منصات التواصل باحترافية", "Social Media", "بناء حضور رقمي واستهداف دقيق للجمهور مع نمو مستمر للتفاعل.", "Social media management and content systems that build engagement.", "Social Media", 50, { icon: "Share2" }],
+  ["paid-advertising", "إعلانات مدفوعة بعائد استثماري مرتفع", "Paid Advertising", "إدارة الحملات الإعلانية باحترافية لرفع النتائج وتحسين العائد على الاستثمار.", "Campaign planning, targeting, budgeting, and performance analysis.", "Marketing", 60, { icon: "BarChart3" }],
+  ["training", "تدريب شخصي يطلق قدراتك الكامنة", "Personal Training", "برامج تدريبية مخصصة لتطوير مهاراتك أو فريقك في التسويق والأعمال الرقمية.", "Personal training programs for your team and digital business skills.", "Training", 70, { icon: "GraduationCap" }],
+  ["accounting-system", "نظام محاسبة متكامل للشركات والأفراد", "Accounting System", "حلول محاسبية منظمة تساعد الشركات والأفراد على إدارة أعمالهم بوضوح.", "Accounting system guidance for companies and individuals.", "Business", 80, { icon: "ReceiptText" }],
+  ["trademark", "تسجيل العلامات التجارية وحمايتها", "Trademark Registration", "حماية علامتك التجارية قانونياً وضمان حقوقك في الأسواق المحلية والدولية.", "Trademark registration and brand protection support.", "Business", 90, { icon: "Tag" }]
+];
+
+for (const [slug, titleAr, titleEn, summaryAr, summaryEn, category, order, meta] of services) {
+  upsert.run("service", slug, titleAr, titleEn, summaryAr, summaryEn, "", "", category, order, JSON.stringify({ englishStatus: "published", ...meta }), now, now);
+}
+
+db.prepare("update content_items set status = 'draft' where type = 'service' and slug = 'business-development'").run();
+
+const articles = [
+  ["digital-community-strategies", "استراتيجيات المجتمعات الرقمية", "Digital Community Strategies", "كيف تعزز المجتمعات الحضور الرقمي والثقة والعلاقات طويلة المدى مع العلامة.", "How digital communities strengthen presence, trust, and long-term brand relationships.", "التسويق الرقمي", 10, { date: "2025-03-23" }],
+  ["international-trade-success-factors", "عوامل نجاح التجارة الدولية في الحاضر والماضي", "Factors for the Success of International Trade", "نظرة عملية إلى أساسيات التجارة وكيف تغير الأدوات الحديثة فرص التوسع الدولي.", "A practical look at trade fundamentals and how modern tools reshape international opportunities.", "التجارة الدولية", 20, { date: "2025-03-23" }],
+  ["network-marketing-reality", "التسويق الشبكي بين الطموح والواقع", "Network Marketing: Between Ambition and Reality", "قراءة متوازنة للوعود والمخاطر والتحديات العملية في التسويق الشبكي.", "A balanced discussion of promises, risks, and practical challenges around network marketing.", "الأعمال", 30, { date: "2025-03-21" }],
+  ["website-importance", "أهمية إنشاء موقع إلكتروني", "The Importance of Creating a Website", "لماذا يبقى الموقع الاحترافي أصلاً أساسياً للثقة والظهور وتحويل الزوار إلى عملاء.", "Why a professional website remains essential for credibility, discovery, and conversion.", "المواقع الإلكترونية", 40, { date: "2025-03-18" }]
+];
+
+for (const [slug, titleAr, titleEn, summaryAr, summaryEn, category, order, meta] of articles) {
+  upsert.run("article", slug, titleAr, titleEn, summaryAr, summaryEn, summaryAr, summaryEn, category, order, JSON.stringify({ englishStatus: "published", ...meta }), now, now);
+}
+
+const projects = [
+  ["digital-marketing-course", "دورة التسويق الرقمي", "Digital Marketing Course", "تعلم التسويق واصنع التأثير عبر برنامج تدريبي عملي ومنهجي.", "Learn marketing and create impact through a practical, structured course.", "Marketing", 10, { year: "2026", client: "Training", services: ["Digital Marketing", "SEO", "AI"] }],
+  ["graphic-design-course", "دورة التصميم الجرافيكي", "Graphic Design Course", "تعلم التصميم كمنظومة تفكير ومهارة مهنية من الأساسيات إلى المشاريع الحقيقية.", "Learn design as a professional skill from visual fundamentals to real projects.", "Branding", 20, { year: "2026", client: "Training", services: ["Photoshop", "Illustrator", "Visual Identity"] }],
+  ["private-training", "تدريب شخصي مصمم خصيصاً لك", "Personal Training Designed for You", "جلسات تدريب فردية مصممة خصيصاً لتطوير مهاراتك وتحقيق أهدافك بثقة واحترافية.", "One-to-one sessions designed to develop your skills and reach your goals professionally.", "Business", 30, { year: "2026", client: "Training", services: ["Training", "Marketing", "Business"] }]
+];
+
+for (const [slug, titleAr, titleEn, summaryAr, summaryEn, category, order, meta] of projects) {
+  upsert.run("project", slug, titleAr, titleEn, summaryAr, summaryEn, "", "", category, order, JSON.stringify({ englishStatus: "published", ...meta }), now, now);
+}
+
+console.log("old-site content synced");

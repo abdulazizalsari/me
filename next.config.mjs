@@ -27,7 +27,7 @@ const nextConfig = {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
-      "connect-src 'self' https://wa.me ws: wss:",
+      "connect-src 'self' https://wa.me https://pgsasqtrwtbeulxpgxmd.supabase.co ws: wss:",
       "frame-src 'self'",
       "manifest-src 'self'"
     ].join("; ");

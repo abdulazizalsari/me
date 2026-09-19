@@ -4,3 +4,11 @@ node_modules/
 public/uploads/
 qa-output/
 *.tsbuildinfo
+.env
+.env.local
+.env.production
+.env*.local
+!.env.example
+.vercel/
+.npm-cache/
+source.zip

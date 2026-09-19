@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-label="Insights placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#003E46"/>
+      <stop offset="1" stop-color="#061f23"/>
+    </linearGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0v48" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <rect width="1200" height="675" fill="url(#grid)" opacity=".72"/>
+  <circle cx="930" cy="120" r="210" fill="#FF5A19" opacity=".18"/>
+  <circle cx="220" cy="570" r="240" fill="#FF5A19" opacity=".12"/>
+  <path d="M150 470h900" stroke="#FF5A19" stroke-width="12" stroke-linecap="round"/>
+  <path d="M150 520h560" stroke="rgba(255,255,255,.75)" stroke-width="10" stroke-linecap="round"/>
+  <text x="600" y="315" fill="#fff" font-family="Arial, sans-serif" font-size="78" font-weight="700" text-anchor="middle">ABDULAZIZ ALSARI</text>
+  <text x="600" y="390" fill="#FF5A19" font-family="Arial, sans-serif" font-size="42" font-weight="700" text-anchor="middle">INSIGHTS</text>
+</svg>
