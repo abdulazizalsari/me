@@ -5,6 +5,7 @@ import "@fontsource-variable/noto-kufi-arabic";
 import "./globals.css";
 import { siteUrl } from "@/data/site";
 import { getContentBySlug } from "@/lib/cms/database";
+import ContentProtection from "@/components/security/ContentProtection";
 
 const plex = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-latin", display: "swap" });
 
@@ -44,6 +45,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         {ga4Enabled && <Script src={`https://www.googletagmanager.com/gtag/js?id=${ga4MeasurementId}`} strategy="afterInteractive" />}
         {ga4Enabled && <Script id="ga4-loader" strategy="afterInteractive">{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4MeasurementId}');`}</Script>}
         {adsenseEnabled && <Script id="adsense-loader" async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`} crossOrigin="anonymous" strategy="afterInteractive" />}
+        <ContentProtection />
         {children}
       </body>
     </html>
