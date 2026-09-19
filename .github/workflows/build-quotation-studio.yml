@@ -16,10 +16,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET 10 SDK
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
+      - name: Verify .NET 10 SDK
+        shell: powershell
+        run: |
+          dotnet --info
+          $sdks = dotnet --list-sdks
+          if (-not ($sdks -match '^10\.')) { throw ".NET 10 SDK is not available on the Windows runner" }
 
       - name: Restore
         run: dotnet restore windows-app/QuotationStudio/QuotationStudio.csproj
