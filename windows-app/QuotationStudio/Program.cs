@@ -16,7 +16,7 @@ namespace QuotationStudio
                 return;
             }
 
-            using var mutex = new Mutex(true, "QuotationStudio.Singleton.v3", out var created);
+            using var mutex = new Mutex(true, "QuotationStudio.Singleton.v31", out var created);
             if (!created)
             {
                 MessageBox.Show("البرنامج يعمل بالفعل.", "Quotation Studio", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -29,7 +29,7 @@ namespace QuotationStudio
             {
                 try { MessageBox.Show((e.ExceptionObject as Exception)?.Message ?? "خطأ غير متوقع", "Quotation Studio", MessageBoxButtons.OK, MessageBoxIcon.Error); } catch { }
             };
-            Application.Run(new MainFormV4());
+            Application.Run(new MainFormV5());
         }
     }
 }
