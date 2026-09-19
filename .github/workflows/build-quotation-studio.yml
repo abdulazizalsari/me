@@ -1,0 +1,53 @@
+name: Build Quotation Studio Windows Installer
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'windows-app/**'
+      - '.github/workflows/build-quotation-studio.yml'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore windows-app/QuotationStudio/QuotationStudio.csproj
+
+      - name: Build Release
+        run: dotnet build windows-app/QuotationStudio/QuotationStudio.csproj -c Release --no-restore
+
+      - name: Install Inno Setup
+        shell: powershell
+        run: choco install innosetup --no-progress -y
+
+      - name: Build installer
+        shell: powershell
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (!(Test-Path $iscc)) { $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" }
+          & $iscc "windows-app\installer.iss"
+
+      - name: Verify installer exists
+        shell: powershell
+        run: |
+          $file = Get-ChildItem "windows-app\dist\QuotationStudio-Setup-*.exe" | Select-Object -First 1
+          if (!$file) { throw "Installer was not generated" }
+          Write-Host "Built: $($file.FullName) / $([math]::Round($file.Length/1MB,2)) MB"
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuotationStudio-Windows-Installer
+          path: windows-app/dist/QuotationStudio-Setup-*.exe
+          if-no-files-found: error
