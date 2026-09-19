@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 const IMAGE_EXT = /\.(?:avif|webp|png|jpe?g|gif|svg)(?:\?.*)?$/i;
@@ -15,11 +15,6 @@ export default function ContentProtection() {
   const pathname = usePathname();
   const [screenMask, setScreenMask] = useState(false);
   const protectedPage = !(pathname ?? "").startsWith("/dashboard");
-
-  const watermarkSvg = useMemo(() => {
-    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='360' height='220' viewBox='0 0 360 220'><g transform='rotate(-24 180 110)' fill='rgba(0,62,70,0.11)' font-family='Arial, sans-serif' text-anchor='middle'><text x='180' y='92' font-size='18' font-weight='700'>AbdulAziz Alsari</text><text x='180' y='119' font-size='12'>abdulazizalsari.net</text></g></svg>`;
-    return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
-  }, []);
 
   useEffect(() => {
     if (!protectedPage) {
@@ -131,20 +126,6 @@ export default function ContentProtection() {
           [data-print-blocker='true'] { display: grid !important; }
         }
       `}</style>
-      <div
-        aria-hidden="true"
-        data-site-watermark="true"
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 2147482000,
-          pointerEvents: "none",
-          backgroundImage: watermarkSvg,
-          backgroundRepeat: "repeat",
-          opacity: 0.34,
-          mixBlendMode: "multiply"
-        }}
-      />
       <div
         aria-hidden="true"
         data-print-blocker="true"
