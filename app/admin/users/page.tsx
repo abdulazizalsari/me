@@ -1,0 +1,2 @@
+import { redirect } from "next/navigation";import { getCurrentAdmin } from "@/lib/cms/auth";import { AdminFrame } from "../AdminFrame";import { AdminPageHeader } from "../AdminPageHeader";import { UsersClient } from "./UsersClient";
+export default async function Page(){const user=await getCurrentAdmin();if(!user)redirect("/admin");return <AdminFrame role={user.role} email={user.email} displayName={user.displayName}><AdminPageHeader title="المستخدمون" description="المدير فقط يستطيع دعوة المستخدمين وتغيير أدوارهم أو حذفهم."/><UsersClient/></AdminFrame>;}

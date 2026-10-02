@@ -1,0 +1,2 @@
+import { redirect } from "next/navigation";import { getCurrentAdmin } from "@/lib/cms/auth";import { AdminFrame } from "../AdminFrame";import { AdminPageHeader } from "../AdminPageHeader";import { BackupClient } from "./BackupClient";
+export default async function Page(){const user=await getCurrentAdmin();if(!user)redirect("/admin");return <AdminFrame role={user.role} email={user.email} displayName={user.displayName}><AdminPageHeader title="النسخ الاحتياطي" description="التحميل والاستعادة متاحان للمدير فقط."/><BackupClient/></AdminFrame>;}
