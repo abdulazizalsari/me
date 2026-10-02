@@ -12,6 +12,15 @@ export const metadata: Metadata = {
 export default async function DashboardLoginPage() {
   const user = await getCurrentAdmin();
   if (user) redirect("/dashboard");
-  return <><LoginForm /><p style={{textAlign:"center",marginTop:12}}><Link href="/dashboard/setup">إعداد المدير لأول مرة</Link></p></>;
-}
 
+  return (
+    <>
+      <LoginForm />
+      <p style={{ textAlign: "center", marginTop: 12 }}>
+        <Link href="/dashboard/forgot-password">نسيت كلمة المرور؟</Link>
+        {" · "}
+        <Link href="/dashboard/setup">إعداد المدير لأول مرة</Link>
+      </p>
+    </>
+  );
+}
