@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Mail, RotateCcwKey } from "lucide-react";
+import { LockKeyhole, Mail } from "lucide-react";
 import { useState } from "react";
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "@/lib/supabase-config";
 
@@ -49,7 +49,7 @@ export function ForgotPasswordForm() {
   return (
     <main className="cms-login-shell" dir="rtl">
       <section className="cms-login-card">
-        <div className="cms-login-mark"><RotateCcwKey size={24} /></div>
+        <div className="cms-login-mark"><LockKeyhole size={24} /></div>
         <p className="eyebrow">لوحة إدارة المحتوى</p>
         <h1>نسيت كلمة المرور؟</h1>
         <p className="muted">أدخل بريد المدير وسنرسل رابطًا آمنًا لتعيين كلمة مرور جديدة.</p>
