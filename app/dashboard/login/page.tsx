@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAdmin } from "@/lib/cms/auth";
 import { LoginForm } from "./LoginForm";
@@ -13,14 +12,5 @@ export default async function DashboardLoginPage() {
   const user = await getCurrentAdmin();
   if (user) redirect("/dashboard");
 
-  return (
-    <>
-      <LoginForm />
-      <p style={{ textAlign: "center", marginTop: 12 }}>
-        <Link href="/dashboard/forgot-password">نسيت كلمة المرور؟</Link>
-        {" · "}
-        <Link href="/dashboard/setup">إعداد المدير لأول مرة</Link>
-      </p>
-    </>
-  );
+  return <LoginForm />;
 }
