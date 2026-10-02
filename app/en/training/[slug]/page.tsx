@@ -1,32 +1,20 @@
-﻿import { LocaleShell } from "../../../_components/LocaleShell";
+import type { Metadata } from "next";
+import { LocaleShell } from "../../../_components/LocaleShell";
 import { CourseDetailPage } from "../../../_components/StandardPage";
+import { getContentBySlug, listContentByType } from "@/lib/cms/database";
 
-const slugs = ["digital-marketing-course", "graphic-design-course", "wordpress-course", "private-training"];
+const legacySlugs = ["digital-marketing-course", "graphic-design-course", "wordpress-course", "private-training"];
+type PageProps = { params: Promise<{ slug: string }> };
 
-type PageProps = {
-  params: Promise<{ slug: string }>;
-};
-
-export function generateStaticParams() {
-  return slugs.map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  const courses = await listContentByType("course", { publishedOnly: true });
+  return Array.from(new Set([...legacySlugs, ...courses.map((course) => course.slug)])).map((slug) => ({ slug }));
 }
-
-export async function generateMetadata({ params }: PageProps) {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-
-  return {
-    title: "Course Details | AbdulAziz Al-Sari",
-    alternates: { canonical: `https://abdulazizalsari.net/en/training/${slug}` }
-  };
+  const course = await getContentBySlug("course", slug);
+  const title = course?.titleEn || course?.titleAr || "Course Details";
+  const description = course?.summaryEn || course?.summaryAr || undefined;
+  return { title, description, alternates: { canonical: `https://abdulazizalsari.net/en/training/${slug}` }, openGraph: { title, description, url: `https://abdulazizalsari.net/en/training/${slug}` } };
 }
-
-export default async function Page({ params }: PageProps) {
-  const { slug } = await params;
-
-  return (
-    <LocaleShell locale="en">
-      <CourseDetailPage locale="en" slug={slug} />
-    </LocaleShell>
-  );
-}
-
+export default async function Page({ params }: PageProps) { const { slug }=await params; return <LocaleShell locale="en"><CourseDetailPage locale="en" slug={slug}/></LocaleShell>; }
