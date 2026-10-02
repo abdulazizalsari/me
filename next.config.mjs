@@ -15,6 +15,11 @@ const nextConfig = {
     const scriptSource = [
       "'self'",
       "'unsafe-inline'",
+      "https://www.googletagmanager.com",
+      "https://connect.facebook.net",
+      "https://analytics.tiktok.com",
+      "https://pagead2.googlesyndication.com",
+      "https://*.googlesyndication.com",
       ...(isProduction ? [] : ["'unsafe-eval'"])
     ].join(" ");
     const contentSecurityPolicy = [
@@ -25,10 +30,10 @@ const nextConfig = {
       "form-action 'self'",
       `script-src ${scriptSource}`,
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob:",
+      "img-src 'self' data: blob: https://www.google-analytics.com https://www.facebook.com https://*.googlesyndication.com",
       "font-src 'self' data:",
-      "connect-src 'self' https://wa.me https://pgsasqtrwtbeulxpgxmd.supabase.co ws: wss:",
-      "frame-src 'self'",
+      "connect-src 'self' https://wa.me https://pgsasqtrwtbeulxpgxmd.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com https://www.facebook.com https://analytics.tiktok.com https://*.googlesyndication.com https://googleads.g.doubleclick.net ws: wss:",
+      "frame-src 'self' https://www.googletagmanager.com https://googleads.g.doubleclick.net https://*.googlesyndication.com",
       "manifest-src 'self'"
     ].join("; ");
     return [{

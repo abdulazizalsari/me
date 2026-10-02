@@ -25,6 +25,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CmsActivityLog, CmsContentItem, CmsContentType, CmsFormSubmission, CmsMediaAsset, CmsNotFoundHit, CmsRedirect, CmsRevision, CmsStatus, CmsUser } from "@/lib/cms/types";
 import { RichTextEditor } from "./RichTextEditor";
+import { IntegrationSettings } from "./IntegrationSettings";
 
 const tabs: { type: "overview" | CmsContentType | "media" | "redirects" | "trash" | "settings"; label: string; icon: typeof LayoutDashboard }[] = [
   { type: "overview", label: "نظرة عامة", icon: LayoutDashboard },
@@ -37,7 +38,7 @@ const tabs: { type: "overview" | CmsContentType | "media" | "redirects" | "trash
   { type: "homepage", label: "الصفحات", icon: LayoutDashboard },
   { type: "media", label: "مكتبة الوسائط", icon: ImageIcon },
   { type: "seo", label: "SEO", icon: BarChart3 },
-  { type: "integration", label: "التكاملات", icon: Waypoints },
+  { type: "integration", label: "التكاملات والتتبع", icon: Waypoints },
   { type: "navigation", label: "التنقل", icon: LayoutDashboard },
   { type: "footer", label: "الفوتر", icon: LayoutDashboard },
   { type: "settings", label: "إعدادات الموقع", icon: Settings },
@@ -834,7 +835,8 @@ export function Dashboard({
     window.location.href = "/dashboard/login";
   }
 
-  const activeIsContent = contentTypes.includes(active as CmsContentType);
+  const activeIsContent = contentTypes.includes(active as CmsContentType) && active !== "integration";
+  const integrationItem = items.find((item) => item.type === "integration" && item.slug === "site-integrations") ?? items.find((item) => item.type === "integration");
 
   return (
     <main className="dashboard-shell cms-shell" dir="rtl">
@@ -1347,6 +1349,8 @@ export function Dashboard({
               </section>
             </div>
           )}
+
+          {active === "integration" && <IntegrationSettings initialMeta={integrationItem?.meta ?? {}} />}
 
           {active === "redirects" && (
             <section className="dashboard-panel cms-panel">

@@ -8,6 +8,8 @@ import { cmsImage } from "@/lib/cms/media";
 import type { Locale } from "@/lib/i18n";
 import { withLocale } from "@/lib/i18n";
 import { WhatsAppLink } from "@/components/layout/WhatsAppLink";
+import { AdSlot } from "@/components/integrations/AdSlot";
+import { integrationConfigFromMeta } from "@/lib/integrations";
 
 type LocalizedText = Record<Locale, string>;
 
@@ -335,6 +337,7 @@ export function HomeInsightsSection({ locale, cmsItems, homepageMeta }: { locale
 
 export function EditorialInsightsPage({ locale, cmsItems = [], searchParams = {} }: { locale: Locale; cmsItems?: CmsContentItem[]; searchParams?: Record<string, string | string[] | undefined> }) {
   const ar = locale === "ar";
+  const integrationConfig = integrationConfigFromMeta(cmsItems.find((item) => item.type === "integration" && item.slug === "site-integrations")?.meta);
   const allArticles = articleRows(publicItemsForLocale(cmsItems, locale));
   const categories = Array.from(new Set(allArticles.map((article) => article.category[locale]).filter(Boolean)));
   const activeCategory = asText(Array.isArray(searchParams.category) ? searchParams.category[0] : searchParams.category);
@@ -364,6 +367,7 @@ export function EditorialInsightsPage({ locale, cmsItems = [], searchParams = {}
       <section className="section insights-section blog-home" aria-labelledby="latest-insights-title">
         <div className="container">
           <InsightsTicker locale={locale} articles={allArticles} count={6} />
+          <AdSlot config={integrationConfig} placement="insightsTop" locale={locale} />
           <div className="featured-stories-grid">
             {featured && <FeaturedArticle article={featured} locale={locale} />}
             <div className="secondary-stories">
@@ -434,6 +438,7 @@ function TableOfContents({ content, locale }: { content: string; locale: Locale 
 }
 
 export function EditorialArticlePage({ locale, slug, cmsItems = [] }: { locale: Locale; slug: string; cmsItems?: CmsContentItem[] }) {
+  const integrationConfig = integrationConfigFromMeta(cmsItems.find((item) => item.type === "integration" && item.slug === "site-integrations")?.meta);
   const localizedCmsItems = publicItemsForLocale(cmsItems, locale);
   const allSourceArticles = articleRows(publicItemsForLocale(cmsItems, "ar"));
   if (locale === "en" && allSourceArticles.some((item) => item.slug === slug) && !localizedCmsItems.some((item) => item.type === "article" && item.slug === slug)) {
@@ -468,6 +473,7 @@ export function EditorialArticlePage({ locale, slug, cmsItems = [] }: { locale: 
           <div className="article-featured-image">
             <Image src={article.image} alt={article.imageAlt?.[locale] || article.title[locale]} fill priority sizes="(max-width: 1024px) 100vw, 1120px" />
           </div>
+          <AdSlot config={integrationConfig} placement="articleTop" locale={locale} />
           <div className="article-reading-layout">
             <aside className="article-reading-aside">
               <TableOfContents content={article.body[locale]} locale={locale} />
@@ -478,9 +484,11 @@ export function EditorialArticlePage({ locale, slug, cmsItems = [] }: { locale: 
               </div>
             </aside>
             <div className="article-body editorial-article-body">
+              <AdSlot config={integrationConfig} placement="articleInline" locale={locale} />
               <ArticleContent content={article.body[locale] || article.excerpt[locale]} />
             </div>
           </div>
+          <AdSlot config={integrationConfig} placement="articleBottom" locale={locale} />
         </div>
       </article>
       <section className="section article-bottom-cta">
