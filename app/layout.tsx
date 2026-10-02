@@ -29,7 +29,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         {config.bingEnabled && config.bingVerification && <meta name="msvalidate.01" content={config.bingVerification} />}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(() => { const en = location.pathname === "/en" || location.pathname.startsWith("/en/"); document.documentElement.lang = en ? "en" : "ar"; document.documentElement.dir = en ? "ltr" : "rtl"; })();`
+            __html: `(() => { const path = location.pathname; const en = path === "/en" || path.startsWith("/en/"); const tr = path === "/tr" || path.startsWith("/tr/"); document.documentElement.lang = en ? "en" : tr ? "tr" : "ar"; document.documentElement.dir = en || tr ? "ltr" : "rtl"; })();`
           }}
         />
       </head>
