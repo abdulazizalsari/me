@@ -1,4 +1,4 @@
-import type { CmsLanguage } from "./types";
+import type { CmsContentItem, CmsLanguage } from "./types";
 import { supabaseRequest } from "@/lib/supabase-rest";
 
 type Row = Record<string, unknown>;
@@ -36,6 +36,13 @@ export async function listTranslationEntries() {
   } satisfies TranslationEntry));
 }
 
+function contentTranslationTarget(key: string) {
+  const match = /^content\.(article|course|service)\.([^.]+)\.(title|summary|body)$/.exec(key);
+  if (!match) return null;
+  const column = match[3] === "title" ? "title_en" : match[3] === "summary" ? "summary_en" : "body_en";
+  return { type: match[1], id: match[2], column };
+}
+
 export async function saveTranslation(input: { key: string; language: string; value: string; userId: string }) {
   const rows = await supabaseRequest<Row[]>("/rest/v1/translations?on_conflict=key,language_code", {
     method: "POST",
@@ -48,7 +55,32 @@ export async function saveTranslation(input: { key: string; language: string; va
     },
     headers: { Prefer: "resolution=merge-duplicates,return=representation" }
   });
+
+  if (input.language === "en") {
+    const target = contentTranslationTarget(input.key);
+    if (target) {
+      await supabaseRequest(`/rest/v1/content_items?id=eq.${encodeURIComponent(target.id)}&type=eq.${encodeURIComponent(target.type)}`, {
+        method: "PATCH",
+        body: { [target.column]: input.value, updated_at: new Date().toISOString() },
+        headers: { Prefer: "return=minimal" }
+      });
+    }
+  }
   return rows[0] ?? null;
+}
+
+export async function syncContentEnglishTranslations(item: CmsContentItem, userId: string) {
+  if (!["article","course","service"].includes(item.type)) return;
+  const rows = [
+    { key: `content.${item.type}.${item.id}.title`, language_code: "en", value: item.titleEn ?? "", updated_by: userId, updated_at: new Date().toISOString() },
+    { key: `content.${item.type}.${item.id}.summary`, language_code: "en", value: item.summaryEn ?? "", updated_by: userId, updated_at: new Date().toISOString() },
+    { key: `content.${item.type}.${item.id}.body`, language_code: "en", value: item.bodyEn ?? "", updated_by: userId, updated_at: new Date().toISOString() }
+  ];
+  await supabaseRequest("/rest/v1/translations?on_conflict=key,language_code", {
+    method: "POST",
+    body: rows,
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" }
+  });
 }
 
 export async function upsertLanguage(input: CmsLanguage) {

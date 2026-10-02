@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentCmsUser } from "@/lib/cms/auth";
 import { saveContentItem } from "@/lib/cms/database";
+import { syncContentEnglishTranslations } from "@/lib/cms/translations";
 import type { CmsContentSeed, CmsContentType, CmsStatus } from "@/lib/cms/types";
 
 const cmsStatuses: CmsStatus[] = ["draft", "published", "scheduled", "archived"];
@@ -20,6 +21,7 @@ export async function POST(request: Request) {
     try { meta = JSON.parse(body.metaText) as Record<string, unknown>; }
     catch { return NextResponse.json({ ok: false, message: "صيغة JSON في البيانات الإضافية غير صحيحة." }, { status: 400 }); }
   } else if (body.meta && typeof body.meta === "object") meta = body.meta;
+
   try {
     const item = await saveContentItem({
       id: body.id, type, slug: body.slug ?? "", titleAr: body.titleAr ?? "", titleEn: body.titleEn ?? "",
@@ -27,6 +29,7 @@ export async function POST(request: Request) {
       category: body.category ?? "", status: cmsStatuses.includes(body.status as CmsStatus) ? body.status as CmsStatus : "draft",
       sortOrder: Number(body.sortOrder ?? 0), meta
     });
+    await syncContentEnglishTranslations(item, user.id).catch(() => undefined);
     return NextResponse.json({ ok: true, item });
   } catch (error) {
     return NextResponse.json({ ok: false, message: error instanceof Error ? error.message : "تعذر حفظ المحتوى." }, { status: 400 });

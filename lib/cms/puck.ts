@@ -2,6 +2,8 @@ import type { CmsPuckPage } from "./types";
 import { supabaseRequest } from "@/lib/supabase-rest";
 
 type Row = Record<string, unknown>;
+const reservedSlugs = new Set(["about","cv","services","training","ruaa","contact","consultation","privacy-policy","en","tr","admin","dashboard","api","robots.txt","sitemap.xml"]);
+
 function parseObject(value: unknown): Record<string, unknown> {
   if (value && typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
   if (typeof value === "string") { try { const parsed=JSON.parse(value); if(parsed&&typeof parsed==="object"&&!Array.isArray(parsed)) return parsed; } catch {} }
@@ -20,17 +22,21 @@ export async function getPuckPage(idOrSlug:string) {
   return rows[0]?rowToPage(rows[0]):null;
 }
 export async function createPuckPage(input:{slug:string;titleAr:string;titleEn?:string;userId:string}) {
-  const row={slug:input.slug.trim().toLowerCase().replace(/[^a-z0-9-]+/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,""),title_ar:input.titleAr.trim(),title_en:input.titleEn?.trim()??"",status:"draft",data_json:{content:[],root:{}},locale_data:{},seo_json:{},created_by:input.userId,updated_by:input.userId};
-  if(!row.slug) throw new Error("الرابط المختصر غير صالح.");
+  const slug=input.slug.trim().toLowerCase().replace(/[^a-z0-9-]+/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,"");
+  if(!slug) throw new Error("الرابط المختصر غير صالح.");
+  if(reservedSlugs.has(slug)) throw new Error("هذا الرابط مستخدم من صفحة أساسية في الموقع. اختر رابطًا آخر.");
+  const row={slug,title_ar:input.titleAr.trim(),title_en:input.titleEn?.trim()??"",status:"draft",data_json:{content:[],root:{}},locale_data:{},seo_json:{},created_by:input.userId,updated_by:input.userId};
   const rows=await supabaseRequest<Row[]>("/rest/v1/puck_pages",{method:"POST",body:row,headers:{Prefer:"return=representation"}});
   return rowToPage(rows[0]);
 }
-export async function savePuckPage(id:string,input:{data:Record<string,unknown>;userId:string;locale?:string;status?:CmsPuckPage["status"];titleAr?:string;titleEn?:string;seo?:Record<string,unknown>}) {
+export async function savePuckPage(id:string,input:{data?:Record<string,unknown>;userId:string;locale?:string;status?:CmsPuckPage["status"];titleAr?:string;titleEn?:string;seo?:Record<string,unknown>}) {
   const current=await getPuckPage(id); if(!current) return null;
   const patch:Record<string,unknown>={updated_by:input.userId,updated_at:new Date().toISOString()};
   const locale=input.locale||"ar";
-  if(locale==="ar") patch.data_json=input.data;
-  else patch.locale_data={...current.localeData,[locale]:input.data};
+  if(input.data){
+    if(locale==="ar") patch.data_json=input.data;
+    else patch.locale_data={...current.localeData,[locale]:input.data};
+  }
   if(input.status) patch.status=input.status;
   if(input.titleAr!==undefined) patch.title_ar=input.titleAr;
   if(input.titleEn!==undefined) patch.title_en=input.titleEn;

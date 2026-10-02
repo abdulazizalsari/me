@@ -25,7 +25,7 @@ export function PuckEditorClient({pageId,initialData,currentLocale,languages,pag
   }
   return <div className="puck-admin-editor" dir="rtl">
     <div className="puck-locale-bar"><strong>{pageTitle}</strong><div>{languages.filter(l=>l.enabled).map(l=><a key={l.code} className={l.code===currentLocale?"active":""} href={`?locale=${l.code}`}>{l.nameAr}</a>)}</div></div>
-    <Puck config={puckConfig} data={initialData} onPublish={save} dnd={{behavior:"static"}} dictionary={arabicDictionary} headerTitle="محرر الصفحات" />
+    <Puck config={puckConfig} data={initialData} onPublish={save} dictionary={arabicDictionary} headerTitle="محرر الصفحات" />
     {message&&<div className="puck-save-message">{message}</div>}
   </div>;
 }
