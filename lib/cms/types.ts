@@ -20,6 +20,7 @@ export type CmsContentType =
   | "seo"
   | "privacy";
 export type CmsStatus = "draft" | "published" | "scheduled" | "archived";
+export type CmsRole = "admin" | "editor";
 
 export type CmsContentSeed = {
   type: CmsContentType;
@@ -62,7 +63,8 @@ export type CmsMediaAsset = {
 export type CmsUser = {
   id: string;
   email: string;
-  role: "admin";
+  role: CmsRole;
+  displayName?: string;
   createdAt: string;
 };
 
@@ -109,4 +111,26 @@ export type CmsNotFoundHit = {
   count: number;
   firstSeenAt: string;
   lastSeenAt: string;
+};
+
+export type CmsLanguage = {
+  code: string;
+  nameAr: string;
+  nameNative: string;
+  direction: "rtl" | "ltr";
+  enabled: boolean;
+  sortOrder: number;
+};
+
+export type CmsPuckPage = {
+  id: string;
+  slug: string;
+  titleAr: string;
+  titleEn: string;
+  status: "draft" | "published" | "archived";
+  data: Record<string, unknown>;
+  localeData: Record<string, unknown>;
+  seo: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
 };

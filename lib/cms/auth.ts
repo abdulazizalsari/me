@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import type { CmsUser } from "./types";
+import type { CmsRole, CmsUser } from "./types";
 import { ADMIN_EMAIL, SUPABASE_ACCESS_COOKIE, SUPABASE_PUBLISHABLE_KEY, SUPABASE_REFRESH_COOKIE, SUPABASE_URL } from "@/lib/supabase-config";
 import { supabaseRequest } from "@/lib/supabase-rest";
 
@@ -18,8 +18,15 @@ async function setAuthCookies(data: AuthResponse) {
   store.set(SUPABASE_REFRESH_COOKIE, data.refresh_token, { httpOnly: true, sameSite: "lax", secure, path: "/", maxAge: 60 * 60 * 24 * 30 });
 }
 
-export async function loginAdmin(email: string, password: string) {
-  if (email.trim().toLowerCase() !== ADMIN_EMAIL) return null;
+async function profileFor(userId: string, token: string) {
+  const rows = await supabaseRequest<Array<{ role: CmsRole; email?: string; display_name?: string }>>(
+    `/rest/v1/admin_profiles?select=role,email,display_name&user_id=eq.${encodeURIComponent(userId)}&limit=1`,
+    { token }
+  );
+  return rows[0] ?? null;
+}
+
+export async function loginCmsUser(email: string, password: string) {
   const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: { apikey: SUPABASE_PUBLISHABLE_KEY, "Content-Type": "application/json" },
@@ -29,9 +36,19 @@ export async function loginAdmin(email: string, password: string) {
   if (!response.ok) return null;
   const data = await response.json() as AuthResponse;
   if (!data.access_token || !data.user?.id) return null;
+  const profile = await profileFor(data.user.id, data.access_token).catch(() => null);
+  if (!profile || !["admin", "editor"].includes(profile.role)) return null;
   await setAuthCookies(data);
-  return { id: data.user.id, email: data.user.email ?? email, role: "admin", createdAt: data.user.created_at ?? "" } satisfies CmsUser;
+  return {
+    id: data.user.id,
+    email: data.user.email ?? profile.email ?? email,
+    role: profile.role,
+    displayName: profile.display_name ?? "",
+    createdAt: data.user.created_at ?? ""
+  } satisfies CmsUser;
 }
+
+export const loginAdmin = loginCmsUser;
 
 export async function signupInitialAdmin(email: string, password: string) {
   if (email.trim().toLowerCase() !== ADMIN_EMAIL) throw new Error("هذا البريد غير مسموح له بتهيئة الإدارة.");
@@ -60,7 +77,7 @@ export async function logoutAdmin() {
   store.delete(SUPABASE_REFRESH_COOKIE);
 }
 
-export async function getCurrentAdmin() {
+export async function getCurrentCmsUser() {
   const store = await cookies();
   const token = store.get(SUPABASE_ACCESS_COOKIE)?.value;
   if (!token) return null;
@@ -69,8 +86,19 @@ export async function getCurrentAdmin() {
   });
   if (!userResponse.ok) return null;
   const user = await userResponse.json() as { id: string; email?: string; created_at?: string };
-  if (!user.id || user.email?.toLowerCase() !== ADMIN_EMAIL) return null;
-  const profiles = await supabaseRequest<Array<{ role: string }>>(`/rest/v1/admin_profiles?select=role&user_id=eq.${encodeURIComponent(user.id)}&limit=1`, { token });
-  if (!profiles[0] || profiles[0].role !== "admin") return null;
-  return { id: user.id, email: user.email ?? "", role: "admin", createdAt: user.created_at ?? "" } satisfies CmsUser;
+  if (!user.id) return null;
+  const profile = await profileFor(user.id, token).catch(() => null);
+  if (!profile || !["admin", "editor"].includes(profile.role)) return null;
+  return {
+    id: user.id,
+    email: user.email ?? profile.email ?? "",
+    role: profile.role,
+    displayName: profile.display_name ?? "",
+    createdAt: user.created_at ?? ""
+  } satisfies CmsUser;
+}
+
+export async function getCurrentAdmin() {
+  const user = await getCurrentCmsUser();
+  return user?.role === "admin" ? user : null;
 }

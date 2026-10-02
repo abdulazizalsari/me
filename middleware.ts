@@ -33,6 +33,10 @@ async function refreshAuth(request: NextRequest) {
   return next;
 }
 
+function isPublicAdminPath(pathname: string) {
+  return pathname === "/admin/login" || pathname.startsWith("/admin/forgot-password") || pathname.startsWith("/admin/reset-password");
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   if (pathname === "/ar" || pathname.startsWith("/ar/")) {
@@ -47,8 +51,21 @@ export async function middleware(request: NextRequest) {
   if (pathname === "/en/insights" || pathname.startsWith("/en/insights/")) {
     const url=request.nextUrl.clone(); url.pathname=pathname.replace(/^\/en\/insights/,"/en/ruaa"); url.search=search; return NextResponse.redirect(url,308);
   }
+
+  if (pathname.startsWith("/admin") && !isPublicAdminPath(pathname)) {
+    const hasAccess = Boolean(request.cookies.get(SUPABASE_ACCESS_COOKIE)?.value);
+    const hasRefresh = Boolean(request.cookies.get(SUPABASE_REFRESH_COOKIE)?.value);
+    if (!hasAccess && !hasRefresh) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/login";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    return refreshAuth(request);
+  }
+
   if (pathname.startsWith("/dashboard") || pathname.startsWith("/api/admin")) return refreshAuth(request);
   return NextResponse.next();
 }
 
-export const config = { matcher: ["/ar/:path*","/privacy","/en/privacy","/insights/:path*","/en/insights/:path*","/dashboard/:path*","/api/admin/:path*"] };
+export const config = { matcher: ["/ar/:path*","/privacy","/en/privacy","/insights/:path*","/en/insights/:path*","/admin/:path*","/dashboard/:path*","/api/admin/:path*"] };

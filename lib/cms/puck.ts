@@ -1,0 +1,71 @@
+import type { CmsPuckPage } from "./types";
+import { supabaseRequest } from "@/lib/supabase-rest";
+
+type Row = Record<string, unknown>;
+
+function parseObject(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
+    } catch {}
+  }
+  return {};
+}
+
+function rowToPage(row: Row): CmsPuckPage {
+  return {
+    id: String(row.id),
+    slug: String(row.slug ?? ""),
+    titleAr: String(row.title_ar ?? ""),
+    titleEn: String(row.title_en ?? ""),
+    status: String(row.status ?? "draft") as CmsPuckPage["status"],
+    data: parseObject(row.data_json),
+    localeData: parseObject(row.locale_data),
+    seo: parseObject(row.seo_json),
+    createdAt: String(row.created_at ?? ""),
+    updatedAt: String(row.updated_at ?? "")
+  };
+}
+
+export async function listPuckPages() {
+  const rows = await supabaseRequest<Row[]>("/rest/v1/puck_pages?select=*&order=updated_at.desc");
+  return rows.map(rowToPage);
+}
+
+export async function getPuckPage(idOrSlug: string) {
+  const byId = /^[0-9a-f-]{36}$/i.test(idOrSlug);
+  const field = byId ? "id" : "slug";
+  const rows = await supabaseRequest<Row[]>(`/rest/v1/puck_pages?select=*&${field}=eq.${encodeURIComponent(idOrSlug)}&limit=1`);
+  return rows[0] ? rowToPage(rows[0]) : null;
+}
+
+export async function createPuckPage(input: { slug: string; titleAr: string; titleEn?: string; userId: string }) {
+  const row = {
+    slug: input.slug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, ""),
+    title_ar: input.titleAr.trim(),
+    title_en: input.titleEn?.trim() ?? "",
+    status: "draft",
+    data_json: { content: [], root: {} },
+    locale_data: {},
+    seo_json: {},
+    created_by: input.userId,
+    updated_by: input.userId
+  };
+  const rows = await supabaseRequest<Row[]>("/rest/v1/puck_pages", { method: "POST", body: row, headers: { Prefer: "return=representation" } });
+  return rowToPage(rows[0]);
+}
+
+export async function savePuckPage(id: string, input: { data: Record<string, unknown>; userId: string; status?: CmsPuckPage["status"]; titleAr?: string; titleEn?: string }) {
+  const patch: Record<string, unknown> = {
+    data_json: input.data,
+    updated_by: input.userId,
+    updated_at: new Date().toISOString()
+  };
+  if (input.status) patch.status = input.status;
+  if (input.titleAr !== undefined) patch.title_ar = input.titleAr;
+  if (input.titleEn !== undefined) patch.title_en = input.titleEn;
+  const rows = await supabaseRequest<Row[]>(`/rest/v1/puck_pages?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: patch, headers: { Prefer: "return=representation" } });
+  return rows[0] ? rowToPage(rows[0]) : null;
+}
