@@ -1,6 +1,7 @@
 "use client";
 
-import { LockKeyhole, LogIn } from "lucide-react";
+import Link from "next/link";
+import { KeyRound, LockKeyhole, LogIn } from "lucide-react";
 import { useState } from "react";
 
 export function LoginForm() {
@@ -46,6 +47,12 @@ export function LoginForm() {
             كلمة المرور
             <input name="password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required />
           </label>
+          <div className="cms-login-recovery">
+            <Link href="/dashboard/forgot-password">
+              <KeyRound size={16} />
+              <span>نسيت كلمة المرور؟</span>
+            </Link>
+          </div>
           {message && <p className="cms-form-error">{message}</p>}
           <button className="btn btn-primary" type="submit" disabled={busy}>
             <LogIn size={18} />
