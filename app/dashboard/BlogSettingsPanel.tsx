@@ -113,6 +113,22 @@ export function BlogSettingsPanel({ initialItem, media }: { initialItem?: CmsCon
       </div>
 
       <div className="cms-section-settings">
+        <div className="panel-heading"><div><h3>SEO صفحة رؤى</h3><p>بيانات صفحة المدونة الرئيسية بالعربية والإنجليزية.</p></div></div>
+        <div className="cms-form-row">
+          <label>SEO Title عربي<input value={settings.seoTitleAr} onChange={(event) => patch("seoTitleAr", event.target.value)} maxLength={70} /></label>
+          <label dir="ltr">SEO Title English<input dir="ltr" value={settings.seoTitleEn} onChange={(event) => patch("seoTitleEn", event.target.value)} maxLength={70} /></label>
+        </div>
+        <div className="cms-form-row">
+          <label>Meta Description عربي<textarea rows={2} value={settings.metaDescriptionAr} onChange={(event) => patch("metaDescriptionAr", event.target.value)} maxLength={160} /></label>
+          <label dir="ltr">Meta Description English<textarea dir="ltr" rows={2} value={settings.metaDescriptionEn} onChange={(event) => patch("metaDescriptionEn", event.target.value)} maxLength={160} /></label>
+        </div>
+        <div className="cms-form-row">
+          <label>Open Graph Image<input dir="ltr" value={settings.ogImage} onChange={(event) => patch("ogImage", event.target.value)} placeholder="/api/media/..." /></label>
+          <label className="cms-check"><input type="checkbox" checked={settings.noindex} onChange={(event) => patch("noindex", event.target.checked)} /> منع فهرسة صفحة رؤى</label>
+        </div>
+      </div>
+
+      <div className="cms-section-settings">
         <div className="panel-heading"><div><h3>عرض المقالات</h3><p>إظهار أو إخفاء العناصر مع الحفاظ على تصميم الموقع الحالي.</p></div></div>
         <div className="cms-form-row">
           <label>عدد المقالات في الصفحة<input type="number" min="1" max="30" value={settings.articlesPerPage} onChange={(event) => patch("articlesPerPage", Number(event.target.value))} /></label>
