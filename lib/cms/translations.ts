@@ -106,5 +106,5 @@ export async function deleteLanguage(code: string) {
 
 export async function translationMap(language: string) {
   const entries = await listTranslationEntries();
-  return Object.fromEntries(entries.map((entry) => [entry.key, language === "ar" ? entry.ar : (entry.values[language] || entry.ar)]));
+  return Object.fromEntries(entries.map((entry) => [entry.key, language === "ar" ? entry.ar : (entry.values[language] || "")]));
 }
