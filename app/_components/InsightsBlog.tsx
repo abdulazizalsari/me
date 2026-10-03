@@ -410,6 +410,14 @@ function ArticleContent({ content }: { content: string }) {
   return (
     <>
       {blocks.map((block, index) => {
+        const imageMatch = block.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+        if (imageMatch) {
+          return (
+            <figure className="article-inline-image" key={index}>
+              <Image src={imageMatch[2]} alt={imageMatch[1] || "صورة داخل المقال"} width={1200} height={675} sizes="(max-width: 1024px) 100vw, 760px" />
+            </figure>
+          );
+        }
         if (block.startsWith("### ")) {
           const text = block.replace(/^###\s+/, "");
           return <h3 id={headingId(text)} key={index}>{text}</h3>;
