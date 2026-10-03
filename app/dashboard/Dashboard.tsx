@@ -338,7 +338,7 @@ export function Dashboard({
     ? filteredItems.slice((Math.min(articleAdminPage, articleAdminPages) - 1) * articleAdminPageSize, Math.min(articleAdminPage, articleAdminPages) * articleAdminPageSize)
     : filteredItems;
   const articleFilterCategories = useMemo(
-    () => Array.from(new Set(items.filter((item) => item.type === "article").map((item) => item.category).filter(Boolean))).sort((a, b) => a.localeCompare(b, "ar")),
+    () => Array.from(new Set(items.filter((item) => item.type === "article").map((item) => item.category).filter((value): value is string => typeof value === "string" && Boolean(value)))).sort((a, b) => a.localeCompare(b, "ar")),
     [items]
   );
 
