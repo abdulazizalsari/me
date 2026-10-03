@@ -11,15 +11,16 @@ import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 const navIcons = { "/": Home, "/about": User, "/training": Target, "/services": Briefcase, "/ruaa": Lightbulb, "/contact": Mail };
 
-function localizedSwitchPath(pathname: string, locale: Locale) {
-  if (locale === "ar") return pathname === "/" ? "/en" : `/en${pathname}`;
-  const clean = pathname.replace(/^\/en/, "");
-  return clean || "/";
+function languagePath(pathname: string, target: "ar" | "en" | "tr") {
+  const clean = pathname.replace(/^\/(en|tr)(?=\/|$)/, "") || "/";
+  if (target === "ar") return clean;
+  if (target === "en") return clean === "/" ? "/en" : `/en${clean}`;
+  return clean === "/" ? "/tr" : `/tr${clean}`;
 }
 
 export function Header({ locale, logoUrl = "/images/brand/abdulaziz-logo-mark.png", logoAlt = "" }: { locale: Locale; logoUrl?: string; logoAlt?: string }) {
   const [open,setOpen]=useState(false);const pathname=usePathname();const c=copy[locale];const ar=locale==="ar";const primaryNav=nav;
-  const switchPath=useMemo(()=>localizedSwitchPath(pathname,locale),[pathname,locale]);
+  const languagePaths=useMemo(()=>({ar:languagePath(pathname,"ar"),en:languagePath(pathname,"en"),tr:languagePath(pathname,"tr")}),[pathname]);
   function isActive(href:string){const localizedHref=withLocale(locale,href);if(localizedHref==="/"||localizedHref==="/en")return pathname===localizedHref;return pathname===localizedHref||pathname.startsWith(`${localizedHref}/`);}
   useEffect(()=>{function onKeyDown(event:KeyboardEvent){if(event.key==="Escape")setOpen(false);}document.addEventListener("keydown",onKeyDown);document.body.style.overflow=open?"hidden":"";return()=>{document.removeEventListener("keydown",onKeyDown);document.body.style.overflow="";};},[open]);
 
@@ -28,8 +29,8 @@ export function Header({ locale, logoUrl = "/images/brand/abdulaziz-logo-mark.pn
     <div className="container nav-shell">
       <a className="brand" href={withLocale(locale,"/")} aria-label={ar?person.arabicName:person.name}><Image src={logoUrl} alt={logoAlt} width={898} height={685} priority className="brand-logo"/><span className="brand-text desktop-brand-text"><span>{ar?person.arabicName:person.name}</span><small>{c.tagline}</small></span></a>
       <nav className="nav" aria-label={ar?"القائمة الرئيسية":"Primary navigation"}>{primaryNav.map(item=>{const Icon=navIcons[item.href as keyof typeof navIcons]??Target;return <a key={item.href} href={withLocale(locale,item.href)} className={isActive(item.href)?"active":undefined} aria-current={isActive(item.href)?"page":undefined}><Icon size={15} aria-hidden/><span>{item.label[locale]}</span></a>;})}</nav>
-      <div className="header-actions"><ThemeToggle/><div className="language-wrap header-language-buttons"><Link className="lang" href={switchPath} aria-label="Change Arabic English language"><span>{ar?"EN":"AR"}</span></Link><Link className="lang" href="/tr" aria-label="Türkçe"><span>TR</span></Link></div><a className="btn btn-primary consultation-btn" href={withLocale(locale,"/consultation")}>{c.book}</a><button className="menu-toggle" type="button" aria-label={ar?"فتح القائمة":"Toggle menu"} aria-expanded={open} onClick={()=>setOpen(v=>!v)}>{open?<X size={22}/>:<Menu size={22}/>}</button></div>
+      <div className="header-actions"><ThemeToggle/><div className="language-wrap header-language-buttons" aria-label={ar?"اللغات":"Languages"}><Link className={`lang ${locale==="ar"?"active":""}`} href={languagePaths.ar} aria-current={locale==="ar"?"page":undefined}><span>AR</span></Link><Link className={`lang ${locale==="en"?"active":""}`} href={languagePaths.en} aria-current={locale==="en"?"page":undefined}><span>EN</span></Link><Link className="lang" href={languagePaths.tr}><span>TR</span></Link></div><a className="btn btn-primary consultation-btn" href={withLocale(locale,"/consultation")}>{c.book}</a><button className="menu-toggle" type="button" aria-label={ar?"فتح القائمة":"Toggle menu"} aria-expanded={open} onClick={()=>setOpen(v=>!v)}>{open?<X size={22}/>:<Menu size={22}/>}</button></div>
     </div>
-    <div className="container mobile-panel" data-open={open} aria-hidden={!open}>{primaryNav.map(item=><a key={item.href} href={withLocale(locale,item.href)} className={isActive(item.href)?"active":undefined} onClick={()=>setOpen(false)}>{item.label[locale]}</a>)}<div className="mobile-language-row"><Link href={switchPath}>{ar?"English":"العربية"}</Link><Link href="/tr">Türkçe</Link></div><a className="btn btn-primary" href={withLocale(locale,"/consultation")}>{c.book}</a></div>
+    <div className="container mobile-panel" data-open={open} aria-hidden={!open}>{primaryNav.map(item=><a key={item.href} href={withLocale(locale,item.href)} className={isActive(item.href)?"active":undefined} onClick={()=>setOpen(false)}>{item.label[locale]}</a>)}<div className="mobile-language-row"><Link className={locale==="ar"?"active":undefined} href={languagePaths.ar}>AR</Link><Link className={locale==="en"?"active":undefined} href={languagePaths.en}>EN</Link><Link href={languagePaths.tr}>TR</Link></div><a className="btn btn-primary" href={withLocale(locale,"/consultation")}>{c.book}</a></div>
   </header>;
 }
