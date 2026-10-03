@@ -16,7 +16,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     translationMap("tr")
   ]);
   const articles=items.filter(item=>item.type==="article"&&!item.meta?.noindex);
-  const articleCategories=Array.from(new Set(articles.map(article=>article.category).filter(Boolean)));
+  const articleCategories=Array.from(new Set(articles.map(article=>article.category).filter((value): value is string => typeof value==="string"&&Boolean(value))));
   const articleTagsList=Array.from(new Set(articles.flatMap(article=>articleTags(article))));
   const legacyCourses=["digital-marketing-course","graphic-design-course","wordpress-course","private-training"];
   const courseSlugs=Array.from(new Set([...legacyCourses,...courses.map(c=>c.slug)]));
