@@ -3,6 +3,7 @@ import { getCurrentCmsUser } from "@/lib/cms/auth";
 import { saveContentItem } from "@/lib/cms/database";
 import { syncContentEnglishTranslations } from "@/lib/cms/translations";
 import type { CmsContentSeed, CmsContentType, CmsStatus } from "@/lib/cms/types";
+import { sanitizeCmsHtml } from "@/lib/cms/sanitize";
 
 const cmsStatuses: CmsStatus[] = ["draft", "published", "scheduled", "archived"];
 const editorTypes: CmsContentType[] = ["article", "course", "service"];
@@ -22,10 +23,14 @@ export async function POST(request: Request) {
     catch { return NextResponse.json({ ok: false, message: "صيغة JSON في البيانات الإضافية غير صحيحة." }, { status: 400 }); }
   } else if (body.meta && typeof body.meta === "object") meta = body.meta;
 
+  if (type === "article") {
+    meta = { ...meta, authorId: String(meta.authorId || user.id), authorName: String(meta.authorName || user.displayName || user.email) };
+  }
+
   try {
     const item = await saveContentItem({
       id: body.id, type, slug: body.slug ?? "", titleAr: body.titleAr ?? "", titleEn: body.titleEn ?? "",
-      summaryAr: body.summaryAr ?? "", summaryEn: body.summaryEn ?? "", bodyAr: body.bodyAr ?? "", bodyEn: body.bodyEn ?? "",
+      summaryAr: body.summaryAr ?? "", summaryEn: body.summaryEn ?? "", bodyAr: sanitizeCmsHtml(body.bodyAr ?? ""), bodyEn: sanitizeCmsHtml(body.bodyEn ?? ""),
       category: body.category ?? "", status: cmsStatuses.includes(body.status as CmsStatus) ? body.status as CmsStatus : "draft",
       sortOrder: Number(body.sortOrder ?? 0), meta
     });
