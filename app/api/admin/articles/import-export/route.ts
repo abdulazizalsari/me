@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { getCurrentAdmin } from "@/lib/cms/auth";
 import { listContentItems, saveContentItem } from "@/lib/cms/database";
 import type { CmsContentItem, CmsContentSeed, CmsStatus } from "@/lib/cms/types";
+import { importWordPressRemoteImage } from "@/lib/cms/wordpress-media-import";
 
 type DuplicateStrategy = "skip" | "update" | "copy";
 type ImportAction = "preview" | "import";
@@ -78,7 +79,8 @@ function normalizeStatus(value: string): CmsStatus {
 }
 
 function safeSlug(title: string, fallback: string) {
-  const source = fallback || title || crypto.randomUUID();
+  let source = fallback || title || crypto.randomUUID();
+  try { source = decodeURIComponent(source); } catch { /* keep original value */ }
   return source.trim().toLowerCase().replace(/[^a-z0-9\u0600-\u06ff-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || crypto.randomUUID();
 }
 
@@ -204,7 +206,8 @@ function parseWordPressWxr(xml: string) {
       og_title: firstPostMeta(meta, ["_yoast_wpseo_opengraph-title", "rank_math_facebook_title"]),
       og_description: firstPostMeta(meta, ["_yoast_wpseo_opengraph-description", "rank_math_facebook_description"]),
       og_image: firstPostMeta(meta, ["_yoast_wpseo_opengraph-image", "rank_math_facebook_image"]),
-      featured_image_url: featuredImageUrl
+      featured_image_url: featuredImageUrl,
+      original_url: xmlTag(item, "link")
     });
   }
 
@@ -221,6 +224,7 @@ function rowToArticle(row: Record<string, unknown>, index: number): CmsContentSe
   const tags = splitList(cell(row, aliases.tags));
   const externalId = cell(row, aliases.externalId);
   const featuredImageUrl = cell(row, aliases.featuredImageUrl);
+  const inlineImageUrls = Array.from(content.matchAll(/<img\b[^>]*\bsrc=(["'])(.*?)\1/gi), (match) => match[2]).filter(Boolean);
 
   return {
     type: "article",
@@ -242,6 +246,8 @@ function rowToArticle(row: Record<string, unknown>, index: number): CmsContentSe
       tags,
       featuredImageUrl,
       image: featuredImageUrl,
+      originalUrl: String(row.original_url ?? ""),
+      inlineImageUrls,
       seoTitle: cell(row, aliases.seoTitle),
       metaDescription: cell(row, aliases.metaDescription),
       canonicalUrl: cell(row, aliases.canonical),
@@ -260,6 +266,46 @@ function sanitizeHtml(value: string) {
     .replace(/\son\w+="[^"]*"/gi, "")
     .replace(/\son\w+='[^']*'/gi, "")
     .replace(/javascript:/gi, "");
+}
+
+function decodeHtmlEntities(value: string) {
+  return value
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#039;/gi, "'")
+    .replace(/&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(parseInt(code, 16)));
+}
+
+function wordpressHtmlToArticleBody(value: string) {
+  let html = sanitizeHtml(value);
+  html = html.replace(/<img\b([^>]*)>/gi, (_full, attrs: string) => {
+    const src = attrs.match(/\bsrc=(["'])(.*?)\1/i)?.[2] ?? "";
+    const alt = attrs.match(/\balt=(["'])(.*?)\1/i)?.[2] ?? "";
+    return src ? `\n\n![${decodeHtmlEntities(alt)}](${src})\n\n` : "";
+  });
+  html = html
+    .replace(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi, "\n\n## $1\n\n")
+    .replace(/<h2\b[^>]*>([\s\S]*?)<\/h2>/gi, "\n\n## $1\n\n")
+    .replace(/<h3\b[^>]*>([\s\S]*?)<\/h3>/gi, "\n\n### $1\n\n")
+    .replace(/<blockquote\b[^>]*>([\s\S]*?)<\/blockquote>/gi, (_m, text: string) => `\n\n> ${text.replace(/<[^>]+>/g, " ").trim()}\n\n`)
+    .replace(/<li\b[^>]*>([\s\S]*?)<\/li>/gi, (_m, text: string) => `\n- ${text.replace(/<[^>]+>/g, " ").trim()}`)
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<\/(p|div|section|article|ul|ol)>/gi, "\n\n")
+    .replace(/<(p|div|section|article|ul|ol)\b[^>]*>/gi, "")
+    .replace(/<[^>]+>/g, "");
+  return decodeHtmlEntities(html)
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function replaceImageUrl(content: string, sourceUrl: string, localUrl: string) {
+  return content.split(sourceUrl).join(localUrl);
 }
 
 function findDuplicate(article: CmsContentSeed, existing: CmsContentItem[]) {
@@ -344,6 +390,7 @@ export async function POST(request: Request) {
   const file = formData.get("file");
   const action = String(formData.get("action") ?? "preview") as ImportAction;
   const duplicateStrategy = String(formData.get("duplicateStrategy") ?? "skip") as DuplicateStrategy;
+  const importImages = String(formData.get("importImages") ?? "true") !== "false";
   if (!(file instanceof File)) return NextResponse.json({ ok: false, message: "ارفع ملف WordPress XML/WXR أو XLSX/CSV أولاً." }, { status: 400 });
   if (file.size > 25 * 1024 * 1024) return NextResponse.json({ ok: false, message: "حجم ملف الاستيراد أكبر من 25MB." }, { status: 413 });
 
@@ -396,7 +443,12 @@ export async function POST(request: Request) {
         invalid: preview.filter((row) => !row.valid).length,
         existing: preview.filter((row) => row.duplicate).length,
         new: preview.filter((row) => !row.duplicate).length,
-        warnings: preview.reduce((count, row) => count + row.warnings.length, 0)
+        warnings: preview.reduce((count, row) => count + row.warnings.length, 0),
+        images: articles.reduce((count, article) => {
+          const featured = String(article.meta?.featuredImageUrl ?? "").trim();
+          const inline = Array.isArray(article.meta?.inlineImageUrls) ? article.meta.inlineImageUrls.length : 0;
+          return count + (featured ? 1 : 0) + inline;
+        }, 0)
       },
       preview
     });
@@ -406,7 +458,20 @@ export async function POST(request: Request) {
   let updated = 0;
   let skipped = 0;
   let failed = 0;
+  let imagesImported = 0;
+  let imagesFailed = 0;
   const errors: string[] = [];
+  const imageErrors: string[] = [];
+  const imageCache = new Map<string, Awaited<ReturnType<typeof importWordPressRemoteImage>>>();
+
+  async function migrateImage(sourceUrl: string, alt: string) {
+    const cached = imageCache.get(sourceUrl);
+    if (cached) return cached;
+    const asset = await importWordPressRemoteImage(sourceUrl, alt);
+    imageCache.set(sourceUrl, asset);
+    imagesImported += 1;
+    return asset;
+  }
 
   for (const [index, article] of articles.entries()) {
     const currentArticles = (await listContentItems()).filter((item) => item.type === "article");
@@ -422,9 +487,51 @@ export async function POST(request: Request) {
     }
     try {
       const copySlug = duplicate && duplicateStrategy === "copy" ? `${article.slug}-${Date.now()}` : article.slug;
+      const nextMeta = { ...(article.meta ?? {}) };
+      let bodyAr = article.bodyAr ?? "";
+      let bodyEn = article.bodyEn ?? "";
+
+      if (sourceFormat === "wordpress-wxr" && importImages) {
+        const featuredSource = String(nextMeta.featuredImageUrl ?? "").trim();
+        if (featuredSource) {
+          try {
+            const asset = await migrateImage(featuredSource, article.titleAr || article.titleEn || "صورة المقال");
+            nextMeta.wordpressFeaturedImageUrl = featuredSource;
+            nextMeta.featuredImageUrl = asset.url;
+            nextMeta.image = asset.url;
+            nextMeta.imageAssetId = asset.id;
+            nextMeta.imageAltAr = article.titleAr || asset.filename;
+            nextMeta.imageAltEn = article.titleEn || article.titleAr || asset.filename;
+          } catch (error) {
+            imagesFailed += 1;
+            imageErrors.push(`${article.titleAr || article.titleEn}: الصورة البارزة - ${error instanceof Error ? error.message : "تعذر الاستيراد"}`);
+          }
+        }
+
+        const inlineSources = Array.isArray(nextMeta.inlineImageUrls) ? nextMeta.inlineImageUrls.map(String).filter(Boolean) : [];
+        for (const sourceUrl of inlineSources) {
+          try {
+            const asset = await migrateImage(sourceUrl, article.titleAr || article.titleEn || "صورة داخل المقال");
+            bodyAr = replaceImageUrl(bodyAr, sourceUrl, asset.url);
+            bodyEn = replaceImageUrl(bodyEn, sourceUrl, asset.url);
+          } catch (error) {
+            imagesFailed += 1;
+            imageErrors.push(`${article.titleAr || article.titleEn}: ${sourceUrl} - ${error instanceof Error ? error.message : "تعذر الاستيراد"}`);
+          }
+        }
+      }
+
+      if (sourceFormat === "wordpress-wxr") {
+        bodyAr = wordpressHtmlToArticleBody(bodyAr);
+        bodyEn = wordpressHtmlToArticleBody(bodyEn);
+      }
+
       const saved = await saveContentItem({
         ...(duplicate && duplicateStrategy === "update" ? { id: duplicate.id, createdAt: duplicate.createdAt } : {}),
         ...article,
+        meta: nextMeta,
+        bodyAr,
+        bodyEn,
         slug: copySlug,
         titleAr: article.titleAr || duplicate?.titleAr || article.titleEn,
         summaryAr: article.summaryAr || duplicate?.summaryAr || article.summaryEn
@@ -437,5 +544,5 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, sourceFormat, result: { imported, updated, skipped, failed, errors } });
+  return NextResponse.json({ ok: true, sourceFormat, result: { imported, updated, skipped, failed, errors, imagesImported, imagesFailed, imageErrors } });
 }
