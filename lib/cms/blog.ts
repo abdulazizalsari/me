@@ -28,6 +28,7 @@ export type BlogSettings = {
   showCategories: boolean;
   showSearch: boolean;
   defaultImageAssetId: string;
+  defaultImageUrl: string;
   ctaTitleAr: string;
   ctaTitleEn: string;
   ctaUrl: string;
@@ -54,6 +55,7 @@ export const defaultBlogSettings: BlogSettings = {
   showCategories: true,
   showSearch: true,
   defaultImageAssetId: "",
+  defaultImageUrl: "",
   ctaTitleAr: "هل تريد تحويل الفكرة إلى خطة عملية؟",
   ctaTitleEn: "Want to turn the idea into a practical plan?",
   ctaUrl: "/consultation",
@@ -115,6 +117,7 @@ export function blogSettingsFromItems(items: CmsContentItem[]): BlogSettings {
     showCategories: bool(meta.showCategories, true),
     showSearch: bool(meta.showSearch, true),
     defaultImageAssetId: text(meta.defaultImageAssetId),
+    defaultImageUrl: text(meta.defaultImageUrl),
     ctaTitleAr: text(meta.ctaTitleAr, defaultBlogSettings.ctaTitleAr),
     ctaTitleEn: text(meta.ctaTitleEn, defaultBlogSettings.ctaTitleEn),
     ctaUrl: text(meta.ctaUrl, defaultBlogSettings.ctaUrl),
@@ -144,5 +147,5 @@ export function articleTags(item: CmsContentItem) {
 
 export function blogDefaultImage(settings: BlogSettings, media: CmsMediaAsset[]) {
   if (!settings.defaultImageAssetId) return "";
-  return media.find((asset) => asset.id === settings.defaultImageAssetId)?.url ?? "";
+  return media.find((asset) => asset.id === settings.defaultImageAssetId)?.url ?? settings.defaultImageUrl ?? "";
 }
