@@ -1029,6 +1029,7 @@ export function Dashboard({
                         label="المحتوى العربي"
                         value={selected.bodyAr ?? ""}
                         dir="rtl"
+                        allowSource={user.role === "admin"}
                         onChange={(bodyAr) => setSelected((current) => ({ ...current, bodyAr }))}
                       />
                     </div>
@@ -1040,6 +1041,7 @@ export function Dashboard({
                         label="English body"
                         value={selected.bodyEn ?? ""}
                         dir="ltr"
+                        allowSource={user.role === "admin"}
                         onChange={(bodyEn) => setSelected((current) => ({ ...current, bodyEn }))}
                       />
                       <label>English translation status<select value={getEnglishStatus()} onChange={(event) => updateMetaField("englishStatus", event.target.value)}>
