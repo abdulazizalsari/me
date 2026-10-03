@@ -18,7 +18,8 @@ export type CmsContentType =
   | "whatsapp"
   | "integration"
   | "seo"
-  | "privacy";
+  | "privacy"
+  | "blog-settings";
 export type CmsStatus = "draft" | "published" | "scheduled" | "archived";
 export type CmsRole = "admin" | "editor";
 
