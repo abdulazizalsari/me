@@ -27,11 +27,13 @@ import type { CmsActivityLog, CmsContentItem, CmsContentType, CmsFormSubmission,
 import { RichTextEditor } from "./RichTextEditor";
 import { IntegrationSettings } from "./IntegrationSettings";
 import { WordPressImportPanel } from "./WordPressImportPanel";
+import { BlogSettingsPanel } from "./BlogSettingsPanel";
 
 const tabs: { type: "overview" | CmsContentType | "media" | "redirects" | "trash" | "settings" | "wordpress-import"; label: string; icon: typeof LayoutDashboard }[] = [
   { type: "overview", label: "نظرة عامة", icon: LayoutDashboard },
   { type: "article", label: "رؤى", icon: FileText },
   { type: "wordpress-import", label: "استيراد WordPress", icon: Upload },
+  { type: "blog-settings", label: "إعدادات المدونة", icon: Settings },
   { type: "service", label: "الخدمات", icon: BriefcaseBusiness },
   { type: "course", label: "الدورات", icon: BarChart3 },
   { type: "project", label: "المشاريع", icon: LayoutDashboard },
@@ -59,7 +61,7 @@ const tabs: { type: "overview" | CmsContentType | "media" | "redirects" | "trash
 
 const navGroups: { label: string; items: typeof tabs }[] = [
   { label: "الرئيسية", items: tabs.filter((tab) => tab.type === "overview") },
-  { label: "المحتوى", items: tabs.filter((tab) => ["article", "wordpress-import", "service", "course", "cv", "experience", "education", "qualification", "skill"].includes(tab.type)) },
+  { label: "المحتوى", items: tabs.filter((tab) => ["article", "wordpress-import", "blog-settings", "service", "course", "cv", "experience", "education", "qualification", "skill"].includes(tab.type)) },
   { label: "الصفحات", items: tabs.filter((tab) => ["homepage", "contact", "consultation", "privacy", "cta"].includes(tab.type)) },
   { label: "الوسائط", items: tabs.filter((tab) => tab.type === "media") },
   { label: "الرسائل", items: tabs.filter((tab) => tab.type === "form") },
@@ -70,6 +72,7 @@ const dashboardPaths: Partial<Record<DashboardTab, string>> = {
   overview: "/dashboard",
   article: "/dashboard/articles",
   "wordpress-import": "/dashboard/import-wordpress",
+  "blog-settings": "/dashboard/blog-settings",
   service: "/dashboard/services",
   course: "/dashboard/courses",
   project: "/dashboard/projects",
@@ -914,7 +917,7 @@ export function Dashboard({
               </nav>
               <p className="dashboard-kicker">إدارة الموقع</p>
               <h1>{active === "overview" ? "لوحة إدارة المحتوى" : tabs.find((tab) => tab.type === active)?.label}</h1>
-              <p>{active === "overview" ? "نظرة عامة على حالة المحتوى والنشاط دون تحرير مباشر." : active === "wordpress-import" ? "استيراد مقالات WordPress من ملف WXR/XML مع الصور والبيانات المرتبطة بها." : "هذا القسم مستقل ويعرض حقوله ومحتواه فقط مع حفظ دائم وآمن في Supabase."}</p>
+              <p>{active === "overview" ? "نظرة عامة على حالة المحتوى والنشاط دون تحرير مباشر." : active === "wordpress-import" ? "استيراد مقالات WordPress من ملف WXR/XML مع الصور والبيانات المرتبطة بها." : active === "blog-settings" ? "إدارة مركزية لصفحة رؤى والتصنيفات والوسوم وعناصر صفحة المقال." : "هذا القسم مستقل ويعرض حقوله ومحتواه فقط مع حفظ دائم وآمن في Supabase."}</p>
               {lastAutosave && <p className="cms-form-note">آخر Autosave محلي: {lastAutosave}</p>}
             </div>
           </div>
@@ -932,7 +935,7 @@ export function Dashboard({
             </section>
           )}
 
-{active !== "wordpress-import" && (
+{active !== "wordpress-import" && active !== "blog-settings" && (
           <div className="dashboard-stats cms-stats">
             <article className="dashboard-stat"><div><span>منشور</span><strong>{counts.published}</strong></div></article>
             <article className="dashboard-stat"><div><span>مسودات</span><strong>{counts.draft}</strong></div></article>
@@ -944,6 +947,8 @@ export function Dashboard({
           )}
 
           {active === "wordpress-import" && <WordPressImportPanel />}
+
+          {active === "blog-settings" && <BlogSettingsPanel initialItem={items.find((item) => item.type === "blog-settings") ?? null} media={media} />}
 
           {active === "overview" && (
             <section className="dashboard-panel cms-panel">
