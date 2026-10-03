@@ -70,6 +70,15 @@ function fallbackContent(): CmsContentItem[] {
   return defaultContent.map((item, index) => ({ ...item, id: `fallback-${index+1}`, createdAt: stamp, updatedAt: stamp }));
 }
 
+export function isContentPublic(item: CmsContentItem, at = new Date()) {
+  if (item.status === "published") return true;
+  if (item.status !== "scheduled") return false;
+  const publishAt = typeof item.meta?.publishAt === "string" ? item.meta.publishAt : "";
+  if (!publishAt) return false;
+  const timestamp = new Date(publishAt).getTime();
+  return Number.isFinite(timestamp) && timestamp <= at.getTime();
+}
+
 async function logActivity(event: string) {
   try {
     await supabaseRequest("/rest/v1/activity_logs", { method: "POST", body: { id: randomUUID(), event, created_at: now() }, headers: { Prefer: "return=minimal" } });
@@ -78,12 +87,13 @@ async function logActivity(event: string) {
 
 export async function listContentItems({ publishedOnly = false }: { publishedOnly?: boolean } = {}) {
   try {
-    const filter = publishedOnly ? "&status=eq.published" : "";
+    const filter = publishedOnly ? "&status=in.(published,scheduled)" : "";
     const rows = await supabaseRequest<Row[]>(`/rest/v1/content_items?select=*&deleted_at=is.null${filter}&order=type.asc,sort_order.asc,updated_at.desc`);
-    return rows.map(rowToContent);
+    const items = rows.map(rowToContent);
+    return publishedOnly ? items.filter((item) => isContentPublic(item)) : items;
   } catch {
     const rows = fallbackContent();
-    return publishedOnly ? rows.filter((i)=>i.status==="published") : rows;
+    return publishedOnly ? rows.filter((item)=>isContentPublic(item)) : rows;
   }
 }
 export async function listDeletedContentItems() {
@@ -92,9 +102,10 @@ export async function listDeletedContentItems() {
 }
 export async function listContentByType(type: CmsContentType, { publishedOnly = false }: { publishedOnly?: boolean } = {}) {
   try {
-    const filter = publishedOnly ? "&status=eq.published" : "";
+    const filter = publishedOnly ? "&status=in.(published,scheduled)" : "";
     const rows = await supabaseRequest<Row[]>(`/rest/v1/content_items?select=*&type=eq.${enc(type)}&deleted_at=is.null${filter}&order=sort_order.asc,updated_at.desc`);
-    return rows.map(rowToContent);
+    const items = rows.map(rowToContent);
+    return publishedOnly ? items.filter((item) => isContentPublic(item)) : items;
   } catch {
     return (await listContentItems({ publishedOnly })).filter((i)=>i.type===type);
   }
