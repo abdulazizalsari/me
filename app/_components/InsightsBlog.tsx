@@ -228,9 +228,9 @@ function StandardArticleCard({ article, locale, index = 0, settings }: { article
         <span className="insight-card-category">{article.category[locale]}</span>
       </a>
       <div className="insight-card-body">
-        <CardMeta article={article} locale={locale} />
+        <CardMeta article={article} locale={locale} settings={settings} />
         <h3 className="h3"><a href={withLocale(locale, `/ruaa/${article.slug}`)}>{article.title[locale]}</a></h3>
-        {settings?.showExcerpt !== false && <p className="muted">{article.excerpt[locale]}</p>}
+        {settings?.showExcerpt !== false && {settings?.showExcerpt !== false && <p className="muted">{article.excerpt[locale]}</p>}}
         <a className="text-link" href={withLocale(locale, `/ruaa/${article.slug}`)}><Arrow size={17} aria-hidden="true" />{locale === "ar" ? "متابعة القراءة" : "Continue reading"}</a>
       </div>
     </article>
@@ -259,8 +259,8 @@ function HorizontalArticleCard({ article, locale, index = 0, settings }: { artic
       <div className="horizontal-article-copy">
         <span className="editorial-label">{article.category[locale]}</span>
         <h3 className="h3"><a href={withLocale(locale, `/ruaa/${article.slug}`)}>{article.title[locale]}</a></h3>
-        <CardMeta article={article} locale={locale} />
-        <p className="muted">{article.excerpt[locale]}</p>
+        <CardMeta article={article} locale={locale} settings={settings} />
+        {settings?.showExcerpt !== false && <p className="muted">{article.excerpt[locale]}</p>}
       </div>
     </article>
   );
@@ -278,11 +278,12 @@ function CategoryNav({ locale, categories, activeCategory, query }: { locale: Lo
   );
 }
 
-function SearchBox({ locale, query, category }: { locale: Locale; query?: string; category?: string }) {
+function SearchBox({ locale, query, category, tag }: { locale: Locale; query?: string; category?: string; tag?: string }) {
   const ar = locale === "ar";
   return (
     <form className="insights-search" action={withLocale(locale, "/ruaa")} role="search">
       {category && <input type="hidden" name="category" value={category} />}
+      {tag && <input type="hidden" name="tag" value={tag} />}
       <label>
         <Search size={18} aria-hidden="true" />
         <span className="sr-only">{ar ? "البحث في رؤى" : "Search insights"}</span>
@@ -293,16 +294,16 @@ function SearchBox({ locale, query, category }: { locale: Locale; query?: string
   );
 }
 
-function Pagination({ locale, currentPage, totalPages, category, query }: { locale: Locale; currentPage: number; totalPages: number; category?: string; query?: string }) {
+function Pagination({ locale, currentPage, totalPages, category, query, tag }: { locale: Locale; currentPage: number; totalPages: number; category?: string; query?: string; tag?: string }) {
   if (totalPages <= 1) return null;
   const ar = locale === "ar";
   return (
     <nav className="article-pagination" aria-label={ar ? "ترقيم المقالات" : "Article pagination"}>
-      <a aria-disabled={currentPage <= 1} href={withLocale(locale, `/ruaa${queryString({ category, q: query, page: Math.max(1, currentPage - 1) })}`)}>{ar ? "السابق" : "Previous"}</a>
+      <a aria-disabled={currentPage <= 1} href={withLocale(locale, `/ruaa${queryString({ category, tag, q: query, page: Math.max(1, currentPage - 1) })}`)}>{ar ? "السابق" : "Previous"}</a>
       {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
         <a className={page === currentPage ? "active" : ""} aria-current={page === currentPage ? "page" : undefined} href={withLocale(locale, `/ruaa${queryString({ category, q: query, page })}`)} key={page}>{page}</a>
       ))}
-      <a aria-disabled={currentPage >= totalPages} href={withLocale(locale, `/ruaa${queryString({ category, q: query, page: Math.min(totalPages, currentPage + 1) })}`)}>{ar ? "التالي" : "Next"}</a>
+      <a aria-disabled={currentPage >= totalPages} href={withLocale(locale, `/ruaa${queryString({ category, tag, q: query, page: Math.min(totalPages, currentPage + 1) })}`)}>{ar ? "التالي" : "Next"}</a>
     </nav>
   );
 }
@@ -418,15 +419,15 @@ export function EditorialInsightsPage({ locale, cmsItems = [], searchParams = {}
               <div className="blog-section-heading">
                 <div>
                   <p className="eyebrow">{ar ? "أحدث المقالات" : "Latest articles"}</p>
-                  <h2 className="h2" id="latest-insights-title">{activeCategory || query ? (ar ? "نتائج التصفح" : "Browsing results") : (ar ? "أحدث المقالات" : "Latest articles")}</h2>
+                  <h2 className="h2" id="latest-insights-title">{activeCategory || activeTag || query ? (ar ? "نتائج التصفح" : "Browsing results") : (ar ? "أحدث المقالات" : "Latest articles")}</h2>
                 </div>
-                {settings.showSearch && <SearchBox locale={locale} query={query} category={activeCategory} />}
+                {settings.showSearch && <SearchBox locale={locale} query={query} category={activeCategory} tag={activeTag} />}
               </div>
               <div className="latest-articles-grid">
                 {pageArticles.map((article, index) => index % 3 === 0 ? <HorizontalArticleCard article={article} locale={locale} index={index} settings={settings} key={article.slug} /> : <StandardArticleCard article={article} locale={locale} index={index} settings={settings} key={article.slug} />)}
               </div>
               {!pageArticles.length && <div className="empty-blog-state">{ar ? "لا توجد مقالات مطابقة حالياً." : "No matching articles yet."}</div>}
-              <Pagination locale={locale} currentPage={currentPage} totalPages={totalPages} category={activeCategory} query={query} />
+              <Pagination locale={locale} currentPage={currentPage} totalPages={totalPages} category={activeCategory} tag={activeTag} query={query} />
             </main>
             <BlogSidebar locale={locale} articles={allArticles} categories={categories} settings={settings} />
           </div>
