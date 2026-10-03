@@ -11,7 +11,7 @@ import { WhatsAppLink } from "@/components/layout/WhatsAppLink";
 import { AdSlot } from "@/components/integrations/AdSlot";
 import { integrationConfigFromMeta } from "@/lib/integrations";
 import { ArticleShare } from "@/app/_components/ArticleShare";
-import { articleTags, blogSettingsFromItems, type BlogSettings } from "@/lib/cms/blog";
+import { articleTags, blogSettingsFromItems, taxonomySlug, type BlogSettings } from "@/lib/cms/blog";
 import { sanitizeCmsHtml, stripHtml } from "@/lib/cms/sanitize";
 import { siteUrl } from "@/data/site";
 
@@ -272,7 +272,7 @@ function CategoryNav({ locale, categories, activeCategory, query }: { locale: Lo
     <nav className="insights-filter-list editorial-category-nav" aria-label={ar ? "تصنيفات المقالات" : "Article categories"}>
       <a className={!activeCategory ? "insights-filter active" : "insights-filter"} href={withLocale(locale, `/ruaa${queryString({ q: query })}`)}>{ar ? "الكل" : "All"}</a>
       {categories.map((category) => (
-        <a className={activeCategory === category ? "insights-filter active" : "insights-filter"} href={withLocale(locale, `/ruaa${queryString({ category, q: query })}`)} key={category}>{category}</a>
+        <a className={activeCategory === category ? "insights-filter active" : "insights-filter"} href={withLocale(locale, `/ruaa/category/${taxonomySlug(category)}`)} key={category}>{category}</a>
       ))}
     </nav>
   );
@@ -324,7 +324,7 @@ function BlogSidebar({ locale, articles, categories, settings }: { locale: Local
       </section>
       {settings.showCategories && <section>
         <h2 className="h3">{ar ? "التصنيفات" : "Categories"}</h2>
-        {categories.map((category, index) => <a className="insights-topic" href={withLocale(locale, `/ruaa${queryString({ category })}`)} key={category}><span>{String(index + 1).padStart(2, "0")}</span>{category}</a>)}
+        {categories.map((category, index) => <a className="insights-topic" href={withLocale(locale, `/ruaa/category/${taxonomySlug(category)}`)} key={category}><span>{String(index + 1).padStart(2, "0")}</span>{category}</a>)}
       </section>}
       <section className="sidebar-cta">
         <h2 className="h3">{ar ? "حوّل الفكرة إلى خطة" : "Turn insight into a plan"}</h2>
@@ -605,7 +605,7 @@ export function EditorialArticlePage({ locale, slug, cmsItems = [] }: { locale: 
             </div>
           </div>
           {article.tags.length > 0 && <div className="article-tags" aria-label={ar ? "وسوم المقال" : "Article tags"}>
-            {article.tags.map((tag) => <a href={withLocale(locale, `/ruaa${queryString({ tag })}`)} key={tag}>#{tag}</a>)}
+            {article.tags.map((tag) => <a href={withLocale(locale, `/ruaa/tag/${taxonomySlug(tag)}`)} key={tag}>#{tag}</a>)}
           </div>}
           {article.references.length > 0 && <section className="article-references">
             <h2 className="h3">{ar ? "المراجع والمصادر" : "References & Sources"}</h2>
