@@ -3,7 +3,7 @@
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { CmsContentItem, CmsMediaAsset } from "@/lib/cms/types";
-import { blogSettingsFromItems, defaultBlogSettings, taxonomySlug, type BlogTaxonomyItem } from "@/lib/cms/blog";
+import { blogSettingsFromItems, defaultBlogSettings, taxonomySlug, type BlogSettings, type BlogTaxonomyItem } from "@/lib/cms/blog";
 
 function blankTaxonomy(): BlogTaxonomyItem {
   return { slug: "", nameAr: "", nameEn: "", descriptionAr: "", descriptionEn: "", enabled: true, sortOrder: 100 };
@@ -16,7 +16,7 @@ export function BlogSettingsPanel({ initialItem, media }: { initialItem?: CmsCon
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
-  function patch(key: keyof typeof settings, value: unknown) {
+  function patch<K extends keyof BlogSettings>(key: K, value: BlogSettings[K]) {
     setSettings((current) => ({ ...current, [key]: value }));
   }
 
