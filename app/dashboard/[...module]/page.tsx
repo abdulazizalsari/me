@@ -10,6 +10,7 @@ type DashboardTab = "overview" | CmsContentType | "media" | "redirects" | "trash
 const routeModules: Record<string, DashboardTab> = {
   articles: "article",
   "import-wordpress": "wordpress-import",
+  "blog-settings": "blog-settings",
   services: "service",
   courses: "course",
   projects: "project",
