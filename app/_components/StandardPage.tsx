@@ -12,11 +12,12 @@ import Image from "next/image";
 import { WhatsAppLink } from "@/components/layout/WhatsAppLink";
 import { cmsImage } from "@/lib/cms/media";
 import { getContentBySlug, listContentByType } from "@/lib/cms/database";
+import { hasContentTranslation } from "@/lib/cms/content-language";
 import { EditorialArticlePage, EditorialInsightsPage } from "@/app/_components/InsightsBlog";
 
 function publicItemsForLocale(items: CmsContentItem[], locale: Locale) {
   if (locale === "ar") return items;
-  return items.filter((item) => item.titleEn.trim() && item.summaryEn.trim() && item.meta?.englishStatus === "published");
+  return items.filter((item) => item.meta?.englishStatus === "published" && hasContentTranslation(item, "en"));
 }
 
 export function PageHero({ eyebrow, title, lead }: { locale: Locale; eyebrow: string; title: string; lead: string }) {
@@ -168,19 +169,20 @@ export async function CvPage({ locale }: { locale: Locale }) {
   </>;
 }
 
-function serviceRows(cmsItems: CmsContentItem[]) {
+function serviceRows(cmsItems: CmsContentItem[], allowStaticFallback = true) {
   const rows = cmsItems.filter((item) => item.type === "service");
   return rows.length ? rows.map((item) => ({
     slug: item.slug,
     icon: iconForItem(item),
     title: { ar: item.titleAr, en: item.titleEn },
     description: { ar: item.summaryAr, en: item.summaryEn }
-  })) : staticServices;
+  })) : allowStaticFallback ? staticServices : [];
 }
 
 export function ServicesPage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?: CmsContentItem[] }) {
   const ar = locale === "ar";
-  const services = serviceRows(publicItemsForLocale(cmsItems, locale));
+  const hasCmsServices = cmsItems.some((item) => item.type === "service");
+  const services = serviceRows(publicItemsForLocale(cmsItems, locale), !hasCmsServices);
   const banner = cmsImage(cmsItems.find((item) => item.type === "homepage")?.meta, "servicesBannerImageAssetId", "/images/legacy/services-banner.webp");
   return <>
     <PageHero locale={locale} eyebrow={ar ? "حلول رقمية متكاملة" : "Integrated Digital Solutions"} title={ar ? "نبني علامتك الرقمية بإتقان لا يضاهى" : "Professional Digital Services"} lead={ar ? "خدمات رقمية شاملة من التصميم والتسويق إلى التدريب ونظام المحاسبة وتسجيل العلامات التجارية." : "Comprehensive digital services from design and marketing to training, accounting systems, and trademark support."} />
@@ -211,6 +213,7 @@ export async function ServiceDetailPage({ locale, slug }: { locale: Locale; slug
   const cmsService = await getContentBySlug("service", slug);
   const fallback = staticServices.find((service) => service.slug === slug);
   if (!fallback && !cmsService) notFound();
+  if (!ar && cmsService && (cmsService.meta?.englishStatus !== "published" || !hasContentTranslation(cmsService, "en"))) notFound();
   const title = cmsService ? { ar: cmsService.titleAr, en: cmsService.titleEn } : fallback!.title;
   const description = cmsService ? { ar: cmsService.summaryAr, en: cmsService.summaryEn } : fallback!.description;
   const Icon = cmsService ? iconForItem(cmsService) : fallback!.icon;
@@ -239,7 +242,7 @@ function projectRows(cmsItems: CmsContentItem[]) {
   })) : staticProjects.map((project) => ({ ...project, image: "image" in project && typeof project.image === "string" ? project.image : "", imageAlt: undefined }));
 }
 
-function courseRows(cmsItems: CmsContentItem[]) {
+function courseRows(cmsItems: CmsContentItem[], allowStaticFallback = true) {
   const courseSlugs = ["digital-marketing-course", "graphic-design-course", "wordpress-course", "private-training"];
   const rows = cmsItems.filter((item) => item.type === "course");
   const sourceRows = rows.length ? rows : cmsItems.filter((item) => item.type === "project" && courseSlugs.includes(item.slug));
@@ -252,7 +255,7 @@ function courseRows(cmsItems: CmsContentItem[]) {
     services: Array.isArray(item.meta?.services) ? item.meta.services.map(String) : [item.category || "Training"],
     image: cmsImage(item.meta, "imageAssetId", typeof item.meta?.image === "string" ? item.meta.image : "").url,
     imageAlt: { ar: cmsImage(item.meta, "imageAssetId", "").altAr, en: cmsImage(item.meta, "imageAssetId", "").altEn }
-  })) : staticProjects.filter((project) => courseSlugs.includes(project.slug)).map((project) => ({ ...project, image: "image" in project && typeof project.image === "string" ? project.image : "", imageAlt: undefined }));
+  })) : allowStaticFallback ? staticProjects.filter((project) => courseSlugs.includes(project.slug)).map((project) => ({ ...project, image: "image" in project && typeof project.image === "string" ? project.image : "", imageAlt: undefined })) : [];
 }
 
 export function PortfolioPage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?: CmsContentItem[] }) {
@@ -340,7 +343,8 @@ const courseDetails = {
 
 export function TrainingPage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?: CmsContentItem[] }) {
   const ar = locale === "ar";
-  const courseAds = courseRows(publicItemsForLocale(cmsItems, locale));
+  const hasCmsCourses = cmsItems.some((item) => item.type === "course");
+  const courseAds = courseRows(publicItemsForLocale(cmsItems, locale), !hasCmsCourses);
   return <>
     <PageHero locale={locale} eyebrow={ar ? "التدريب" : "Training"} title={ar ? "اختر الدورة المناسبة لك" : "Choose the right course for you"} lead={ar ? "استعرض الدورات، ثم افتح صفحة التفاصيل الخاصة بالدورة التي تهمك." : "Browse the courses, then open the dedicated details page for the one you want."} />
     <section className="section"><div className="container legacy-course-grid">{courseAds.map((course) => <article className="card project" key={course.slug}><div className="project-media"><Image src={course.image} alt={course.title[locale]} fill sizes="(max-width: 768px) 100vw, 33vw" /></div><div className="project-body"><p className="eyebrow">{ar ? "دورة تدريبية" : "Training course"}</p><h2 className="h3">{course.title[locale]}</h2><p className="muted">{course.description[locale]}</p><a className="btn btn-primary" href={withLocale(locale, `/training/${course.slug}`)}>{ar ? "تفاصيل الدورة" : "Course details"}</a></div></article>)}</div></section>
@@ -352,6 +356,7 @@ export async function CourseDetailPage({ locale, slug }: { locale: Locale; slug:
   const isDigitalMarketing = slug === "digital-marketing-course";
   const cmsCourse = (await getContentBySlug("course", slug)) ?? (await getContentBySlug("project", slug));
   const fallbackCourse = courseDetails[slug as keyof typeof courseDetails];
+  if (!ar && cmsCourse && (cmsCourse.meta?.englishStatus !== "published" || !hasContentTranslation(cmsCourse, "en"))) notFound();
   const courseImage = cmsImage(cmsCourse?.meta, "imageAssetId", fallbackCourse?.image ?? "");
   const customModules: Array<[string, string]> = Array.isArray(cmsCourse?.meta?.modules)
     ? (cmsCourse!.meta!.modules as unknown[]).flatMap((entry) => {
@@ -362,13 +367,13 @@ export async function CourseDetailPage({ locale, slug }: { locale: Locale; slug:
   const course = fallbackCourse ? {
     ...fallbackCourse,
     image: courseImage.url,
-    title: isDigitalMarketing ? { ar: "دورة احتراف التسويق الرقمي", en: "Digital Marketing Mastery Course" } : cmsCourse ? { ar: cmsCourse.titleAr, en: cmsCourse.titleEn || cmsCourse.titleAr } : fallbackCourse.title,
-    intro: isDigitalMarketing ? fallbackCourse.intro : cmsCourse ? { ar: cmsCourse.summaryAr, en: cmsCourse.summaryEn || cmsCourse.summaryAr } : fallbackCourse.intro
+    title: isDigitalMarketing ? { ar: "دورة احتراف التسويق الرقمي", en: "Digital Marketing Mastery Course" } : cmsCourse ? { ar: cmsCourse.titleAr, en: cmsCourse.titleEn } : fallbackCourse.title,
+    intro: isDigitalMarketing ? fallbackCourse.intro : cmsCourse ? { ar: cmsCourse.summaryAr, en: cmsCourse.summaryEn } : fallbackCourse.intro
   } : cmsCourse ? {
     image: courseImage.url || "/images/brand/abdulaziz-logo-mark.png",
-    title: { ar: cmsCourse.titleAr, en: cmsCourse.titleEn || cmsCourse.titleAr },
-    intro: { ar: cmsCourse.summaryAr, en: cmsCourse.summaryEn || cmsCourse.summaryAr },
-    modules: customModules.length ? customModules : [[ar ? "محتوى الدورة" : "Course content", ar ? (cmsCourse.bodyAr || cmsCourse.summaryAr) : (cmsCourse.bodyEn || cmsCourse.bodyAr || cmsCourse.summaryEn || cmsCourse.summaryAr)]] as Array<[string, string]>
+    title: { ar: cmsCourse.titleAr, en: cmsCourse.titleEn },
+    intro: { ar: cmsCourse.summaryAr, en: cmsCourse.summaryEn },
+    modules: customModules.length ? customModules : [[ar ? "محتوى الدورة" : "Course content", ar ? (cmsCourse.bodyAr || cmsCourse.summaryAr) : (cmsCourse.bodyEn || cmsCourse.bodyAr || cmsCourse.summaryEn)]] as Array<[string, string]>
   } : null;
   if (!course) notFound();
   if (slug === "graphic-design-course") return <GraphicDesignCoursePage locale={locale} image={courseImage.url} />;
