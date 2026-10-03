@@ -2209,8 +2209,19 @@ button, input, textarea, select { font: inherit; }
   }
   .h1 { font-size: clamp(1.18rem, 5.4vw, 1.72rem); }
   .btn { width: 100%; }
-  .lang, .menu-toggle { width: 46px; }
-  .header-actions .theme-toggle { margin-inline: 0; }
+  .header-language-buttons { gap: 4px; }
+  .header-language-buttons .lang {
+    width: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    padding-inline: 4px;
+    font-size: .68rem;
+    border-radius: 9px;
+  }
+  .menu-toggle { width: 40px; min-width: 40px; }
+  .header-actions { gap: 5px; }
+  .header-actions .theme-toggle { margin-inline: 0; width: 36px; height: 36px; }
+  .desktop-brand-text { display: none; }
   .brand-logo { width: 42px; }
   .brand small { max-width: 190px; }
 }
