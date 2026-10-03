@@ -119,7 +119,7 @@ type ImagePlacement = "inline" | "hero" | "background" | "cover" | "gallery" | "
 type DashboardTab = (typeof tabs)[number]["type"];
 type RichField = "bodyAr" | "bodyEn";
 type ImportPreviewRow = { row: number; title: string; slug: string; status: string; category?: string; author?: string; date?: string; duplicate: boolean; valid: boolean; warnings: string[] };
-type ImportSummary = { rows: number; valid: number; invalid: number; existing: number; new: number; warnings: number };
+type ImportSummary = { rows: number; valid: number; invalid: number; existing: number; new: number; warnings: number; images?: number };
 
 const imagePlacementLabels: Record<ImagePlacement, string> = {
   inline: "داخل المحتوى",
@@ -291,6 +291,7 @@ export function Dashboard({
   const [lastAutosave, setLastAutosave] = useState("");
   const [articleImportFile, setArticleImportFile] = useState<File | null>(null);
   const [articleImportStrategy, setArticleImportStrategy] = useState<"skip" | "update" | "copy">("skip");
+  const [articleImportImages, setArticleImportImages] = useState(true);
   const [articleImportPreview, setArticleImportPreview] = useState<ImportPreviewRow[]>([]);
   const [articleImportSummary, setArticleImportSummary] = useState<ImportSummary | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -798,6 +799,7 @@ export function Dashboard({
     formData.append("file", articleImportFile);
     formData.append("action", action);
     formData.append("duplicateStrategy", articleImportStrategy);
+    formData.append("importImages", String(articleImportImages));
     setBusy(true);
     setMessage(action === "preview" ? "جار فحص الملف..." : "جار استيراد المقالات...");
     const response = await fetch("/api/admin/articles/import-export", { method: "POST", body: formData });
@@ -813,8 +815,8 @@ export function Dashboard({
       setMessage(data.sourceFormat === "wordpress-wxr" ? "تمت قراءة ملف WordPress بنجاح. راجع المقالات قبل الاستيراد." : "تم فحص الملف. راجع المعاينة قبل الاستيراد.");
       return;
     }
-    const result = data.result as { imported?: number; updated?: number; skipped?: number; failed?: number; errors?: string[] } | undefined;
-    setMessage(`تم الاستيراد: جديد ${result?.imported ?? 0}، تحديث ${result?.updated ?? 0}، متجاوز ${result?.skipped ?? 0}، فشل ${result?.failed ?? 0}.`);
+    const result = data.result as { imported?: number; updated?: number; skipped?: number; failed?: number; errors?: string[]; imagesImported?: number; imagesFailed?: number; imageErrors?: string[] } | undefined;
+    setMessage(`تم الاستيراد: جديد ${result?.imported ?? 0}، تحديث ${result?.updated ?? 0}، متجاوز ${result?.skipped ?? 0}، فشل ${result?.failed ?? 0}، صور محفوظة ${result?.imagesImported ?? 0}، صور تعذر حفظها ${result?.imagesFailed ?? 0}.`);
     setArticleImportPreview([]);
     setArticleImportSummary(null);
     window.location.reload();
@@ -1228,6 +1230,7 @@ export function Dashboard({
                         <option value="copy">Create New Copy</option>
                       </select></label>
                     </div>
+                    <label className="cms-check"><input type="checkbox" checked={articleImportImages} onChange={(event) => setArticleImportImages(event.target.checked)} /> نسخ صور WordPress إلى مكتبة وسائط الموقع وربطها بالمقالات</label>
                     <div className="cms-form-actions">
                       <button className="cms-ghost-button" type="button" disabled={busy} onClick={() => runArticleImport("preview")}>معاينة الملف</button>
                       <button className="dashboard-primary" type="button" disabled={busy || !articleImportPreview.length} onClick={() => runArticleImport("import")}>استيراد المقالات</button>
@@ -1242,13 +1245,14 @@ export function Dashboard({
                       <span>New: {articleImportSummary.new}</span>
                       <span>Existing: {articleImportSummary.existing}</span>
                       <span>Warnings: {articleImportSummary.warnings}</span>
+                      <span>Images: {articleImportSummary.images ?? 0}</span>
                     </div>}
                     {articleImportPreview.length > 0 && <div className="table-wrap cms-table-wrap">
                       <table><thead><tr><th>#</th><th>العنوان</th><th>الرابط</th><th>التصنيف</th><th>الكاتب</th><th>الحالة</th><th>مكرر؟</th><th>ملاحظات</th></tr></thead><tbody>
                         {articleImportPreview.map((row) => <tr key={`${row.row}-${row.slug}`}><td>{row.row}</td><td>{row.title}</td><td dir="ltr">{row.slug}</td><td>{row.category || "-"}</td><td>{row.author || "-"}</td><td>{row.status}</td><td>{row.duplicate ? "نعم" : "لا"}</td><td>{row.warnings.join(", ") || "-"}</td></tr>)}
                       </tbody></table>
                     </div>}
-                    <p className="cms-form-note">ملف WordPress المطلوب: Tools → Export → All content. يدعم WXR/XML الرسمي ويستورد العنوان، المحتوى، الملخص، الحالة، التاريخ، التصنيف، الوسوم، الكاتب، الصورة البارزة إن كانت موجودة في ملف التصدير، وحقول SEO الشائعة من Yoast وRank Math. الصور الخارجية تبقى كرابط مرجعي ولا تُنسخ إلى مكتبة الوسائط تلقائياً حالياً.</p>
+                    <p className="cms-form-note">ملف WordPress المطلوب: Tools → Export → All content. يدعم WXR/XML الرسمي ويستورد العنوان، المحتوى، الملخص، الحالة، التاريخ، التصنيف، الوسوم، الكاتب، الصورة البارزة إن كانت موجودة في ملف التصدير، وحقول SEO الشائعة من Yoast وRank Math. عند تفعيل خيار الصور، يقوم النظام بتنزيل الصور من موقع WordPress القديم وحفظها داخل مكتبة وسائط الموقع وربط الصورة البارزة وصور المحتوى بالمقال. إذا كان المصدر القديم غير متاح سيستمر استيراد المقال ويعرض عدد الصور التي تعذر نسخها.</p>
                   </div>}
                   {selected.type === "service" && <div className="cms-section-settings">
                     <div className="panel-heading"><div><h3>حقول الخدمة</h3><p>حقول خاصة بالخدمات فقط: الأيقونة، المزايا، CTA، وترتيب الظهور.</p></div></div>
