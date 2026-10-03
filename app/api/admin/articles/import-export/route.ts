@@ -105,7 +105,7 @@ function decodeXml(value: string) {
 }
 
 function escapeXmlTag(value: string) {
-  return value.replace(/[.*+?^$()|[\]\\]/g, "\\function rowToArticle(row: Record<string, unknown>, index: number): CmsContentSeed {");
+  return value.replace(/[.*+?^$()|[\]\\]/g, "\\$&");
 }
 
 function xmlTag(block: string, tag: string) {
@@ -377,6 +377,9 @@ export async function POST(request: Request) {
       title: article.titleAr || article.titleEn,
       slug: article.slug,
       status: article.status,
+      category: article.category,
+      author: String(article.meta?.author ?? ""),
+      date: String(article.meta?.date ?? ""),
       duplicate: Boolean(duplicate),
       valid: warnings.length === 0 || warnings.every((warning) => warning === "Duplicate detected"),
       warnings
