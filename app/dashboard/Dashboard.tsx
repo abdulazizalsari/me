@@ -205,7 +205,7 @@ const footerPresets = [
 ];
 
 function typeLabel(type: CmsContentType) {
-  return {
+  const labels: Record<CmsContentType, string> = {
     homepage: "قسم رئيسية",
     service: "خدمة",
     course: "دورة",
@@ -222,11 +222,13 @@ function typeLabel(type: CmsContentType) {
     contact: "تواصل",
     consultation: "استشارة",
     form: "نموذج",
-  whatsapp: "واتساب",
+    whatsapp: "واتساب",
     integration: "تكامل",
-  seo: "SEO"
-    ,privacy: "سياسة الخصوصية"
-  }[type];
+    seo: "SEO",
+    privacy: "سياسة الخصوصية",
+    "blog-settings": "إعدادات المدونة"
+  };
+  return labels[type];
 }
 
 function formatMeta(meta: Record<string, unknown> | undefined) {
