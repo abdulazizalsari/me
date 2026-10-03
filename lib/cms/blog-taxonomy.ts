@@ -16,6 +16,7 @@ export function resolveBlogCategory(items: CmsContentItem[], slug: string) {
   const category = items
     .filter((item) => item.type === "article")
     .map((item) => item.category)
+    .filter((value): value is string => typeof value === "string" && Boolean(value))
     .find((value) => taxonomySlug(value) === decoded);
   return category ? { filterValue: category, nameAr: category, nameEn: category, descriptionAr: "", descriptionEn: "" } : null;
 }
