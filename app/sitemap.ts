@@ -4,6 +4,7 @@ import { listContentByType, listContentItems } from "@/lib/cms/database";
 import { listPuckPages, hasPuckTranslation } from "@/lib/cms/puck";
 import { translationMap } from "@/lib/cms/translations";
 import { hasContentTranslation } from "@/lib/cms/content-language";
+import { articleTags, taxonomySlug } from "@/lib/cms/blog";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const pages=["","about","cv","services","training","ruaa","contact","consultation","privacy-policy"];
@@ -14,7 +15,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     listPuckPages(),
     translationMap("tr")
   ]);
-  const articles=items.filter(item=>item.type==="article");
+  const articles=items.filter(item=>item.type==="article"&&!item.meta?.noindex);
+  const articleCategories=Array.from(new Set(articles.map(article=>article.category).filter(Boolean)));
+  const articleTagsList=Array.from(new Set(articles.flatMap(article=>articleTags(article))));
   const legacyCourses=["digital-marketing-course","graphic-design-course","wordpress-course","private-training"];
   const courseSlugs=Array.from(new Set([...legacyCourses,...courses.map(c=>c.slug)]));
   const publishedPuck=puckPages.filter(p=>p.status==="published");
@@ -49,6 +52,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       {url:`${siteUrl}/ruaa/${article.slug}`,lastModified:new Date(article.updatedAt)},
       ...(englishReady(article)?[{url:`${siteUrl}/en/ruaa/${article.slug}`,lastModified:new Date(article.updatedAt)}]:[]),
       ...(turkishReady(article)?[{url:`${siteUrl}/tr/ruaa/${article.slug}`,lastModified:new Date(article.updatedAt)}]:[])
+    ]),
+    ...articleCategories.flatMap(category=>[
+      {url:`${siteUrl}/ruaa/category/${taxonomySlug(category)}`,lastModified:now},
+      {url:`${siteUrl}/en/ruaa/category/${taxonomySlug(category)}`,lastModified:now}
+    ]),
+    ...articleTagsList.flatMap(tag=>[
+      {url:`${siteUrl}/ruaa/tag/${taxonomySlug(tag)}`,lastModified:now},
+      {url:`${siteUrl}/en/ruaa/tag/${taxonomySlug(tag)}`,lastModified:now}
     ]),
     ...publishedPuck.flatMap(page=>[
       {url:`${siteUrl}/${page.slug}`,lastModified:new Date(page.updatedAt)},
