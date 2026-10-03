@@ -1,5 +1,5 @@
 ﻿import Image from "next/image";
-import { ArrowUpLeft, ArrowUpRight, CalendarDays, Clock3, Copy, Megaphone, Newspaper, Search, Sparkles } from "lucide-react";
+import { ArrowUpLeft, ArrowUpRight, CalendarDays, Clock3, Megaphone, Newspaper, Search, Sparkles } from "lucide-react";
 import { notFound } from "next/navigation";
 import type { CSSProperties } from "react";
 import { articles as staticArticles } from "@/data/articles";
@@ -10,6 +10,10 @@ import { withLocale } from "@/lib/i18n";
 import { WhatsAppLink } from "@/components/layout/WhatsAppLink";
 import { AdSlot } from "@/components/integrations/AdSlot";
 import { integrationConfigFromMeta } from "@/lib/integrations";
+import { ArticleShare } from "@/app/_components/ArticleShare";
+import { articleTags, blogSettingsFromItems, type BlogSettings } from "@/lib/cms/blog";
+import { sanitizeCmsHtml, stripHtml } from "@/lib/cms/sanitize";
+import { siteUrl } from "@/data/site";
 
 type LocalizedText = Record<Locale, string>;
 
@@ -26,6 +30,13 @@ export type InsightArticle = {
   important: boolean;
   featured: boolean;
   priority: "normal" | "high" | "primary";
+  tags: string[];
+  author: string;
+  authorBio: LocalizedText;
+  authorImage: string;
+  references: string[];
+  ctaTitle: LocalizedText;
+  ctaUrl: string;
 };
 
 const placeholderImage = "/images/legacy/insights-placeholder.svg";
@@ -47,7 +58,7 @@ export function publicItemsForLocale(items: CmsContentItem[], locale: Locale) {
   return items.filter((item) => item.titleEn.trim() && item.summaryEn.trim() && item.meta?.englishStatus === "published");
 }
 
-export function articleRows(cmsItems: CmsContentItem[]): InsightArticle[] {
+export function articleRows(cmsItems: CmsContentItem[], defaultImage = ""): InsightArticle[] {
   const rows = cmsItems.filter((item) => item.type === "article");
   if (!rows.length) {
     return staticArticles.map((item, index) => ({
@@ -60,12 +71,21 @@ export function articleRows(cmsItems: CmsContentItem[]): InsightArticle[] {
       image: fallbackImageForCategory(item.category.en),
       important: index < 2,
       featured: index === 0,
-      priority: index === 0 ? "primary" : index < 2 ? "high" : "normal"
+      priority: index === 0 ? "primary" : index < 2 ? "high" : "normal",
+      tags: [],
+      author: "AbdulAziz Al-Sari",
+      authorBio: { ar: "", en: "" },
+      authorImage: "",
+      references: [],
+      ctaTitle: { ar: "", en: "" },
+      ctaUrl: ""
     }));
   }
 
   return rows.map((item) => {
-    const image = cmsImage(item.meta, "imageAssetId", typeof item.meta?.image === "string" ? item.meta.image : fallbackImageForCategory(item.category || ""));
+    const image = cmsImage(item.meta, "imageAssetId", typeof item.meta?.image === "string" ? item.meta.image : (defaultImage || fallbackImageForCategory(item.category || "")));
+    const tags = articleTags(item);
+    const references = Array.isArray(item.meta?.references) ? item.meta.references.map(String).filter(Boolean) : [];
     return {
       slug: item.slug,
       title: { ar: item.titleAr, en: item.titleEn || item.titleAr },
@@ -78,7 +98,20 @@ export function articleRows(cmsItems: CmsContentItem[]): InsightArticle[] {
       imageAlt: { ar: image.altAr, en: image.altEn },
       important: Boolean(item.meta?.isImportant),
       featured: Boolean(item.meta?.isFeatured),
-      priority: item.meta?.editorialPriority === "primary" ? "primary" : item.meta?.editorialPriority === "high" ? "high" : "normal"
+      priority: item.meta?.editorialPriority === "primary" ? "primary" : item.meta?.editorialPriority === "high" ? "high" : "normal",
+      tags,
+      author: typeof item.meta?.authorName === "string" && item.meta.authorName.trim() ? item.meta.authorName : "AbdulAziz Al-Sari",
+      authorBio: {
+        ar: typeof item.meta?.authorBioAr === "string" ? item.meta.authorBioAr : "",
+        en: typeof item.meta?.authorBioEn === "string" ? item.meta.authorBioEn : ""
+      },
+      authorImage: typeof item.meta?.authorImage === "string" ? item.meta.authorImage : "",
+      references,
+      ctaTitle: {
+        ar: typeof item.meta?.ctaTitleAr === "string" ? item.meta.ctaTitleAr : "",
+        en: typeof item.meta?.ctaTitleEn === "string" ? item.meta.ctaTitleEn : ""
+      },
+      ctaUrl: typeof item.meta?.ctaUrl === "string" ? item.meta.ctaUrl : ""
     };
   });
 }
@@ -142,7 +175,8 @@ function tickerSpeed(value: unknown): "slow" | "medium" {
   return value === "medium" ? "medium" : "slow";
 }
 
-function CardMeta({ article, locale }: { article: InsightArticle; locale: Locale }) {
+function CardMeta({ article, locale, settings }: { article: InsightArticle; locale: Locale; settings?: BlogSettings }) {
+  if (settings && !settings.showDate) return null;
   return <p className="insight-meta"><CalendarDays size={14} aria-hidden="true" />{dateLabel(article.date, locale)}</p>;
 }
 
@@ -167,7 +201,7 @@ export function InsightsTicker({ locale, articles, label, count = 6, speed = "sl
   );
 }
 
-function FeaturedArticle({ article, locale, compact = false }: { article: InsightArticle; locale: Locale; compact?: boolean }) {
+function FeaturedArticle({ article, locale, compact = false, settings }: { article: InsightArticle; locale: Locale; compact?: boolean; settings?: BlogSettings }) {
   const ar = locale === "ar";
   return (
     <article className={compact ? "featured-mini-story" : "featured-editorial-card"}>
@@ -176,16 +210,16 @@ function FeaturedArticle({ article, locale, compact = false }: { article: Insigh
         <span className="insight-card-category">{article.category[locale]}</span>
       </a>
       <div className="featured-editorial-copy">
-        <CardMeta article={article} locale={locale} />
+        <CardMeta article={article} locale={locale} settings={settings} />
         <h2 className={compact ? "h3" : "h2"}><a href={withLocale(locale, `/ruaa/${article.slug}`)}>{article.title[locale]}</a></h2>
-        {!compact && <p className="lead">{article.excerpt[locale]}</p>}
+        {!compact && settings?.showExcerpt !== false && <p className="lead">{article.excerpt[locale]}</p>}
         <a className="text-link" href={withLocale(locale, `/ruaa/${article.slug}`)}>{ar ? "قراءة المقال" : "Read article"}</a>
       </div>
     </article>
   );
 }
 
-function StandardArticleCard({ article, locale, index = 0 }: { article: InsightArticle; locale: Locale; index?: number }) {
+function StandardArticleCard({ article, locale, index = 0, settings }: { article: InsightArticle; locale: Locale; index?: number; settings?: BlogSettings }) {
   const Arrow = locale === "ar" ? ArrowUpLeft : ArrowUpRight;
   return (
     <article className="card article-card insight-card editorial-card" style={{ "--reveal-index": index } as CSSProperties}>
@@ -196,27 +230,27 @@ function StandardArticleCard({ article, locale, index = 0 }: { article: InsightA
       <div className="insight-card-body">
         <CardMeta article={article} locale={locale} />
         <h3 className="h3"><a href={withLocale(locale, `/ruaa/${article.slug}`)}>{article.title[locale]}</a></h3>
-        <p className="muted">{article.excerpt[locale]}</p>
+        {settings?.showExcerpt !== false && <p className="muted">{article.excerpt[locale]}</p>}
         <a className="text-link" href={withLocale(locale, `/ruaa/${article.slug}`)}><Arrow size={17} aria-hidden="true" />{locale === "ar" ? "متابعة القراءة" : "Continue reading"}</a>
       </div>
     </article>
   );
 }
 
-function CompactArticle({ article, locale }: { article: InsightArticle; locale: Locale }) {
+function CompactArticle({ article, locale, settings }: { article: InsightArticle; locale: Locale; settings?: BlogSettings }) {
   return (
     <a className="compact-article" href={withLocale(locale, `/ruaa/${article.slug}`)}>
       <span className="compact-article-media"><Image src={article.image} alt={article.imageAlt?.[locale] || article.title[locale]} fill sizes="96px" /></span>
       <span className="compact-article-copy">
         <small>{article.category[locale]}</small>
         <strong>{article.title[locale]}</strong>
-        <em>{dateLabel(article.date, locale)}</em>
+        {settings?.showDate !== false && <em>{dateLabel(article.date, locale)}</em>}
       </span>
     </a>
   );
 }
 
-function HorizontalArticleCard({ article, locale, index = 0 }: { article: InsightArticle; locale: Locale; index?: number }) {
+function HorizontalArticleCard({ article, locale, index = 0, settings }: { article: InsightArticle; locale: Locale; index?: number; settings?: BlogSettings }) {
   return (
     <article className="horizontal-article-card" style={{ "--reveal-index": index } as CSSProperties}>
       <a className="horizontal-article-media" href={withLocale(locale, `/ruaa/${article.slug}`)} aria-label={article.title[locale]}>
@@ -273,24 +307,24 @@ function Pagination({ locale, currentPage, totalPages, category, query }: { loca
   );
 }
 
-function BlogSidebar({ locale, articles, categories }: { locale: Locale; articles: InsightArticle[]; categories: string[] }) {
+function BlogSidebar({ locale, articles, categories, settings }: { locale: Locale; articles: InsightArticle[]; categories: string[]; settings: BlogSettings }) {
   const ar = locale === "ar";
   const important = selectImportant(articles, 5);
   const latest = [...articles].sort(newestFirst).slice(0, 4);
   return (
     <aside className="insights-sidebar blog-sidebar" aria-label={ar ? "محتوى جانبي لرؤى" : "Insights sidebar"}>
-      <section>
+      {settings.showImportant && <section>
         <h2 className="h3"><Sparkles size={18} aria-hidden="true" />{ar ? "أهم المقالات" : "Important articles"}</h2>
-        <div className="compact-list">{important.map((article) => <CompactArticle article={article} locale={locale} key={article.slug} />)}</div>
-      </section>
+        <div className="compact-list">{important.map((article) => <CompactArticle article={article} locale={locale} settings={settings} key={article.slug} />)}</div>
+      </section>}
       <section>
         <h2 className="h3"><Newspaper size={18} aria-hidden="true" />{ar ? "أحدث المقالات" : "Latest articles"}</h2>
-        <div className="compact-list">{latest.map((article) => <CompactArticle article={article} locale={locale} key={article.slug} />)}</div>
+        <div className="compact-list">{latest.map((article) => <CompactArticle article={article} locale={locale} settings={settings} key={article.slug} />)}</div>
       </section>
-      <section>
+      {settings.showCategories && <section>
         <h2 className="h3">{ar ? "التصنيفات" : "Categories"}</h2>
         {categories.map((category, index) => <a className="insights-topic" href={withLocale(locale, `/ruaa${queryString({ category })}`)} key={category}><span>{String(index + 1).padStart(2, "0")}</span>{category}</a>)}
-      </section>
+      </section>}
       <section className="sidebar-cta">
         <h2 className="h3">{ar ? "حوّل الفكرة إلى خطة" : "Turn insight into a plan"}</h2>
         <p>{ar ? "ابدأ باستشارة قصيرة لفهم الطريق العملي الأنسب." : "Start with a short consultation to clarify the practical path."}</p>
@@ -303,7 +337,8 @@ function BlogSidebar({ locale, articles, categories }: { locale: Locale; article
 export function HomeInsightsSection({ locale, cmsItems, homepageMeta }: { locale: Locale; cmsItems: CmsContentItem[]; homepageMeta?: Record<string, unknown> }) {
   const ar = locale === "ar";
   if (homepageMeta?.insightsVisible === false) return null;
-  const articles = articleRows(publicItemsForLocale(cmsItems, locale));
+  const settings = blogSettingsFromItems(cmsItems);
+  const articles = articleRows(publicItemsForLocale(cmsItems, locale), settings.defaultImageUrl);
   if (!articles.length) return null;
   const count = typeof homepageMeta?.insightsArticleCount === "number" ? homepageMeta.insightsArticleCount : 3;
   const featured = selectFeatured(articles, typeof homepageMeta?.insightsFeaturedSlug === "string" ? homepageMeta.insightsFeaturedSlug : undefined);
@@ -325,9 +360,9 @@ export function HomeInsightsSection({ locale, cmsItems, homepageMeta }: { locale
           {homepageMeta?.insightsShowAllButton !== false && <a className="btn btn-secondary" href={withLocale(locale, "/ruaa")}>{ar ? "عرض جميع المقالات" : "View all articles"}</a>}
         </div>
         <div className="home-editorial-layout">
-          {featured && <FeaturedArticle article={featured} locale={locale} />}
+          {featured && <FeaturedArticle article={featured} locale={locale} settings={settings} />}
           <div className="home-editorial-side">
-            {pool.slice(0, 4).map((article) => <CompactArticle article={article} locale={locale} key={article.slug} />)}
+            {pool.slice(0, 4).map((article) => <CompactArticle article={article} locale={locale} settings={settings} key={article.slug} />)}
           </div>
         </div>
       </div>
@@ -338,42 +373,46 @@ export function HomeInsightsSection({ locale, cmsItems, homepageMeta }: { locale
 export function EditorialInsightsPage({ locale, cmsItems = [], searchParams = {} }: { locale: Locale; cmsItems?: CmsContentItem[]; searchParams?: Record<string, string | string[] | undefined> }) {
   const ar = locale === "ar";
   const integrationConfig = integrationConfigFromMeta(cmsItems.find((item) => item.type === "integration" && item.slug === "site-integrations")?.meta);
-  const allArticles = articleRows(publicItemsForLocale(cmsItems, locale));
+  const settings = blogSettingsFromItems(cmsItems);
+  const allArticles = articleRows(publicItemsForLocale(cmsItems, locale), settings.defaultImageUrl);
   const categories = Array.from(new Set(allArticles.map((article) => article.category[locale]).filter(Boolean)));
   const activeCategory = asText(Array.isArray(searchParams.category) ? searchParams.category[0] : searchParams.category);
   const query = asText(Array.isArray(searchParams.q) ? searchParams.q[0] : searchParams.q);
+  const activeTag = asText(Array.isArray(searchParams.tag) ? searchParams.tag[0] : searchParams.tag);
   const currentPage = Math.max(1, Number(Array.isArray(searchParams.page) ? searchParams.page[0] : searchParams.page) || 1);
   const searched = allArticles.filter((article) => {
     if (activeCategory && article.category[locale] !== activeCategory) return false;
+    if (activeTag && !article.tags.some((tag) => tag.toLowerCase() === activeTag.toLowerCase())) return false;
     if (!query) return true;
-    const haystack = `${article.title[locale]} ${article.excerpt[locale]} ${article.body[locale]} ${article.category[locale]}`.toLowerCase();
+    const haystack = `${article.title[locale]} ${article.excerpt[locale]} ${stripHtml(article.body[locale])} ${article.category[locale]} ${article.tags.join(" ")} ${article.author}`.toLowerCase();
     return haystack.includes(query.toLowerCase());
   });
   const featured = selectFeatured(allArticles);
   const secondary = allArticles.filter((article) => article.slug !== featured?.slug).sort(byEditorialPriority).slice(0, 2);
   const latestPool = searched.filter((article) => article.slug !== featured?.slug).sort(newestFirst);
-  const totalPages = Math.max(1, Math.ceil(latestPool.length / pageSize));
-  const pageArticles = latestPool.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const pageSizeValue = settings.articlesPerPage;
+  const totalPages = Math.max(1, Math.ceil(latestPool.length / pageSizeValue));
+  const pageArticles = latestPool.slice((currentPage - 1) * pageSizeValue, currentPage * pageSizeValue);
   return (
     <>
       <section className="insights-editorial-hero">
         <div className="container">
           <p className="eyebrow"><Newspaper size={17} aria-hidden="true" />{ar ? "رؤى" : "Insights"}</p>
-          <h1 className="h1">{ar ? "رؤى عملية للأعمال والعالم الرقمي" : "Practical Insights for Business and the Digital World"}</h1>
-          <p className="lead">{ar ? "مقالات وتحليلات وأفكار عملية في التسويق الرقمي، تطوير الأعمال، التجارة الدولية، الاستراتيجية، والتدريب." : "Practical articles, analysis, and ideas on digital marketing, business development, international trade, strategy, and training."}</p>
-          <CategoryNav locale={locale} categories={categories} activeCategory={activeCategory} query={query} />
+          <h1 className="h1">{ar ? settings.titleAr : settings.titleEn}</h1>
+          <p className="lead">{ar ? settings.introAr : settings.introEn}</p>
+          {settings.showCategories && <CategoryNav locale={locale} categories={categories} activeCategory={activeCategory} query={query} />}
         </div>
       </section>
       <section className="section insights-section blog-home" aria-labelledby="latest-insights-title">
         <div className="container">
           <InsightsTicker locale={locale} articles={allArticles} count={6} />
           <AdSlot config={integrationConfig} placement="insightsTop" locale={locale} />
-          <div className="featured-stories-grid">
-            {featured && <FeaturedArticle article={featured} locale={locale} />}
+          {settings.showFeatured && <div className="featured-stories-grid">
+            {featured && <FeaturedArticle article={featured} locale={locale} settings={settings} />}
             <div className="secondary-stories">
-              {secondary.map((article) => <FeaturedArticle article={article} locale={locale} compact key={article.slug} />)}
+              {secondary.map((article) => <FeaturedArticle article={article} locale={locale} compact settings={settings} key={article.slug} />)}
             </div>
-          </div>
+          </div>}
           <div className="insights-layout editorial-blog-layout" id="article-grid">
             <main className="blog-main">
               <div className="blog-section-heading">
@@ -381,15 +420,15 @@ export function EditorialInsightsPage({ locale, cmsItems = [], searchParams = {}
                   <p className="eyebrow">{ar ? "أحدث المقالات" : "Latest articles"}</p>
                   <h2 className="h2" id="latest-insights-title">{activeCategory || query ? (ar ? "نتائج التصفح" : "Browsing results") : (ar ? "أحدث المقالات" : "Latest articles")}</h2>
                 </div>
-                <SearchBox locale={locale} query={query} category={activeCategory} />
+                {settings.showSearch && <SearchBox locale={locale} query={query} category={activeCategory} />}
               </div>
               <div className="latest-articles-grid">
-                {pageArticles.map((article, index) => index % 3 === 0 ? <HorizontalArticleCard article={article} locale={locale} index={index} key={article.slug} /> : <StandardArticleCard article={article} locale={locale} index={index} key={article.slug} />)}
+                {pageArticles.map((article, index) => index % 3 === 0 ? <HorizontalArticleCard article={article} locale={locale} index={index} settings={settings} key={article.slug} /> : <StandardArticleCard article={article} locale={locale} index={index} settings={settings} key={article.slug} />)}
               </div>
               {!pageArticles.length && <div className="empty-blog-state">{ar ? "لا توجد مقالات مطابقة حالياً." : "No matching articles yet."}</div>}
               <Pagination locale={locale} currentPage={currentPage} totalPages={totalPages} category={activeCategory} query={query} />
             </main>
-            <BlogSidebar locale={locale} articles={allArticles} categories={categories} />
+            <BlogSidebar locale={locale} articles={allArticles} categories={categories} settings={settings} />
           </div>
         </div>
       </section>
@@ -402,10 +441,31 @@ function bodyBlocks(content: string) {
 }
 
 function headingId(text: string) {
-  return text.toLowerCase().replace(/[^\p{Letter}\p{Number}]+/gu, "-").replace(/^-|-$/g, "");
+  return stripHtml(text).toLowerCase().replace(/[^\p{Letter}\p{Number}]+/gu, "-").replace(/^-|-$/g, "");
+}
+
+function looksLikeHtml(content: string) {
+  return /<\/?[a-z][\s\S]*>/i.test(content);
+}
+
+function prepareHtml(content: string) {
+  let html = sanitizeCmsHtml(content);
+  const used = new Map<string, number>();
+  html = html.replace(/<(h2|h3)\b([^>]*)>([\s\S]*?)<\/\1>/gi, (_match, tag: string, attrs: string, inner: string) => {
+    const base = headingId(inner) || "section";
+    const count = used.get(base) ?? 0;
+    used.set(base, count + 1);
+    const id = count ? `${base}-${count + 1}` : base;
+    const cleanAttrs = attrs.replace(/\sid=(["'])[^"']*\1/gi, "");
+    return `<${tag}${cleanAttrs} id="${id}">${inner}</${tag}>`;
+  });
+  return html;
 }
 
 function ArticleContent({ content }: { content: string }) {
+  if (looksLikeHtml(content)) {
+    return <div className="article-rich-html" dangerouslySetInnerHTML={{ __html: prepareHtml(content) }} />;
+  }
   const blocks = bodyBlocks(content);
   return (
     <>
@@ -434,33 +494,84 @@ function ArticleContent({ content }: { content: string }) {
   );
 }
 
+function articleHeadings(content: string) {
+  if (looksLikeHtml(content)) {
+    return Array.from(prepareHtml(content).matchAll(/<(h2|h3)\b[^>]*id=(["'])(.*?)\2[^>]*>([\s\S]*?)<\/\1>/gi), (match) => ({
+      id: match[3],
+      text: stripHtml(match[4])
+    })).filter((item) => item.text);
+  }
+  return bodyBlocks(content)
+    .filter((block) => /^#{2,3}\s+/.test(block))
+    .map((block) => {
+      const text = block.replace(/^#{2,3}\s+/, "");
+      return { id: headingId(text), text };
+    });
+}
+
 function TableOfContents({ content, locale }: { content: string; locale: Locale }) {
-  const headings = bodyBlocks(content).filter((block) => /^#{2,3}\s+/.test(block)).map((block) => block.replace(/^#{2,3}\s+/, ""));
+  const headings = articleHeadings(content);
   if (headings.length < 3) return null;
   return (
     <nav className="article-toc" aria-label={locale === "ar" ? "محتويات المقال" : "Article contents"}>
       <strong>{locale === "ar" ? "محتويات المقال" : "Article contents"}</strong>
-      {headings.map((heading) => <a href={`#${headingId(heading)}`} key={heading}>{heading}</a>)}
+      {headings.map((heading) => <a href={`#${heading.id}`} key={heading.id}>{heading.text}</a>)}
     </nav>
   );
 }
 
 export function EditorialArticlePage({ locale, slug, cmsItems = [] }: { locale: Locale; slug: string; cmsItems?: CmsContentItem[] }) {
   const integrationConfig = integrationConfigFromMeta(cmsItems.find((item) => item.type === "integration" && item.slug === "site-integrations")?.meta);
+  const settings = blogSettingsFromItems(cmsItems);
   const localizedCmsItems = publicItemsForLocale(cmsItems, locale);
-  const allSourceArticles = articleRows(publicItemsForLocale(cmsItems, "ar"));
+  const allSourceArticles = articleRows(publicItemsForLocale(cmsItems, "ar"), settings.defaultImageUrl);
   if (locale === "en" && allSourceArticles.some((item) => item.slug === slug) && !localizedCmsItems.some((item) => item.type === "article" && item.slug === slug)) {
     notFound();
   }
-  const articles = articleRows(localizedCmsItems);
+  const articles = articleRows(localizedCmsItems, settings.defaultImageUrl);
   const article = articles.find((item) => item.slug === slug) || articles[0];
   if (!article) notFound();
   const ar = locale === "ar";
-  const related = articles.filter((candidate) => candidate.slug !== article.slug && candidate.category[locale] === article.category[locale]).slice(0, 3);
+  const related = articles
+    .filter((candidate) => candidate.slug !== article.slug)
+    .map((candidate) => ({
+      candidate,
+      score: (candidate.category[locale] === article.category[locale] ? 10 : 0)
+        + candidate.tags.filter((tag) => article.tags.some((own) => own.toLowerCase() === tag.toLowerCase())).length * 3
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score || newestFirst(a.candidate, b.candidate))
+    .slice(0, 3)
+    .map((entry) => entry.candidate);
   const important = selectImportant(articles, 4).filter((item) => item.slug !== article.slug);
   const minutes = readingMinutes(article, locale);
+  const canonicalPath = withLocale(locale, `/ruaa/${article.slug}`);
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BlogPosting",
+        headline: article.title[locale],
+        description: article.excerpt[locale],
+        image: article.image ? [article.image.startsWith("http") ? article.image : `${siteUrl}${article.image}`] : undefined,
+        datePublished: article.date,
+        dateModified: article.updatedAt || article.date,
+        author: { "@type": "Person", name: article.author },
+        mainEntityOfPage: `${siteUrl}${canonicalPath}`
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: ar ? "الرئيسية" : "Home", item: `${siteUrl}${withLocale(locale, "/")}` },
+          { "@type": "ListItem", position: 2, name: ar ? "رؤى" : "Insights", item: `${siteUrl}${withLocale(locale, "/ruaa")}` },
+          { "@type": "ListItem", position: 3, name: article.title[locale], item: `${siteUrl}${canonicalPath}` }
+        ]
+      }
+    ]
+  };
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
       <article className="article-publication">
         <div className="container">
           <nav className="article-breadcrumbs" aria-label={ar ? "مسار الصفحة" : "Breadcrumb"}>
@@ -473,9 +584,9 @@ export function EditorialArticlePage({ locale, slug, cmsItems = [] }: { locale: 
             <h1 className="h1">{article.title[locale]}</h1>
             <p className="lead">{article.excerpt[locale]}</p>
             <div className="article-meta-row">
-              <span>{ar ? "عبدالعزيز الصاري" : "AbdulAziz Al-Sari"}</span>
-              <span><CalendarDays size={15} aria-hidden="true" />{dateLabel(article.date, locale)}</span>
-              <span><Clock3 size={15} aria-hidden="true" />{ar ? `${minutes} دقائق قراءة` : `${minutes} min read`}</span>
+              {settings.showAuthor && <span>{article.author}</span>}
+              {settings.showDate && <span><CalendarDays size={15} aria-hidden="true" />{dateLabel(article.date, locale)}</span>}
+              {settings.showReadingTime && <span><Clock3 size={15} aria-hidden="true" />{ar ? `${minutes} دقائق قراءة` : `${minutes} min read`}</span>}
             </div>
           </header>
           <div className="article-featured-image">
@@ -484,18 +595,25 @@ export function EditorialArticlePage({ locale, slug, cmsItems = [] }: { locale: 
           <AdSlot config={integrationConfig} placement="articleTop" locale={locale} />
           <div className="article-reading-layout">
             <aside className="article-reading-aside">
-              <TableOfContents content={article.body[locale]} locale={locale} />
-              <div className="article-share">
-                <strong>{ar ? "مشاركة" : "Share"}</strong>
-                <a href={`https://wa.me/?text=${encodeURIComponent(article.title[locale])}`} target="_blank" rel="noreferrer">WhatsApp</a>
-                <button type="button"><Copy size={15} aria-hidden="true" />{ar ? "نسخ الرابط" : "Copy link"}</button>
-              </div>
+              {settings.showToc && <TableOfContents content={article.body[locale]} locale={locale} />}
+              {settings.showShare && <ArticleShare title={article.title[locale]} locale={locale} />}
             </aside>
             <div className="article-body editorial-article-body">
               <AdSlot config={integrationConfig} placement="articleInline" locale={locale} />
               <ArticleContent content={article.body[locale] || article.excerpt[locale]} />
             </div>
           </div>
+          {article.tags.length > 0 && <div className="article-tags" aria-label={ar ? "وسوم المقال" : "Article tags"}>
+            {article.tags.map((tag) => <a href={withLocale(locale, `/ruaa${queryString({ tag })}`)} key={tag}>#{tag}</a>)}
+          </div>}
+          {article.references.length > 0 && <section className="article-references">
+            <h2 className="h3">{ar ? "المراجع والمصادر" : "References & Sources"}</h2>
+            <ol>{article.references.map((reference) => <li key={reference}>{/^https?:\/\//i.test(reference) ? <a href={reference} target="_blank" rel="noreferrer">{reference}</a> : reference}</li>)}</ol>
+          </section>}
+          {settings.showAuthor && (article.authorBio[locale] || article.authorImage) && <section className="article-author-box">
+            {article.authorImage && <img src={article.authorImage} alt={article.author} />}
+            <div><span>{ar ? "عن الكاتب" : "About the author"}</span><strong>{article.author}</strong>{article.authorBio[locale] && <p>{article.authorBio[locale]}</p>}</div>
+          </section>}
           <AdSlot config={integrationConfig} placement="articleBottom" locale={locale} />
         </div>
       </article>
@@ -503,24 +621,24 @@ export function EditorialArticlePage({ locale, slug, cmsItems = [] }: { locale: 
         <div className="container cta">
           <div>
             <p className="eyebrow">{ar ? "من الفكرة إلى التنفيذ" : "From idea to execution"}</p>
-            <h2 className="h2">{ar ? "هل تريد تحويل الفكرة إلى خطة عملية؟" : "Want to turn the idea into a practical plan?"}</h2>
+            <h2 className="h2">{article.ctaTitle[locale] || (ar ? settings.ctaTitleAr : settings.ctaTitleEn)}</h2>
           </div>
-          <a className="btn btn-primary" href={withLocale(locale, "/consultation")}>{ar ? "اطلب استشارة" : "Book a consultation"}</a>
+          <a className="btn btn-primary" href={article.ctaUrl || withLocale(locale, settings.ctaUrl)}>{ar ? "اطلب استشارة" : "Book a consultation"}</a>
         </div>
       </section>
-      {related.length > 0 && (
+      {settings.showRelated && related.length > 0 && (
         <section className="section related-articles" aria-labelledby="related-articles-title">
           <div className="container">
             <h2 className="h2" id="related-articles-title">{ar ? "مقالات ذات صلة" : "Related articles"}</h2>
-            <div className="grid related-articles-grid">{related.map((item) => <StandardArticleCard article={item} locale={locale} key={item.slug} />)}</div>
+            <div className="grid related-articles-grid">{related.map((item) => <StandardArticleCard article={item} locale={locale} settings={settings} key={item.slug} />)}</div>
           </div>
         </section>
       )}
-      {important.length > 0 && (
+      {settings.showImportant && important.length > 0 && (
         <section className="section band">
           <div className="container">
             <div className="blog-section-heading"><div><p className="eyebrow">{ar ? "أهم المقالات" : "Important articles"}</p><h2 className="h2">{ar ? "تابع القراءة" : "Keep reading"}</h2></div></div>
-            <div className="compact-list compact-list-grid">{important.map((item) => <CompactArticle article={item} locale={locale} key={item.slug} />)}</div>
+            <div className="compact-list compact-list-grid">{important.map((item) => <CompactArticle article={item} locale={locale} settings={settings} key={item.slug} />)}</div>
           </div>
         </section>
       )}
