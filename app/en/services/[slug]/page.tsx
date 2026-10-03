@@ -2,18 +2,22 @@ import { LocaleShell } from "../../../_components/LocaleShell";
 import { ServiceDetailPage } from "../../../_components/StandardPage";
 import { routeMetadata } from "@/lib/metadata";
 import { listContentByType } from "@/lib/cms/database";
+import { hasContentTranslation } from "@/lib/cms/content-language";
 import { services } from "@/data/services";
 
 type PageProps = { params: Promise<{ slug: string }>;
 };
 
 export async function generateStaticParams() {
-  return [...services.map((service) => service.slug), ...(await listContentByType("service")).map((service) => service.slug)].map((slug) => ({ slug }));
+  const cms=(await listContentByType("service",{publishedOnly:true})).filter((service)=>service.meta?.englishStatus==="published"&&hasContentTranslation(service,"en"));
+  return Array.from(new Set([...services.map((service) => service.slug), ...cms.map((service) => service.slug)])).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const service = (await listContentByType("service")).find((item) => item.slug === slug) ?? services.find((item) => item.slug === slug);
+  const cmsService = (await listContentByType("service",{publishedOnly:true})).find((item) => item.slug === slug);
+  if(cmsService && (cmsService.meta?.englishStatus!=="published"||!hasContentTranslation(cmsService,"en"))) return {};
+  const service = cmsService ?? services.find((item) => item.slug === slug);
   const title = service && "titleEn" in service ? service.titleEn : service?.title.en;
 
   return { ...routeMetadata("services", "en", `/en/services/${slug}`), title: title ?? "Services" };
