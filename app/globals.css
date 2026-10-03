@@ -1480,6 +1480,19 @@ button, input, textarea, select { font: inherit; }
   line-height: 2.05;
   font-size: 1.04rem;
 }
+.article-inline-image {
+  margin: 24px 0;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--brand-primary);
+  box-shadow: 0 14px 34px rgba(0,62,70,.08);
+}
+.article-inline-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
 .editorial-article-body blockquote {
   margin: 22px 0;
   padding: 18px 20px;
