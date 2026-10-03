@@ -845,6 +845,8 @@ export function Dashboard({
 
   const activeIsContent = contentTypes.includes(active as CmsContentType) && active !== "integration";
   const integrationItem = items.find((item) => item.type === "integration" && item.slug === "site-integrations") ?? items.find((item) => item.type === "integration");
+  const blogSettingsItem = items.find((item) => item.type === "blog-settings" && item.slug === "blog-settings") ?? items.find((item) => item.type === "blog-settings");
+  const blogCategories = Array.isArray(blogSettingsItem?.meta?.categories) ? blogSettingsItem.meta.categories.filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === "object" && !Array.isArray(entry) && entry.enabled !== false) : [];
 
   return (
     <main className="dashboard-shell cms-shell" dir="rtl">
@@ -1051,7 +1053,8 @@ export function Dashboard({
                     </div>
                   )}
                   <div className="cms-form-row">
-                    <label>التصنيف<input value={selected.category ?? ""} onChange={(event) => setSelected({ ...selected, category: event.target.value })} /></label>
+                    <label>التصنيف<input list={selected.type === "article" ? "blog-category-options" : undefined} value={selected.category ?? ""} onChange={(event) => setSelected({ ...selected, category: event.target.value })} /></label>
+                    {selected.type === "article" && <datalist id="blog-category-options">{blogCategories.map((entry, index) => <option value={String(entry.nameAr ?? entry.nameEn ?? "")} key={String(entry.slug ?? index)} />)}</datalist>}
                     <label>الترتيب<input type="number" value={selected.sortOrder} onChange={(event) => setSelected({ ...selected, sortOrder: Number(event.target.value) })} /></label>
                   </div>
                   <div className="cms-section-settings">
@@ -1062,8 +1065,13 @@ export function Dashboard({
                     </div>
                     <label>Meta Description<textarea rows={2} value={String(readMeta().metaDescription ?? "")} onChange={(event) => updateMetaField("metaDescription", event.target.value)} maxLength={160} /></label>
                     <div className="cms-form-row">
+                      <label>Open Graph Title<input value={String(readMeta().ogTitle ?? "")} onChange={(event) => updateMetaField("ogTitle", event.target.value)} /></label>
                       <label>Open Graph Image<input dir="ltr" value={String(readMeta().ogImage ?? "")} onChange={(event) => updateMetaField("ogImage", event.target.value)} /></label>
+                    </div>
+                    <label>Open Graph Description<textarea rows={2} value={String(readMeta().ogDescription ?? "")} onChange={(event) => updateMetaField("ogDescription", event.target.value)} /></label>
+                    <div className="cms-form-row">
                       <label>Twitter Image<input dir="ltr" value={String(readMeta().twitterImage ?? "")} onChange={(event) => updateMetaField("twitterImage", event.target.value)} /></label>
+                      <label className="cms-check"><input type="checkbox" checked={Boolean(readMeta().noindex)} onChange={(event) => updateMetaField("noindex", event.target.checked)} /> Noindex</label>
                     </div>
                     <label>Schema JSON<textarea dir="ltr" rows={3} value={String(readMeta().schemaJson ?? "")} onChange={(event) => updateMetaField("schemaJson", event.target.value)} /></label>
                     <div className="cms-seo-preview">
@@ -1222,9 +1230,11 @@ export function Dashboard({
                     </div>
                   </div>}
                   {selected.type === "article" && <div className="cms-section-settings">
-                    <div className="panel-heading"><div><h3>إعدادات ظهور المقال في رؤى</h3><p>تحدد هذه الخيارات المقالات المهمة والمميزة في الصفحة الرئيسية وصفحة رؤى.</p></div></div>
-                    <label className="cms-check"><input type="checkbox" checked={Boolean(readMeta().isImportant)} onChange={(event) => updateMetaField("isImportant", event.target.checked)} /> مقال مهم</label>
-                    <label className="cms-check"><input type="checkbox" checked={Boolean(readMeta().isFeatured)} onChange={(event) => updateMetaField("isFeatured", event.target.checked)} /> مقال مميز</label>
+                    <div className="panel-heading"><div><h3>إعدادات المقال</h3><p>الظهور، الكاتب، الوسوم، المراجع، وجدولة النشر.</p></div></div>
+                    <div className="cms-check-grid">
+                      <label className="cms-check"><input type="checkbox" checked={Boolean(readMeta().isImportant)} onChange={(event) => updateMetaField("isImportant", event.target.checked)} /> مقال مهم</label>
+                      <label className="cms-check"><input type="checkbox" checked={Boolean(readMeta().isFeatured)} onChange={(event) => updateMetaField("isFeatured", event.target.checked)} /> مقال مميز</label>
+                    </div>
                     <div className="cms-form-row">
                       <label>الأولوية التحريرية<select value={String(readMeta().editorialPriority ?? "normal")} onChange={(event) => updateMetaField("editorialPriority", event.target.value)}>
                         <option value="normal">عادي</option>
@@ -1233,6 +1243,22 @@ export function Dashboard({
                       </select></label>
                       <label>تاريخ النشر<input type="date" value={String(readMeta().date ?? "")} onChange={(event) => updateMetaField("date", event.target.value)} /></label>
                     </div>
+                    <label>موعد النشر المجدول<input type="datetime-local" value={String(readMeta().publishAt ?? "")} onChange={(event) => updateMetaField("publishAt", event.target.value)} /><small>يُستخدم عندما تكون الحالة «مجدول».</small></label>
+                    <div className="cms-form-row">
+                      <label>اسم الكاتب<input value={String(readMeta().authorName ?? user.displayName ?? user.email)} onChange={(event) => updateMetaField("authorName", event.target.value)} /></label>
+                      <label>صورة الكاتب URL<input dir="ltr" value={String(readMeta().authorImage ?? "")} onChange={(event) => updateMetaField("authorImage", event.target.value)} /></label>
+                    </div>
+                    <div className="cms-form-row">
+                      <label>نبذة الكاتب بالعربية<textarea rows={3} value={String(readMeta().authorBioAr ?? "")} onChange={(event) => updateMetaField("authorBioAr", event.target.value)} /></label>
+                      <label dir="ltr">Author bio<textarea dir="ltr" rows={3} value={String(readMeta().authorBioEn ?? "")} onChange={(event) => updateMetaField("authorBioEn", event.target.value)} /></label>
+                    </div>
+                    <label>الوسوم<input value={Array.isArray(readMeta().tags) ? (readMeta().tags as string[]).join(", ") : ""} onChange={(event) => updateMetaField("tags", event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean))} placeholder="تسويق رقمي، تجارة دولية، مواقع" /></label>
+                    <label>المراجع والمصادر<textarea rows={4} value={Array.isArray(readMeta().references) ? (readMeta().references as string[]).join("\n") : ""} onChange={(event) => updateMetaField("references", event.target.value.split("\n").map((line) => line.trim()).filter(Boolean))} placeholder="مرجع أو رابط في كل سطر" /></label>
+                    <div className="cms-form-row">
+                      <label>CTA عنوان عربي<input value={String(readMeta().ctaTitleAr ?? "")} onChange={(event) => updateMetaField("ctaTitleAr", event.target.value)} /></label>
+                      <label dir="ltr">CTA English<input dir="ltr" value={String(readMeta().ctaTitleEn ?? "")} onChange={(event) => updateMetaField("ctaTitleEn", event.target.value)} /></label>
+                    </div>
+                    <label>CTA URL<input dir="ltr" value={String(readMeta().ctaUrl ?? "")} onChange={(event) => updateMetaField("ctaUrl", event.target.value)} placeholder="/consultation" /></label>
                   </div>}
                   {(selected.type === "article" || active === "article") && <div className="cms-section-settings cms-import-export">
                     <div className="panel-heading"><div><h3>استيراد مقالات WordPress</h3><p>ارفع ملف التصدير الرسمي من WordPress بصيغة XML/WXR مباشرة، أو استخدم XLSX/CSV. ستظهر معاينة قبل الحفظ مع كشف المقالات المكررة.</p></div></div>
