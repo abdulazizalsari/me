@@ -50,5 +50,12 @@ export async function deletePuckPage(id:string) {
 export function dataForLocale(page:CmsPuckPage,locale:string) {
   if(locale==="ar") return page.data;
   const value=page.localeData?.[locale];
-  return value&&typeof value==="object"&&!Array.isArray(value)?value as Record<string,unknown>:page.data;
+  return value&&typeof value==="object"&&!Array.isArray(value)?value as Record<string,unknown>:null;
+}
+
+export function hasPuckTranslation(page:CmsPuckPage,locale:string) {
+  if(locale==="ar") return true;
+  const data=dataForLocale(page,locale);
+  const content=data?.content;
+  return Array.isArray(content) && content.length > 0;
 }
