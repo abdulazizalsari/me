@@ -1389,6 +1389,7 @@ export function Dashboard({
                   </div>}
                   <div className="cms-form-actions">
                     <button className="btn btn-primary" type="submit" disabled={busy}><Save size={18} /> {busy ? "جار الحفظ..." : "حفظ"}</button>
+                    {selected.id && selected.type === "article" && <a className="cms-ghost-button" href={`/dashboard/preview/article/${selected.id}`} target="_blank" rel="noreferrer">معاينة المقال</a>}
                     {selected.id && <button className="cms-danger-button" type="button" onClick={() => deleteItem(selected.id)}><Trash2 size={17} /> حذف</button>}
                   </div>
                 </form>
