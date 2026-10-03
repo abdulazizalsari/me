@@ -116,7 +116,7 @@ export function BlogSettingsPanel({ initialItem, media }: { initialItem?: CmsCon
         <div className="panel-heading"><div><h3>عرض المقالات</h3><p>إظهار أو إخفاء العناصر مع الحفاظ على تصميم الموقع الحالي.</p></div></div>
         <div className="cms-form-row">
           <label>عدد المقالات في الصفحة<input type="number" min="1" max="30" value={settings.articlesPerPage} onChange={(event) => patch("articlesPerPage", Number(event.target.value))} /></label>
-          <label>الصورة الافتراضية<select value={settings.defaultImageAssetId} onChange={(event) => patch("defaultImageAssetId", event.target.value)}><option value="">استخدام الصورة الافتراضية الحالية</option>{media.map((asset) => <option value={asset.id} key={asset.id}>{asset.filename}</option>)}</select></label>
+          <label>الصورة الافتراضية<select value={settings.defaultImageAssetId} onChange={(event) => { const asset = media.find((item) => item.id === event.target.value); setSettings((current) => ({ ...current, defaultImageAssetId: event.target.value, defaultImageUrl: asset?.url ?? "" })); }}><option value="">استخدام الصورة الافتراضية الحالية</option>{media.map((asset) => <option value={asset.id} key={asset.id}>{asset.filename}</option>)}</select></label>
         </div>
         <div className="cms-check-grid">
           {([
