@@ -10,11 +10,22 @@ function localeForPath(pathname: string): Locale {
 }
 
 function pageContext(pathname: string, locale: Locale) {
-  if (pathname.includes("/services")) return locale === "ar" ? "الخدمات" : "Services";
-  if (pathname.includes("/training")) return locale === "ar" ? "التدريب أو الدورة" : "Training or course";
-  if (pathname.includes("/ruaa")) return locale === "ar" ? "الرؤى" : "Insights";
-  if (pathname.includes("/contact")) return locale === "ar" ? "التواصل" : "Contact";
-  return locale === "ar" ? "الصفحة الرئيسية" : "Home page";
+  const cleanPath = pathname.replace(/^\/en(?=\/|$)/, "") || "/";
+  const ar = locale === "ar";
+
+  if (cleanPath === "/") return ar ? "الصفحة الرئيسية" : "Home page";
+  if (cleanPath === "/about") return ar ? "من أنا" : "About page";
+  if (cleanPath === "/services") return ar ? "الخدمات" : "Services";
+  if (cleanPath.startsWith("/services/")) return ar ? "تفاصيل خدمة" : "Service details";
+  if (cleanPath === "/training") return ar ? "التدريب" : "Training";
+  if (cleanPath.startsWith("/training/")) return ar ? "تفاصيل دورة" : "Course details";
+  if (cleanPath === "/ruaa") return ar ? "الرؤى" : "Insights";
+  if (cleanPath.startsWith("/ruaa/")) return ar ? "مقال من رؤى" : "Insights article";
+  if (cleanPath === "/contact") return ar ? "التواصل" : "Contact";
+  if (cleanPath === "/consultation") return ar ? "طلب استشارة" : "Consultation";
+  if (cleanPath === "/cv") return ar ? "السيرة الذاتية" : "CV";
+  if (cleanPath === "/privacy-policy") return ar ? "سياسة الخصوصية" : "Privacy policy";
+  return ar ? "صفحة داخلية" : "Website page";
 }
 
 export function WhatsAppCTA() {
