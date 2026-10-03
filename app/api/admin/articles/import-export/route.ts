@@ -89,6 +89,128 @@ function parseWorkbook(buffer: ArrayBuffer) {
   return rawRows.map((row) => Object.fromEntries(Object.entries(row).map(([key, value]) => [normalizeHeader(key), value])));
 }
 
+
+function decodeXml(value: string) {
+  const trimmed = value.trim();
+  const cdata = trimmed.startsWith("<![CDATA[") && trimmed.endsWith("]]>")
+    ? trimmed.slice(9, -3)
+    : trimmed;
+  return cdata
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#039;/g, "'")
+    .replace(/&amp;/g, "&");
+}
+
+function escapeXmlTag(value: string) {
+  return value.replace(/[.*+?^$()|[\]\\]/g, "\\function rowToArticle(row: Record<string, unknown>, index: number): CmsContentSeed {");
+}
+
+function xmlTag(block: string, tag: string) {
+  const escaped = escapeXmlTag(tag);
+  const match = block.match(new RegExp("<" + escaped + "\\b[^>]*>([\\s\\S]*?)<\\/" + escaped + ">", "i"));
+  return match ? decodeXml(match[1]) : "";
+}
+
+function parsePostMeta(item: string) {
+  const result: Record<string, string> = {};
+  const regex = /<wp:postmeta\b[^>]*>([\s\S]*?)<\/wp:postmeta>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(item))) {
+    const key = xmlTag(match[1], "wp:meta_key");
+    const value = xmlTag(match[1], "wp:meta_value");
+    if (key) result[key] = value;
+  }
+  return result;
+}
+
+function parseWordPressTerms(item: string) {
+  const categories: string[] = [];
+  const tags: string[] = [];
+  const regex = /<category\b([^>]*)>([\s\S]*?)<\/category>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(item))) {
+    const domainMatch = match[1].match(/\bdomain=(["'])(.*?)\1/i);
+    const domain = domainMatch?.[2] ?? "";
+    const value = decodeXml(match[2]);
+    if (!value) continue;
+    if (domain === "category") categories.push(value);
+    if (domain === "post_tag") tags.push(value);
+  }
+  return { categories: [...new Set(categories)], tags: [...new Set(tags)] };
+}
+
+function firstPostMeta(meta: Record<string, string>, keys: string[]) {
+  for (const key of keys) if (meta[key]?.trim()) return meta[key].trim();
+  return "";
+}
+
+function parseWordPressWxr(xml: string) {
+  if (!/<rss\b/i.test(xml) || !/wordpress\.org\/export\//i.test(xml)) {
+    throw new Error("الملف XML ليس ملف WordPress WXR صالحاً.");
+  }
+
+  const items = Array.from(xml.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi), (match) => match[1]);
+  const attachmentUrls = new Map<string, string>();
+
+  for (const item of items) {
+    if (xmlTag(item, "wp:post_type") !== "attachment") continue;
+    const id = xmlTag(item, "wp:post_id");
+    const url = xmlTag(item, "wp:attachment_url");
+    if (id && url) attachmentUrls.set(id, url);
+  }
+
+  const rows: Record<string, unknown>[] = [];
+
+  for (const item of items) {
+    if (xmlTag(item, "wp:post_type") !== "post") continue;
+
+    const meta = parsePostMeta(item);
+    const terms = parseWordPressTerms(item);
+    const thumbnailId = meta._thumbnail_id ?? "";
+    const featuredImageUrl = attachmentUrls.get(thumbnailId) ?? firstPostMeta(meta, [
+      "_thumbnail_url",
+      "featured_image_url",
+      "_yoast_wpseo_opengraph-image",
+      "rank_math_facebook_image"
+    ]);
+
+    const language = firstPostMeta(meta, [
+      "_icl_post_language",
+      "_wpml_post_language",
+      "language",
+      "lang"
+    ]) || "ar";
+
+    rows.push({
+      external_id: xmlTag(item, "wp:post_id"),
+      post_id: xmlTag(item, "wp:post_id"),
+      title: xmlTag(item, "title"),
+      slug: xmlTag(item, "wp:post_name"),
+      content: xmlTag(item, "content:encoded"),
+      excerpt: xmlTag(item, "excerpt:encoded"),
+      status: xmlTag(item, "wp:status"),
+      publish_date: xmlTag(item, "wp:post_date_gmt") || xmlTag(item, "wp:post_date"),
+      category: terms.categories[0] ?? "",
+      categories: terms.categories.join(", "),
+      tags: terms.tags.join(", "),
+      author: xmlTag(item, "dc:creator"),
+      language,
+      seo_title: firstPostMeta(meta, ["_yoast_wpseo_title", "rank_math_title"]),
+      meta_description: firstPostMeta(meta, ["_yoast_wpseo_metadesc", "rank_math_description"]),
+      canonical: firstPostMeta(meta, ["_yoast_wpseo_canonical", "rank_math_canonical_url"]),
+      og_title: firstPostMeta(meta, ["_yoast_wpseo_opengraph-title", "rank_math_facebook_title"]),
+      og_description: firstPostMeta(meta, ["_yoast_wpseo_opengraph-description", "rank_math_facebook_description"]),
+      og_image: firstPostMeta(meta, ["_yoast_wpseo_opengraph-image", "rank_math_facebook_image"]),
+      featured_image_url: featuredImageUrl
+    });
+  }
+
+  return rows;
+}
+
 function rowToArticle(row: Record<string, unknown>, index: number): CmsContentSeed {
   const language = cell(row, aliases.language).toLowerCase();
   const title = cell(row, aliases.title);
@@ -222,9 +344,26 @@ export async function POST(request: Request) {
   const file = formData.get("file");
   const action = String(formData.get("action") ?? "preview") as ImportAction;
   const duplicateStrategy = String(formData.get("duplicateStrategy") ?? "skip") as DuplicateStrategy;
-  if (!(file instanceof File)) return NextResponse.json({ ok: false, message: "ارفع ملف XLSX أو CSV أولاً." }, { status: 400 });
+  if (!(file instanceof File)) return NextResponse.json({ ok: false, message: "ارفع ملف WordPress XML/WXR أو XLSX/CSV أولاً." }, { status: 400 });
+  if (file.size > 25 * 1024 * 1024) return NextResponse.json({ ok: false, message: "حجم ملف الاستيراد أكبر من 25MB." }, { status: 413 });
 
-  const rows = parseWorkbook(await file.arrayBuffer());
+  const filename = file.name.toLowerCase();
+  const isWordPressXml = filename.endsWith(".xml") || filename.endsWith(".wxr") || file.type.includes("xml");
+  let rows: Record<string, unknown>[];
+  let sourceFormat: "wordpress-wxr" | "spreadsheet";
+
+  try {
+    if (isWordPressXml) {
+      rows = parseWordPressWxr(await file.text());
+      sourceFormat = "wordpress-wxr";
+      if (!rows.length) return NextResponse.json({ ok: false, message: "لم أجد مقالات WordPress من النوع post داخل ملف WXR." }, { status: 400 });
+    } else {
+      rows = parseWorkbook(await file.arrayBuffer());
+      sourceFormat = "spreadsheet";
+    }
+  } catch (error) {
+    return NextResponse.json({ ok: false, message: error instanceof Error ? error.message : "تعذر قراءة ملف الاستيراد." }, { status: 400 });
+  }
   const existing = (await listContentItems()).filter((item) => item.type === "article");
   const articles = rows.map(rowToArticle);
   const preview = articles.map((article, index) => {
@@ -247,6 +386,7 @@ export async function POST(request: Request) {
   if (action !== "import") {
     return NextResponse.json({
       ok: true,
+      sourceFormat,
       summary: {
         rows: preview.length,
         valid: preview.filter((row) => row.valid).length,
@@ -255,7 +395,7 @@ export async function POST(request: Request) {
         new: preview.filter((row) => !row.duplicate).length,
         warnings: preview.reduce((count, row) => count + row.warnings.length, 0)
       },
-      preview: preview.slice(0, 12)
+      preview
     });
   }
 
@@ -294,5 +434,5 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, result: { imported, updated, skipped, failed, errors } });
+  return NextResponse.json({ ok: true, sourceFormat, result: { imported, updated, skipped, failed, errors } });
 }
