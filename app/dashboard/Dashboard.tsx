@@ -302,19 +302,45 @@ export function Dashboard({
   const [articleImportImages, setArticleImportImages] = useState(true);
   const [articleImportPreview, setArticleImportPreview] = useState<ImportPreviewRow[]>([]);
   const [articleImportSummary, setArticleImportSummary] = useState<ImportSummary | null>(null);
+  const [articleStatusFilter, setArticleStatusFilter] = useState<"all" | CmsStatus>("all");
+  const [articleCategoryFilter, setArticleCategoryFilter] = useState("all");
+  const [articleSort, setArticleSort] = useState<"order" | "newest" | "oldest" | "title">("newest");
+  const [articleAdminPage, setArticleAdminPage] = useState(1);
+  const [articleSelectedIds, setArticleSelectedIds] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const initialSelectionDone = useRef(false);
 
   const filteredItems = useMemo(() => {
-    return items
+    const rows = items
       .filter((item) => (contentTypes.includes(active as CmsContentType) ? item.type === active : true))
       .filter((item) => {
-        const haystack = `${item.titleAr} ${item.titleEn} ${item.slug} ${item.category}`.toLowerCase();
+        const haystack = `${item.titleAr} ${item.titleEn} ${item.slug} ${item.category} ${Array.isArray(item.meta?.tags) ? item.meta.tags.join(" ") : ""}`.toLowerCase();
         return haystack.includes(query.toLowerCase());
       })
-      .sort((a, b) => a.sortOrder - b.sortOrder);
-  }, [active, items, query]);
+      .filter((item) => active !== "article" || articleStatusFilter === "all" || item.status === articleStatusFilter)
+      .filter((item) => active !== "article" || articleCategoryFilter === "all" || item.category === articleCategoryFilter);
+
+    if (active === "article") {
+      return rows.sort((a, b) => {
+        if (articleSort === "newest") return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        if (articleSort === "oldest") return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+        if (articleSort === "title") return (a.titleAr || a.titleEn).localeCompare(b.titleAr || b.titleEn, "ar");
+        return a.sortOrder - b.sortOrder;
+      });
+    }
+    return rows.sort((a, b) => a.sortOrder - b.sortOrder);
+  }, [active, items, query, articleStatusFilter, articleCategoryFilter, articleSort]);
+
+  const articleAdminPageSize = 20;
+  const articleAdminPages = Math.max(1, Math.ceil(filteredItems.length / articleAdminPageSize));
+  const articleAdminRows = active === "article"
+    ? filteredItems.slice((Math.min(articleAdminPage, articleAdminPages) - 1) * articleAdminPageSize, Math.min(articleAdminPage, articleAdminPages) * articleAdminPageSize)
+    : filteredItems;
+  const articleFilterCategories = useMemo(
+    () => Array.from(new Set(items.filter((item) => item.type === "article").map((item) => item.category).filter(Boolean))).sort((a, b) => a.localeCompare(b, "ar")),
+    [items]
+  );
 
   const counts = useMemo(() => ({
     published: items.filter((item) => item.status === "published").length,
@@ -830,6 +856,35 @@ export function Dashboard({
     window.location.reload();
   }
 
+  async function runArticleBulk(action: "publish" | "draft" | "archive" | "changeCategory") {
+    if (!articleSelectedIds.length) {
+      setMessage("حدد مقالاً واحداً على الأقل.");
+      return;
+    }
+    let category = "";
+    if (action === "changeCategory") {
+      category = window.prompt("اكتب اسم التصنيف الجديد:")?.trim() ?? "";
+      if (!category) return;
+    }
+    if (action === "archive" && !window.confirm(`نقل ${articleSelectedIds.length} مقالاً إلى الأرشيف؟ يمكن استرجاعها لاحقاً.`)) return;
+
+    setBusy(true);
+    const response = await fetch("/api/admin/articles/bulk", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: articleSelectedIds, action, category })
+    });
+    const data = await response.json().catch(() => ({}));
+    setBusy(false);
+    if (!response.ok || !data.ok) {
+      setMessage(data.message ?? "تعذر تنفيذ الإجراء الجماعي.");
+      return;
+    }
+    setArticleSelectedIds([]);
+    setMessage(`تم تحديث ${data.updated ?? 0} مقالاً${data.skipped ? `، وتم تجاوز ${data.skipped}` : ""}.`);
+    window.location.reload();
+  }
+
   function dropMedia(event: React.DragEvent<HTMLFormElement>) {
     event.preventDefault();
     const fileInput = event.currentTarget.elements.namedItem("file");
@@ -1000,7 +1055,43 @@ export function Dashboard({
                   <div><h2>{typeLabel(active as CmsContentType)}: العناصر</h2><p>النشر والمسودات والترتيب محفوظة في قاعدة البيانات.</p></div>
                   <button className="dashboard-primary" type="button" onClick={() => startNew(active as CmsContentType)}><Plus size={17} /> جديد</button>
                 </div>
-                <ContentTable items={filteredItems} onEdit={editItem} onDelete={deleteItem} />
+                {active === "article" && <div className="cms-article-admin-toolbar">
+                  <select aria-label="فلترة الحالة" value={articleStatusFilter} onChange={(event) => { setArticleStatusFilter(event.target.value as "all" | CmsStatus); setArticleAdminPage(1); }}>
+                    <option value="all">كل الحالات</option>
+                    <option value="published">منشور</option>
+                    <option value="draft">مسودة</option>
+                    <option value="scheduled">مجدول</option>
+                    <option value="archived">مؤرشف</option>
+                  </select>
+                  <select aria-label="فلترة التصنيف" value={articleCategoryFilter} onChange={(event) => { setArticleCategoryFilter(event.target.value); setArticleAdminPage(1); }}>
+                    <option value="all">كل التصنيفات</option>
+                    {articleFilterCategories.map((category) => <option value={category} key={category}>{category}</option>)}
+                  </select>
+                  <select aria-label="ترتيب المقالات" value={articleSort} onChange={(event) => setArticleSort(event.target.value as typeof articleSort)}>
+                    <option value="newest">الأحدث تعديلاً</option>
+                    <option value="oldest">الأقدم</option>
+                    <option value="title">العنوان</option>
+                    <option value="order">الترتيب اليدوي</option>
+                  </select>
+                  <span className="cms-selection-count">{articleSelectedIds.length} محدد</span>
+                  <button className="cms-ghost-button" type="button" disabled={busy || !articleSelectedIds.length} onClick={() => void runArticleBulk("publish")}>نشر</button>
+                  <button className="cms-ghost-button" type="button" disabled={busy || !articleSelectedIds.length} onClick={() => void runArticleBulk("draft")}>مسودة</button>
+                  <button className="cms-ghost-button" type="button" disabled={busy || !articleSelectedIds.length} onClick={() => void runArticleBulk("changeCategory")}>تغيير التصنيف</button>
+                  <button className="cms-danger-button" type="button" disabled={busy || !articleSelectedIds.length} onClick={() => void runArticleBulk("archive")}>أرشفة</button>
+                </div>}
+                <ContentTable
+                  items={active === "article" ? articleAdminRows : filteredItems}
+                  onEdit={editItem}
+                  onDelete={deleteItem}
+                  selectable={active === "article"}
+                  selectedIds={articleSelectedIds}
+                  onSelectionChange={setArticleSelectedIds}
+                />
+                {active === "article" && articleAdminPages > 1 && <div className="cms-admin-pagination">
+                  <button type="button" disabled={articleAdminPage <= 1} onClick={() => setArticleAdminPage((page) => Math.max(1, page - 1))}>السابق</button>
+                  <span>صفحة {Math.min(articleAdminPage, articleAdminPages)} من {articleAdminPages}</span>
+                  <button type="button" disabled={articleAdminPage >= articleAdminPages} onClick={() => setArticleAdminPage((page) => Math.min(articleAdminPages, page + 1))}>التالي</button>
+                </div>}
               </section>
 
               <section className="dashboard-panel cms-panel">
@@ -1552,37 +1643,73 @@ export function Dashboard({
   );
 }
 
-function ContentTable({ items, onEdit, onDelete }: { items: CmsContentItem[]; onEdit: (item: CmsContentItem) => void; onDelete: (id: string) => void }) {
+function ContentTable({
+  items,
+  onEdit,
+  onDelete,
+  selectable = false,
+  selectedIds = [],
+  onSelectionChange
+}: {
+  items: CmsContentItem[];
+  onEdit: (item: CmsContentItem) => void;
+  onDelete: (id: string) => void;
+  selectable?: boolean;
+  selectedIds?: string[];
+  onSelectionChange?: (ids: string[]) => void;
+}) {
+  const allSelected = Boolean(items.length) && items.every((item) => selectedIds.includes(item.id));
+  function toggleAll(checked: boolean) {
+    if (!onSelectionChange) return;
+    const visibleIds = items.map((item) => item.id);
+    onSelectionChange(checked ? Array.from(new Set([...selectedIds, ...visibleIds])) : selectedIds.filter((id) => !visibleIds.includes(id)));
+  }
+  function toggleOne(id: string, checked: boolean) {
+    if (!onSelectionChange) return;
+    onSelectionChange(checked ? Array.from(new Set([...selectedIds, id])) : selectedIds.filter((value) => value !== id));
+  }
+  const statusLabel: Record<CmsStatus, string> = {
+    published: "منشور",
+    draft: "مسودة",
+    scheduled: "مجدول",
+    archived: "مؤرشف"
+  };
+
   return (
     <div className="table-wrap cms-table-wrap">
       <table>
         <thead>
           <tr>
+            {selectable && <th><input type="checkbox" aria-label="تحديد الكل" checked={allSelected} onChange={(event) => toggleAll(event.target.checked)} /></th>}
             <th>العنوان</th>
             <th>النوع</th>
             <th>الحالة</th>
-            <th>الترتيب</th>
+            <th>التصنيف</th>
+            <th>آخر تحديث</th>
             <th>إجراءات</th>
           </tr>
         </thead>
         <tbody>
           {items.map((item) => (
             <tr key={item.id}>
-              <td><strong>{item.titleAr}</strong><small>{item.slug}</small></td>
+              {selectable && <td><input type="checkbox" aria-label={`تحديد ${item.titleAr || item.titleEn}`} checked={selectedIds.includes(item.id)} onChange={(event) => toggleOne(item.id, event.target.checked)} /></td>}
+              <td><strong>{item.titleAr || item.titleEn}</strong><small>{item.slug}</small></td>
               <td>{typeLabel(item.type)}</td>
-              <td><span className={`status ${item.status === "published" ? "status-active" : "status-review"}`}><i />{item.status === "published" ? "منشور" : "مسودة"}</span></td>
-              <td>{item.sortOrder}</td>
+              <td><span className={`status ${item.status === "published" ? "status-active" : "status-review"}`}><i />{statusLabel[item.status]}</span></td>
+              <td>{item.category || "—"}</td>
+              <td>{new Date(item.updatedAt).toLocaleDateString("ar")}</td>
               <td>
                 <div className="cms-row-actions">
                   <button type="button" onClick={() => onEdit(item)}>تحرير</button>
-                  <button type="button" onClick={() => onDelete(item.id)} aria-label={`حذف ${item.titleAr}`}><Trash2 size={15} /></button>
+                  {item.type === "article" && item.id && <a href={`/dashboard/preview/article/${item.id}`} target="_blank" rel="noreferrer">معاينة</a>}
+                  <button type="button" onClick={() => onDelete(item.id)} aria-label={`حذف ${item.titleAr || item.titleEn}`}><Trash2 size={15} /></button>
                 </div>
               </td>
             </tr>
           ))}
+          {!items.length && <tr><td colSpan={selectable ? 7 : 6}>لا توجد عناصر مطابقة.</td></tr>}
         </tbody>
       </table>
     </div>
   );
 }
-
