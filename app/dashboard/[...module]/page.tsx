@@ -5,10 +5,11 @@ import { listActivityLogs, listContentItems, listDeletedContentItems, listFormSu
 import type { CmsContentType } from "@/lib/cms/types";
 import { Dashboard } from "../Dashboard";
 
-type DashboardTab = "overview" | CmsContentType | "media" | "redirects" | "trash" | "settings";
+type DashboardTab = "overview" | CmsContentType | "media" | "redirects" | "trash" | "settings" | "wordpress-import";
 
 const routeModules: Record<string, DashboardTab> = {
   articles: "article",
+  "import-wordpress": "wordpress-import",
   services: "service",
   courses: "course",
   projects: "project",
