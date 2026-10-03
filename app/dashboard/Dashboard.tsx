@@ -118,7 +118,7 @@ type MediaCategoryFilter = "all" | "images" | "logos" | "articles" | "courses";
 type ImagePlacement = "inline" | "hero" | "background" | "cover" | "gallery" | "floating";
 type DashboardTab = (typeof tabs)[number]["type"];
 type RichField = "bodyAr" | "bodyEn";
-type ImportPreviewRow = { row: number; title: string; slug: string; status: string; duplicate: boolean; valid: boolean; warnings: string[] };
+type ImportPreviewRow = { row: number; title: string; slug: string; status: string; category?: string; author?: string; date?: string; duplicate: boolean; valid: boolean; warnings: string[] };
 type ImportSummary = { rows: number; valid: number; invalid: number; existing: number; new: number; warnings: number };
 
 const imagePlacementLabels: Record<ImagePlacement, string> = {
@@ -791,7 +791,7 @@ export function Dashboard({
 
   async function runArticleImport(action: "preview" | "import") {
     if (!articleImportFile) {
-      setMessage("اختر ملف XLSX أو CSV أولاً.");
+      setMessage("اختر ملف WordPress XML/WXR أو XLSX/CSV أولاً.");
       return;
     }
     const formData = new FormData();
@@ -810,7 +810,7 @@ export function Dashboard({
     if (action === "preview") {
       setArticleImportSummary(data.summary ?? null);
       setArticleImportPreview(Array.isArray(data.preview) ? data.preview : []);
-      setMessage("تم فحص الملف. راجع المعاينة قبل الاستيراد.");
+      setMessage(data.sourceFormat === "wordpress-wxr" ? "تمت قراءة ملف WordPress بنجاح. راجع المقالات قبل الاستيراد." : "تم فحص الملف. راجع المعاينة قبل الاستيراد.");
       return;
     }
     const result = data.result as { imported?: number; updated?: number; skipped?: number; failed?: number; errors?: string[] } | undefined;
@@ -1218,10 +1218,10 @@ export function Dashboard({
                       <label>تاريخ النشر<input type="date" value={String(readMeta().date ?? "")} onChange={(event) => updateMetaField("date", event.target.value)} /></label>
                     </div>
                   </div>}
-                  {selected.type === "article" && <div className="cms-section-settings cms-import-export">
-                    <div className="panel-heading"><div><h3>Import / Export WordPress</h3><p>استيراد XLSX/CSV بمعاينة قبل الحفظ، وتصدير بصيغة CMS أو WordPress-Compatible.</p></div></div>
+                  {(selected.type === "article" || active === "article") && <div className="cms-section-settings cms-import-export">
+                    <div className="panel-heading"><div><h3>استيراد مقالات WordPress</h3><p>ارفع ملف التصدير الرسمي من WordPress بصيغة XML/WXR مباشرة، أو استخدم XLSX/CSV. ستظهر معاينة قبل الحفظ مع كشف المقالات المكررة.</p></div></div>
                     <div className="cms-form-row">
-                      <label>ملف المقالات<input type="file" accept=".xlsx,.xls,.csv" onChange={(event) => setArticleImportFile(event.target.files?.[0] ?? null)} /></label>
+                      <label>ملف المقالات<input type="file" accept=".xml,.wxr,.xlsx,.xls,.csv,application/xml,text/xml" onChange={(event) => { setArticleImportFile(event.target.files?.[0] ?? null); setArticleImportPreview([]); setArticleImportSummary(null); }} /></label>
                       <label>استراتيجية التكرار<select value={articleImportStrategy} onChange={(event) => setArticleImportStrategy(event.target.value as "skip" | "update" | "copy")}>
                         <option value="skip">Skip Existing - الأكثر أماناً</option>
                         <option value="update">Update Existing</option>
@@ -1229,11 +1229,11 @@ export function Dashboard({
                       </select></label>
                     </div>
                     <div className="cms-form-actions">
-                      <button className="cms-ghost-button" type="button" disabled={busy} onClick={() => runArticleImport("preview")}>Preview Import</button>
-                      <button className="dashboard-primary" type="button" disabled={busy || !articleImportPreview.length} onClick={() => runArticleImport("import")}>Import</button>
-                      <button className="cms-ghost-button" type="button" onClick={() => { window.location.href = "/api/admin/articles/import-export?mode=template"; }}>Download Template</button>
-                      <button className="cms-ghost-button" type="button" onClick={() => { window.location.href = "/api/admin/articles/import-export?format=cms"; }}>Export CMS XLSX</button>
-                      <button className="cms-ghost-button" type="button" onClick={() => { window.location.href = "/api/admin/articles/import-export?format=wordpress"; }}>Export WordPress XLSX</button>
+                      <button className="cms-ghost-button" type="button" disabled={busy} onClick={() => runArticleImport("preview")}>معاينة الملف</button>
+                      <button className="dashboard-primary" type="button" disabled={busy || !articleImportPreview.length} onClick={() => runArticleImport("import")}>استيراد المقالات</button>
+                      <button className="cms-ghost-button" type="button" onClick={() => { window.location.href = "/api/admin/articles/import-export?mode=template"; }}>تحميل قالب Excel</button>
+                      <button className="cms-ghost-button" type="button" onClick={() => { window.location.href = "/api/admin/articles/import-export?format=cms"; }}>تصدير CMS Excel</button>
+                      <button className="cms-ghost-button" type="button" onClick={() => { window.location.href = "/api/admin/articles/import-export?format=wordpress"; }}>تصدير WordPress Excel</button>
                     </div>
                     {articleImportSummary && <div className="cms-import-summary">
                       <span>Rows: {articleImportSummary.rows}</span>
@@ -1244,11 +1244,11 @@ export function Dashboard({
                       <span>Warnings: {articleImportSummary.warnings}</span>
                     </div>}
                     {articleImportPreview.length > 0 && <div className="table-wrap cms-table-wrap">
-                      <table><thead><tr><th>Row</th><th>Title</th><th>Slug</th><th>Status</th><th>Duplicate</th><th>Warnings</th></tr></thead><tbody>
-                        {articleImportPreview.map((row) => <tr key={`${row.row}-${row.slug}`}><td>{row.row}</td><td>{row.title}</td><td dir="ltr">{row.slug}</td><td>{row.status}</td><td>{row.duplicate ? "Yes" : "No"}</td><td>{row.warnings.join(", ") || "-"}</td></tr>)}
+                      <table><thead><tr><th>#</th><th>العنوان</th><th>الرابط</th><th>التصنيف</th><th>الكاتب</th><th>الحالة</th><th>مكرر؟</th><th>ملاحظات</th></tr></thead><tbody>
+                        {articleImportPreview.map((row) => <tr key={`${row.row}-${row.slug}`}><td>{row.row}</td><td>{row.title}</td><td dir="ltr">{row.slug}</td><td>{row.category || "-"}</td><td>{row.author || "-"}</td><td>{row.status}</td><td>{row.duplicate ? "نعم" : "لا"}</td><td>{row.warnings.join(", ") || "-"}</td></tr>)}
                       </tbody></table>
                     </div>}
-                    <p className="cms-form-note">يحافظ الاستيراد على HTML الأساسي، يزيل scripts/iframe والأحداث غير الآمنة، ولا يستورد الصور الخارجية كملفات محلية حالياً؛ يحفظ رابط الصورة كمرجع وتحذير ضمن المعاينة عند الحاجة.</p>
+                    <p className="cms-form-note">ملف WordPress المطلوب: Tools → Export → All content. يدعم WXR/XML الرسمي ويستورد العنوان، المحتوى، الملخص، الحالة، التاريخ، التصنيف، الوسوم، الكاتب، الصورة البارزة إن كانت موجودة في ملف التصدير، وحقول SEO الشائعة من Yoast وRank Math. الصور الخارجية تبقى كرابط مرجعي ولا تُنسخ إلى مكتبة الوسائط تلقائياً حالياً.</p>
                   </div>}
                   {selected.type === "service" && <div className="cms-section-settings">
                     <div className="panel-heading"><div><h3>حقول الخدمة</h3><p>حقول خاصة بالخدمات فقط: الأيقونة، المزايا، CTA، وترتيب الظهور.</p></div></div>
