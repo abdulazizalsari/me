@@ -1,0 +1,140 @@
+"use client";
+
+import { useState } from "react";
+import type { CmsLanguage } from "@/lib/cms/types";
+
+export function LanguagesClient({initialLanguages}:{initialLanguages:CmsLanguage[]}){
+  const [languages,setLanguages]=useState(initialLanguages);
+  const [message,setMessage]=useState("");
+  const [busy,setBusy]=useState("");
+
+  async function persist(language:CmsLanguage){
+    setBusy(language.code);
+    setMessage("");
+    const r=await fetch("/api/admin/translations",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        action:"language",
+        code:language.code,
+        nameAr:language.nameAr,
+        nameNative:language.nameNative,
+        direction:language.direction,
+        enabled:language.enabled,
+        sortOrder:language.sortOrder
+      })
+    });
+    const d=await r.json().catch(()=>({}));
+    setBusy("");
+    if(!r.ok){setMessage(d.message||"تعذر حفظ إعدادات اللغة.");return false;}
+    setMessage(`تم حفظ إعدادات اللغة: ${language.nameAr}`);
+    return true;
+  }
+
+  async function addLanguage(e:React.FormEvent<HTMLFormElement>){
+    e.preventDefault();
+    const form=e.currentTarget;
+    const fd=new FormData(form);
+    const code=String(fd.get("code")||"").trim();
+    const language:CmsLanguage={
+      code,
+      nameAr:String(fd.get("nameAr")||"").trim(),
+      nameNative:String(fd.get("nameNative")||"").trim(),
+      direction:fd.get("direction")==="rtl"?"rtl":"ltr",
+      enabled:true,
+      sortOrder:Number(fd.get("sortOrder")||100)
+    };
+    if(languages.some(item=>item.code===code)){
+      setMessage("رمز اللغة موجود مسبقًا.");
+      return;
+    }
+    if(await persist(language)){
+      setLanguages(cur=>[...cur,language].sort((a,b)=>a.sortOrder-b.sortOrder||a.code.localeCompare(b.code)));
+      form.reset();
+    }
+  }
+
+  async function toggleLanguage(language:CmsLanguage){
+    if(language.code==="ar")return;
+    const next={...language,enabled:!language.enabled};
+    if(await persist(next))setLanguages(cur=>cur.map(item=>item.code===next.code?next:item));
+  }
+
+  async function updateDirection(language:CmsLanguage,direction:"rtl"|"ltr"){
+    if(language.code==="ar")return;
+    const next={...language,direction};
+    if(await persist(next))setLanguages(cur=>cur.map(item=>item.code===next.code?next:item));
+  }
+
+  async function updateOrder(language:CmsLanguage,sortOrder:number){
+    const next={...language,sortOrder};
+    if(await persist(next))setLanguages(cur=>cur.map(item=>item.code===next.code?next:item).sort((a,b)=>a.sortOrder-b.sortOrder||a.code.localeCompare(b.code)));
+  }
+
+  async function removeLanguage(language:CmsLanguage){
+    if(language.code==="ar")return;
+    if(!confirm(`حذف لغة «${language.nameAr}»؟ سيتم حذف إعداد اللغة وترجماتها المرتبطة بها.`))return;
+    setBusy(language.code);
+    const r=await fetch(`/api/admin/translations?code=${encodeURIComponent(language.code)}`,{method:"DELETE"});
+    const d=await r.json().catch(()=>({}));
+    setBusy("");
+    if(!r.ok){setMessage(d.message||"تعذر حذف اللغة.");return;}
+    setLanguages(cur=>cur.filter(item=>item.code!==language.code));
+    setMessage(`تم حذف اللغة: ${language.nameAr}`);
+  }
+
+  return <div className="admin-stack">
+    <section className="admin-card admin-language-manager">
+      <div className="admin-card-heading">
+        <div>
+          <h2>إضافة لغة جديدة</h2>
+          <p className="admin-muted">استخدم رمز ISO مختصرًا مثل en أو tr أو fr. بعد الإضافة ستظهر اللغة تلقائيًا داخل جدول الترجمة.</p>
+        </div>
+      </div>
+      <form className="admin-add-language admin-language-create" onSubmit={addLanguage}>
+        <label>رمز اللغة<input name="code" dir="ltr" placeholder="fr" pattern="[a-z]{2,3}(-[A-Z]{2})?" required/></label>
+        <label>الاسم بالعربية<input name="nameAr" placeholder="الفرنسية" required/></label>
+        <label>الاسم الأصلي<input name="nameNative" placeholder="Français" required/></label>
+        <label>الاتجاه<select name="direction" defaultValue="ltr"><option value="ltr">LTR</option><option value="rtl">RTL</option></select></label>
+        <label>الترتيب<input name="sortOrder" type="number" min="1" defaultValue="100"/></label>
+        <button className="admin-primary-button" type="submit">إضافة اللغة</button>
+      </form>
+      {message&&<p className="admin-message">{message}</p>}
+    </section>
+
+    <section className="admin-card">
+      <div className="admin-card-heading">
+        <div><h2>لغات الموقع</h2><p className="admin-muted">التعطيل يخفي اللغة من الاستخدام العام مع إبقاء بياناتها. الحذف يزيل إعداد اللغة نهائيًا.</p></div>
+      </div>
+      <div className="admin-table-wrap">
+        <table className="admin-languages-table">
+          <thead><tr><th>اللغة</th><th>الرمز</th><th>الاتجاه</th><th>الترتيب</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
+          <tbody>
+            {languages.map(language=>{
+              const primary=language.code==="ar";
+              return <tr key={language.code}>
+                <td><strong>{language.nameAr}</strong><small>{language.nameNative}{primary?" · اللغة الأم":""}</small></td>
+                <td><code>{language.code}</code></td>
+                <td>
+                  <select value={language.direction} disabled={primary||busy===language.code} onChange={e=>updateDirection(language,e.target.value==="rtl"?"rtl":"ltr")}>
+                    <option value="ltr">LTR</option><option value="rtl">RTL</option>
+                  </select>
+                </td>
+                <td><input className="admin-language-order" type="number" min="1" value={language.sortOrder} disabled={busy===language.code} onChange={e=>setLanguages(cur=>cur.map(item=>item.code===language.code?{...item,sortOrder:Number(e.target.value)}:item))} onBlur={e=>updateOrder({...language,sortOrder:Number(e.target.value)},Number(e.target.value))}/></td>
+                <td><span className={`admin-status ${language.enabled?"published":"draft"}`}>{language.enabled?"مفعلة":"متوقفة"}</span></td>
+                <td>
+                  <div className="admin-language-actions">
+                    {primary?<span className="admin-muted">ثابتة</span>:<>
+                      <button type="button" disabled={busy===language.code} onClick={()=>toggleLanguage(language)}>{language.enabled?"إيقاف":"تفعيل"}</button>
+                      <button className="danger" type="button" disabled={busy===language.code} onClick={()=>removeLanguage(language)}>حذف</button>
+                    </>}
+                  </div>
+                </td>
+              </tr>;
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>;
+}

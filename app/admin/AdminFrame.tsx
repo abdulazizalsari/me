@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, FileText, Home, Languages, LogOut, Menu, Moon, PanelsTopLeft, Save, Sun, Users, X, Inbox } from "lucide-react";
+import { BookOpen, FileText, Globe2, Home, Languages, LogOut, Menu, Moon, PanelsTopLeft, Save, Sun, Users, X, Inbox } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { CmsRole } from "@/lib/cms/types";
 
@@ -11,6 +11,7 @@ const items = [
   { href: "/admin/content", label: "المحتوى", icon: FileText, roles: ["admin","editor"] },
   { href: "/admin/pages", label: "محرر الصفحات", icon: PanelsTopLeft, roles: ["admin","editor"] },
   { href: "/admin/translations", label: "الترجمة", icon: Languages, roles: ["admin","editor"] },
+  { href: "/admin/languages", label: "اللغات", icon: Globe2, roles: ["admin"] },
   { href: "/admin/requests", label: "الطلبات", icon: Inbox, roles: ["admin","editor"] },
   { href: "/admin/users", label: "المستخدمون", icon: Users, roles: ["admin"] },
   { href: "/admin/backup", label: "النسخ الاحتياطي", icon: Save, roles: ["admin"] }

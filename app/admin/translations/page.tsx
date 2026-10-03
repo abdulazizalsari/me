@@ -1,2 +1,16 @@
-import { redirect } from "next/navigation";import { getCurrentCmsUser } from "@/lib/cms/auth";import { listLanguages,listTranslationEntries } from "@/lib/cms/translations";import { AdminFrame } from "../AdminFrame";import { AdminPageHeader } from "../AdminPageHeader";import { TranslationsClient } from "./TranslationsClient";
-export default async function Page(){const user=await getCurrentCmsUser();if(!user)redirect("/admin/login");const [languages,entries]=await Promise.all([listLanguages(),listTranslationEntries()]);return <AdminFrame role={user.role} email={user.email} displayName={user.displayName}><AdminPageHeader title="الترجمة" description="العربية هي اللغة الأم، وكل لغة مضافة تظهر كعمود مستقل. لا تغيّر key عند التصدير والترجمة الخارجية."/><TranslationsClient initialLanguages={languages} initialEntries={entries} role={user.role}/></AdminFrame>;}
+import { redirect } from "next/navigation";
+import { getCurrentCmsUser } from "@/lib/cms/auth";
+import { listLanguages,listTranslationEntries } from "@/lib/cms/translations";
+import { AdminFrame } from "../AdminFrame";
+import { AdminPageHeader } from "../AdminPageHeader";
+import { TranslationsClient } from "./TranslationsClient";
+
+export default async function Page(){
+  const user=await getCurrentCmsUser();
+  if(!user)redirect("/admin/login");
+  const [languages,entries]=await Promise.all([listLanguages(),listTranslationEntries()]);
+  return <AdminFrame role={user.role} email={user.email} displayName={user.displayName}>
+    <AdminPageHeader title="الترجمة" description="العربية هي اللغة الأم، وكل لغة مفعلة تظهر كعمود مستقل. إضافة اللغات وإيقافها أو حذفها أصبحت في قسم «اللغات» المستقل."/>
+    <TranslationsClient initialLanguages={languages} initialEntries={entries}/>
+  </AdminFrame>;
+}
