@@ -15,6 +15,12 @@ export type BlogSettings = {
   titleEn: string;
   introAr: string;
   introEn: string;
+  seoTitleAr: string;
+  seoTitleEn: string;
+  metaDescriptionAr: string;
+  metaDescriptionEn: string;
+  ogImage: string;
+  noindex: boolean;
   articlesPerPage: number;
   showExcerpt: boolean;
   showAuthor: boolean;
@@ -42,6 +48,12 @@ export const defaultBlogSettings: BlogSettings = {
   titleEn: "Practical Insights for Business and the Digital World",
   introAr: "مقالات وتحليلات وأفكار عملية في التسويق الرقمي، تطوير الأعمال، التجارة الدولية، الاستراتيجية، والتدريب.",
   introEn: "Practical articles, analysis, and ideas on digital marketing, business development, international trade, strategy, and training.",
+  seoTitleAr: "رؤى | عبدالعزيز الصاري",
+  seoTitleEn: "Insights | AbdulAziz Al-Sari",
+  metaDescriptionAr: "مقالات ورؤى عملية في التسويق الرقمي وتطوير الأعمال والتجارة الدولية.",
+  metaDescriptionEn: "Practical insights on digital marketing, business development, and international trade.",
+  ogImage: "",
+  noindex: false,
   articlesPerPage: 6,
   showExcerpt: true,
   showAuthor: true,
@@ -104,6 +116,12 @@ export function blogSettingsFromItems(items: CmsContentItem[]): BlogSettings {
     titleEn: text(meta.titleEn, item?.titleEn || defaultBlogSettings.titleEn),
     introAr: text(meta.introAr, item?.summaryAr || defaultBlogSettings.introAr),
     introEn: text(meta.introEn, item?.summaryEn || defaultBlogSettings.introEn),
+    seoTitleAr: text(meta.seoTitleAr, defaultBlogSettings.seoTitleAr),
+    seoTitleEn: text(meta.seoTitleEn, defaultBlogSettings.seoTitleEn),
+    metaDescriptionAr: text(meta.metaDescriptionAr, defaultBlogSettings.metaDescriptionAr),
+    metaDescriptionEn: text(meta.metaDescriptionEn, defaultBlogSettings.metaDescriptionEn),
+    ogImage: text(meta.ogImage),
+    noindex: bool(meta.noindex, false),
     articlesPerPage: number(meta.articlesPerPage, defaultBlogSettings.articlesPerPage, 1, 30),
     showExcerpt: bool(meta.showExcerpt, true),
     showAuthor: bool(meta.showAuthor, true),
