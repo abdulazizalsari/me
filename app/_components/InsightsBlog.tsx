@@ -230,7 +230,7 @@ function StandardArticleCard({ article, locale, index = 0, settings }: { article
       <div className="insight-card-body">
         <CardMeta article={article} locale={locale} settings={settings} />
         <h3 className="h3"><a href={withLocale(locale, `/ruaa/${article.slug}`)}>{article.title[locale]}</a></h3>
-        {settings?.showExcerpt !== false && {settings?.showExcerpt !== false && <p className="muted">{article.excerpt[locale]}</p>}}
+        {settings?.showExcerpt !== false && <p className="muted">{article.excerpt[locale]}</p>}
         <a className="text-link" href={withLocale(locale, `/ruaa/${article.slug}`)}><Arrow size={17} aria-hidden="true" />{locale === "ar" ? "متابعة القراءة" : "Continue reading"}</a>
       </div>
     </article>
