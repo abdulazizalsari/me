@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans } from "next/font/google";
+import { headers } from "next/headers";
 import "@fontsource-variable/noto-kufi-arabic";
 import "./globals.css";
 import { siteUrl } from "@/data/site";
 import { getContentBySlug } from "@/lib/cms/database";
 import ContentProtection from "@/components/security/ContentProtection";
+import ScreenGuard from "@/components/security/ScreenGuard";
+import { isScreenGuardCrawler } from "@/lib/security/screen-guard-config";
 import TrackingManager from "@/components/integrations/TrackingManager";
 import { integrationConfigFromMeta } from "@/lib/integrations";
 
@@ -19,8 +22,12 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const integrationItem = await getContentBySlug("integration", "site-integrations");
+  const [integrationItem, requestHeaders] = await Promise.all([
+    getContentBySlug("integration", "site-integrations"),
+    headers()
+  ]);
   const config = integrationConfigFromMeta(integrationItem?.meta);
+  const skipScreenGuard = isScreenGuardCrawler(requestHeaders.get("user-agent") ?? "");
 
   return (
     <html lang="ar" dir="rtl" className={plex.variable}>
@@ -29,14 +36,18 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         {config.bingEnabled && config.bingVerification && <meta name="msvalidate.01" content={config.bingVerification} />}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(() => { const path = location.pathname; const en = path === "/en" || path.startsWith("/en/"); const tr = path === "/tr" || path.startsWith("/tr/"); document.documentElement.lang = en ? "en" : tr ? "tr" : "ar"; document.documentElement.dir = en || tr ? "ltr" : "rtl"; })();`
+            __html: `(() => { const path = location.pathname; const en = path === "/en" || path.startsWith("/en/"); document.documentElement.lang = en ? "en" : "ar"; document.documentElement.dir = en ? "ltr" : "rtl"; })();`
           }}
         />
       </head>
       <body>
         <TrackingManager config={config} />
-        <ContentProtection />
-        {children}
+        {skipScreenGuard ? children : (
+          <>
+            <ContentProtection />
+            <ScreenGuard>{children}</ScreenGuard>
+          </>
+        )}
       </body>
     </html>
   );
