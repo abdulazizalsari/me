@@ -15,6 +15,7 @@ import { articleTags, blogSettingsFromItems, taxonomySlug, type BlogSettings } f
 import { sanitizeCmsHtml, stripHtml } from "@/lib/cms/sanitize";
 import { siteUrl } from "@/data/site";
 import { RotatingImportantArticles } from "@/app/_components/RotatingImportantArticles";
+import { RandomArticlePopup } from "@/app/_components/RandomArticlePopup";
 
 type LocalizedText = Record<Locale, string>;
 
@@ -570,6 +571,21 @@ export function EditorialInsightsPage({ locale, cmsItems = [], searchParams = {}
           autoRotate={settings.importantAutoRotate}
         />
       )}
+
+      <RandomArticlePopup
+        locale={locale}
+        intervalSeconds={12}
+        articles={allArticles.map((article) => ({
+          slug: article.slug,
+          href: withLocale(locale, `/ruaa/${article.slug}`),
+          title: article.title[locale],
+          category: article.category[locale],
+          image: article.image,
+          imageAlt: article.imageAlt?.[locale] || article.title[locale],
+          author: article.author,
+          readingMinutes: readingMinutes(article, locale)
+        }))}
+      />
     </>
   );
 }
