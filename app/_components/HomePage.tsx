@@ -69,7 +69,7 @@ function cmsCourses(items: CmsContentItem[]) {
   }));
 }
 
-const homeSectionKeys = ["hero", "intro", "experience", "services", "stats", "training", "expertise", "insights", "cta"] as const;
+const homeSectionKeys = ["hero", "intro", "experience", "services", "stats", "relatedProjects", "training", "expertise", "insights", "cta"] as const;
 
 function sectionState(meta: Record<string, unknown> | undefined, key: (typeof homeSectionKeys)[number]) {
   const sections = Array.isArray(meta?.homeSections) ? meta.homeSections as Record<string, unknown>[] : [];
