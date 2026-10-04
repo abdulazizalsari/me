@@ -349,42 +349,47 @@ export function HomeInsightsSection({ locale, cmsItems, homepageMeta }: { locale
   const importantArticles = selectImportant(articles, 6);
 
   return (
-    <section className="section home-important-articles" aria-labelledby="home-important-articles-title">
+    <section className="home-editorial-six" aria-labelledby="home-editorial-six-title">
       <div className="container">
-        <div className="home-important-heading">
-          <div className="home-important-title-row">
-            <h2 className="h2" id="home-important-articles-title">{ar ? "أهم المقالات" : "Important Articles"}</h2>
-            <span aria-hidden="true" />
+        <div className="home-editorial-six-frame">
+          <div className="home-editorial-six-head">
+            <span className="home-editorial-six-line" aria-hidden="true" />
+            <h2 id="home-editorial-six-title">{ar ? "أهم المقالات" : "Important Articles"}</h2>
           </div>
-          {homepageMeta?.insightsShowAllButton !== false && (
-            <a className="home-important-view-all" href={withLocale(locale, "/ruaa")}>
-              {ar ? "عرض جميع المقالات" : "View all articles"}
-            </a>
-          )}
-        </div>
 
-        <div className="home-important-grid">
-          {importantArticles.map((article, index) => (
-            <a className="home-important-card" href={withLocale(locale, `/ruaa/${article.slug}`)} key={article.slug}>
-              <span className="home-important-number">{index + 1}</span>
-              <span className="home-important-copy">
-                <strong>{article.title[locale]}</strong>
-                <small>
-                  {settings.showAuthor && <span>{article.author}</span>}
-                  {settings.showReadingTime && <span>{readingMinutes(article, locale)} {ar ? "دقائق قراءة" : "min read"}</span>}
-                </small>
-                <em>{article.category[locale]}</em>
-              </span>
-              <span className="home-important-media">
-                <Image
-                  src={article.image}
-                  alt={article.imageAlt?.[locale] || article.title[locale]}
-                  fill
-                  sizes="(max-width: 720px) 100vw, 150px"
-                />
-              </span>
-            </a>
-          ))}
+          <div className="home-editorial-six-grid">
+            {importantArticles.map((article, index) => (
+              <a className="home-editorial-six-card" href={withLocale(locale, `/ruaa/${article.slug}`)} key={article.slug}>
+                <span className="home-editorial-six-media">
+                  <Image
+                    src={article.image}
+                    alt={article.imageAlt?.[locale] || article.title[locale]}
+                    fill
+                    sizes="(max-width: 720px) 104px, 120px"
+                  />
+                </span>
+
+                <span className="home-editorial-six-copy" dir={ar ? "rtl" : "ltr"}>
+                  <strong>{article.title[locale]}</strong>
+                  <small>
+                    {settings.showAuthor && <span>{article.author}</span>}
+                    {settings.showReadingTime && <span>{readingMinutes(article, locale)} {ar ? "دقائق قراءة" : "min read"}</span>}
+                  </small>
+                  <em>{article.category[locale]}</em>
+                </span>
+
+                <span className="home-editorial-six-number">{index + 1}</span>
+              </a>
+            ))}
+          </div>
+
+          {homepageMeta?.insightsShowAllButton !== false && (
+            <div className="home-editorial-six-footer">
+              <a href={withLocale(locale, "/ruaa")}>
+                {ar ? "عرض جميع المقالات" : "View all articles"}
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </section>
