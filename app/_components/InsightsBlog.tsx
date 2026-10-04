@@ -14,6 +14,7 @@ import { ArticleShare } from "@/app/_components/ArticleShare";
 import { articleTags, blogSettingsFromItems, taxonomySlug, type BlogSettings } from "@/lib/cms/blog";
 import { sanitizeCmsHtml, stripHtml } from "@/lib/cms/sanitize";
 import { siteUrl } from "@/data/site";
+import { RotatingImportantArticles } from "@/app/_components/RotatingImportantArticles";
 
 type LocalizedText = Record<Locale, string>;
 
@@ -381,6 +382,7 @@ export function EditorialInsightsPage({ locale, cmsItems = [], searchParams = {}
   const query = asText(Array.isArray(searchParams.q) ? searchParams.q[0] : searchParams.q);
   const activeTag = asText(Array.isArray(searchParams.tag) ? searchParams.tag[0] : searchParams.tag);
   const currentPage = Math.max(1, Number(Array.isArray(searchParams.page) ? searchParams.page[0] : searchParams.page) || 1);
+
   const searched = allArticles.filter((article) => {
     if (activeCategory && article.category[locale] !== activeCategory) return false;
     if (activeTag && !article.tags.some((tag) => tag.toLowerCase() === activeTag.toLowerCase())) return false;
@@ -388,51 +390,186 @@ export function EditorialInsightsPage({ locale, cmsItems = [], searchParams = {}
     const haystack = `${article.title[locale]} ${article.excerpt[locale]} ${stripHtml(article.body[locale])} ${article.category[locale]} ${article.tags.join(" ")} ${article.author}`.toLowerCase();
     return haystack.includes(query.toLowerCase());
   });
+
   const featured = selectFeatured(allArticles);
-  const secondary = allArticles.filter((article) => article.slug !== featured?.slug).sort(byEditorialPriority).slice(0, 2);
+  const showcaseSmall = allArticles
+    .filter((article) => article.slug !== featured?.slug)
+    .sort(byEditorialPriority)
+    .slice(0, 4);
+
+  const newest = [...searched].sort(newestFirst);
+  const sectionTwoArticles = newest.filter((article) => article.slug !== featured?.slug).slice(0, 4);
+  const sectionTwoSlugs = new Set(sectionTwoArticles.map((article) => article.slug));
+  const sectionThreePool = newest.filter((article) => article.slug !== featured?.slug && !sectionTwoSlugs.has(article.slug));
+  const sectionThreeArticles = (sectionThreePool.length >= 4 ? sectionThreePool : newest.filter((article) => article.slug !== featured?.slug)).slice(0, 4);
+
   const latestPool = searched.filter((article) => article.slug !== featured?.slug).sort(newestFirst);
   const pageSizeValue = settings.articlesPerPage;
   const totalPages = Math.max(1, Math.ceil(latestPool.length / pageSizeValue));
   const pageArticles = latestPool.slice((currentPage - 1) * pageSizeValue, currentPage * pageSizeValue);
+  const importantPool = [...allArticles].sort(byEditorialPriority);
+
+  const categoryCounts = categories.map((category) => ({
+    category,
+    count: allArticles.filter((article) => article.category[locale] === category).length
+  }));
+
+  const hasFilter = Boolean(activeCategory || activeTag || query);
+
   return (
     <>
-      <section className="insights-editorial-hero">
+      <section className="blog-reference-intro">
         <div className="container">
-          <p className="eyebrow"><Newspaper size={17} aria-hidden="true" />{ar ? "رؤى" : "Insights"}</p>
-          <h1 className="h1">{ar ? settings.titleAr : settings.titleEn}</h1>
-          <p className="lead">{ar ? settings.introAr : settings.introEn}</p>
-          {settings.showCategories && <CategoryNav locale={locale} categories={categories} activeCategory={activeCategory} query={query} />}
-        </div>
-      </section>
-      <section className="section insights-section blog-home" aria-labelledby="latest-insights-title">
-        <div className="container">
-          <InsightsTicker locale={locale} articles={allArticles} count={6} />
-          <AdSlot config={integrationConfig} placement="insightsTop" locale={locale} />
-          {settings.showFeatured && <div className="featured-stories-grid">
-            {featured && <FeaturedArticle article={featured} locale={locale} settings={settings} />}
-            <div className="secondary-stories">
-              {secondary.map((article) => <FeaturedArticle article={article} locale={locale} compact settings={settings} key={article.slug} />)}
-            </div>
-          </div>}
-          <div className="insights-layout editorial-blog-layout" id="article-grid">
-            <main className="blog-main">
-              <div className="blog-section-heading">
-                <div>
-                  <p className="eyebrow">{ar ? "أحدث المقالات" : "Latest articles"}</p>
-                  <h2 className="h2" id="latest-insights-title">{activeCategory || activeTag || query ? (ar ? "نتائج التصفح" : "Browsing results") : (ar ? "أحدث المقالات" : "Latest articles")}</h2>
-                </div>
-                {settings.showSearch && <SearchBox locale={locale} query={query} category={activeCategory} tag={activeTag} />}
-              </div>
-              <div className="latest-articles-grid">
-                {pageArticles.map((article, index) => index % 3 === 0 ? <HorizontalArticleCard article={article} locale={locale} index={index} settings={settings} key={article.slug} /> : <StandardArticleCard article={article} locale={locale} index={index} settings={settings} key={article.slug} />)}
-              </div>
-              {!pageArticles.length && <div className="empty-blog-state">{ar ? "لا توجد مقالات مطابقة حالياً." : "No matching articles yet."}</div>}
-              <Pagination locale={locale} currentPage={currentPage} totalPages={totalPages} category={activeCategory} tag={activeTag} query={query} />
-            </main>
-            <BlogSidebar locale={locale} articles={allArticles} categories={categories} settings={settings} />
+          <div className="blog-reference-intro-copy">
+            <p className="eyebrow"><Newspaper size={17} aria-hidden="true" />{ar ? "رؤى" : "Insights"}</p>
+            <h1 className="h1">{ar ? settings.titleAr : settings.titleEn}</h1>
+            <p className="lead">{ar ? settings.introAr : settings.introEn}</p>
+          </div>
+          <div className="blog-reference-tools">
+            {settings.showSearch && <SearchBox locale={locale} query={query} category={activeCategory} tag={activeTag} />}
+            {settings.showCategories && <CategoryNav locale={locale} categories={categories} activeCategory={activeCategory} query={query} />}
           </div>
         </div>
       </section>
+
+      <section className="blog-showcase-section" aria-label={ar ? "مختارات رؤى" : "Featured insights"}>
+        <div className="container">
+          <InsightsTicker locale={locale} articles={allArticles} count={6} />
+          <AdSlot config={integrationConfig} placement="insightsTop" locale={locale} />
+          {settings.showFeatured && featured && (
+            <div className="blog-showcase-grid">
+              <a className="blog-showcase-main" href={withLocale(locale, `/ruaa/${featured.slug}`)}>
+                <Image src={featured.image} alt={featured.imageAlt?.[locale] || featured.title[locale]} fill priority sizes="(max-width: 900px) 100vw, 54vw" />
+                <span className="blog-showcase-overlay" />
+                <span className="blog-showcase-content">
+                  <em>{featured.category[locale]}</em>
+                  <strong>{featured.title[locale]}</strong>
+                  <small>{settings.showReadingTime ? `${readingMinutes(featured, locale)} ${ar ? "دقائق قراءة" : "min read"}` : dateLabel(featured.date, locale)}</small>
+                </span>
+              </a>
+              <div className="blog-showcase-small-grid">
+                {showcaseSmall.map((article) => (
+                  <a className="blog-showcase-small" href={withLocale(locale, `/ruaa/${article.slug}`)} key={article.slug}>
+                    <Image src={article.image} alt={article.imageAlt?.[locale] || article.title[locale]} fill sizes="(max-width: 900px) 50vw, 22vw" />
+                    <span className="blog-showcase-overlay" />
+                    <span className="blog-showcase-content">
+                      <em>{article.category[locale]}</em>
+                      <strong>{article.title[locale]}</strong>
+                      <small>{readingMinutes(article, locale)} {ar ? "دقائق قراءة" : "min read"}</small>
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="blog-reference-section-two" aria-labelledby="section-two-title">
+        <div className="container blog-reference-two-layout">
+          <main>
+            <div className="blog-reference-heading">
+              <div>
+                <p className="eyebrow">{ar ? "جديد رؤى" : "Fresh insights"}</p>
+                <h2 className="h2" id="section-two-title">{hasFilter ? (ar ? "نتائج التصفح" : "Browsing results") : (ar ? "أحدث المقالات" : "Latest articles")}</h2>
+              </div>
+              <a className="text-link" href="#all-articles">{ar ? "مشاهدة الكل" : "View all"}</a>
+            </div>
+            <div className="blog-reference-two-grid">
+              {sectionTwoArticles.map((article) => (
+                <a className="blog-reference-two-card" href={withLocale(locale, `/ruaa/${article.slug}`)} key={article.slug}>
+                  <span className="blog-reference-two-media">
+                    <Image src={article.image} alt={article.imageAlt?.[locale] || article.title[locale]} fill sizes="(max-width: 760px) 42vw, 240px" />
+                  </span>
+                  <span className="blog-reference-two-copy">
+                    <em>{article.category[locale]}</em>
+                    <strong>{article.title[locale]}</strong>
+                    <small>{article.author} • {readingMinutes(article, locale)} {ar ? "دقائق قراءة" : "min read"}</small>
+                  </span>
+                </a>
+              ))}
+            </div>
+          </main>
+          {settings.showCategories && (
+            <aside className="blog-category-rail" aria-label={ar ? "تصفح حسب الفئة" : "Browse by category"}>
+              <h2>{ar ? "تصفح حسب الفئة" : "Browse by category"}</h2>
+              <a className={!activeCategory ? "active" : ""} href={withLocale(locale, "/ruaa")}>
+                <strong>{ar ? "كل المقالات" : "All articles"}</strong><span>{allArticles.length}</span>
+              </a>
+              {categoryCounts.map(({ category, count }) => (
+                <a className={activeCategory === category ? "active" : ""} href={withLocale(locale, `/ruaa/category/${taxonomySlug(category)}`)} key={category}>
+                  <strong>{category}</strong><span>{count}</span>
+                </a>
+              ))}
+            </aside>
+          )}
+        </div>
+      </section>
+
+      <section className="blog-reference-section-three" id="all-articles" aria-labelledby="section-three-title">
+        <div className="container blog-reference-three-layout">
+          <main>
+            <div className="blog-reference-heading">
+              <div>
+                <p className="eyebrow">{ar ? "مختارات جديدة" : "New selections"}</p>
+                <h2 className="h2" id="section-three-title">{ar ? "أحدث المقالات" : "Latest articles"}</h2>
+              </div>
+            </div>
+            <div className="blog-dark-card-grid">
+              {sectionThreeArticles.map((article) => (
+                <a className="blog-dark-card" href={withLocale(locale, `/ruaa/${article.slug}`)} key={article.slug}>
+                  <span className="blog-dark-card-media">
+                    <Image src={article.image} alt={article.imageAlt?.[locale] || article.title[locale]} fill sizes="(max-width: 760px) 100vw, 36vw" />
+                    <em>{article.category[locale]}</em>
+                  </span>
+                  <span className="blog-dark-card-copy">
+                    <strong>{article.title[locale]}</strong>
+                    <small>{article.author} • {readingMinutes(article, locale)} {ar ? "دقائق قراءة" : "min read"}</small>
+                    <i aria-hidden="true">←</i>
+                  </span>
+                </a>
+              ))}
+            </div>
+
+            {pageArticles.length > 4 && (
+              <div className="blog-more-articles">
+                <h3>{ar ? "المزيد من المقالات" : "More articles"}</h3>
+                <div className="latest-articles-grid">
+                  {pageArticles.slice(4).map((article, index) => <StandardArticleCard article={article} locale={locale} index={index} settings={settings} key={article.slug} />)}
+                </div>
+              </div>
+            )}
+            {!pageArticles.length && <div className="empty-blog-state">{ar ? "لا توجد مقالات مطابقة حالياً." : "No matching articles yet."}</div>}
+            <Pagination locale={locale} currentPage={currentPage} totalPages={totalPages} category={activeCategory} tag={activeTag} query={query} />
+          </main>
+
+          <aside className="blog-sections-rail" aria-label={ar ? "أقسام رؤى" : "Insights sections"}>
+            <div className="blog-sections-rail-title">
+              <span aria-hidden="true">▦</span>
+              <h2>{ar ? "أقسام رؤى" : "Insights sections"}</h2>
+            </div>
+            <div className="blog-sections-rail-list">
+              {categoryCounts.slice(0, 6).map(({ category, count }, index) => (
+                <a href={withLocale(locale, `/ruaa/category/${taxonomySlug(category)}`)} key={category}>
+                  <span className="blog-section-icon">{String(index + 1).padStart(2, "0")}</span>
+                  <span><strong>{category}</strong><small>{count} {ar ? "مقال" : "articles"}</small></span>
+                  <i aria-hidden="true">←</i>
+                </a>
+              ))}
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      {settings.showImportant && (
+        <RotatingImportantArticles
+          locale={locale}
+          articles={importantPool}
+          visibleCount={settings.importantCardsCount}
+          rotateSeconds={settings.importantRotateSeconds}
+          autoRotate={settings.importantAutoRotate}
+        />
+      )}
     </>
   );
 }
