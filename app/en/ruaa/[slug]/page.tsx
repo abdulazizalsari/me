@@ -6,19 +6,24 @@ import { getContentBySlug, isContentPublic, listContentItems } from "@/lib/cms/d
 import { articleMetadata } from "@/lib/cms/article-metadata";
 import { hasContentTranslation } from "@/lib/cms/content-language";
 
+function decodeRouteSlug(value: string) {
+  try { return decodeURIComponent(value); } catch { return value; }
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const article = await getContentBySlug("article", slug);
   if (!article || !isContentPublic(article) || article.meta?.englishStatus !== "published" || !hasContentTranslation(article, "en")) {
     return { robots: { index: false, follow: false } };
   }
-  return articleMetadata(article, "en", slug);
+  return articleMetadata(article, "en", article.slug);
 }
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const decodedSlug = decodeRouteSlug(slug);
   const article = await getContentBySlug("article", slug);
   if (!article || !isContentPublic(article) || article.meta?.englishStatus !== "published" || !hasContentTranslation(article, "en")) notFound();
-  if (article.slug !== slug) permanentRedirect(`/en/ruaa/${encodeURIComponent(article.slug)}`);
+  if (article.slug !== decodedSlug) permanentRedirect(`/en/ruaa/${encodeURIComponent(article.slug)}`);
   return <LocaleShell locale="en"><ArticlePage locale="en" slug={article.slug} cmsItems={await listContentItems({ publishedOnly: true })} /></LocaleShell>;
 }
