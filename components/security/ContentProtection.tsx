@@ -47,11 +47,16 @@ export default function ContentProtection() {
     observer.observe(document.body, { childList: true, subtree: true });
 
     const preventContextMenu = (event: MouseEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.closest("img, [data-protected-image='true']")) event.preventDefault();
+      if (isEditable(event.target)) return;
+      event.preventDefault();
     };
 
     const preventCopy = (event: ClipboardEvent) => {
+      if (isEditable(event.target)) return;
+      event.preventDefault();
+    };
+
+    const preventPaste = (event: ClipboardEvent) => {
       if (isEditable(event.target)) return;
       event.preventDefault();
     };
@@ -81,6 +86,7 @@ export default function ContentProtection() {
     document.addEventListener("contextmenu", preventContextMenu, true);
     document.addEventListener("copy", preventCopy, true);
     document.addEventListener("cut", preventCopy, true);
+    document.addEventListener("paste", preventPaste, true);
     document.addEventListener("dragstart", preventDrag, true);
     document.addEventListener("click", preventImageDownload, true);
     window.addEventListener("keydown", handleKeys, true);
@@ -91,6 +97,7 @@ export default function ContentProtection() {
       document.removeEventListener("contextmenu", preventContextMenu, true);
       document.removeEventListener("copy", preventCopy, true);
       document.removeEventListener("cut", preventCopy, true);
+      document.removeEventListener("paste", preventPaste, true);
       document.removeEventListener("dragstart", preventDrag, true);
       document.removeEventListener("click", preventImageDownload, true);
       window.removeEventListener("keydown", handleKeys, true);

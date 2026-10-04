@@ -6,6 +6,7 @@ import { siteUrl } from "@/data/site";
 import { getContentBySlug } from "@/lib/cms/database";
 import TrackingManager from "@/components/integrations/TrackingManager";
 import { integrationConfigFromMeta } from "@/lib/integrations";
+import ContentProtection from "@/components/security/ContentProtection";
 
 const plex = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-latin", display: "swap" });
 
@@ -34,6 +35,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       </head>
       <body>
         <TrackingManager config={config} />
+        <ContentProtection />
         {children}
       </body>
     </html>
