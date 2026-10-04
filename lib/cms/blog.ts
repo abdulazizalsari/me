@@ -33,6 +33,9 @@ export type BlogSettings = {
   showImportant: boolean;
   showCategories: boolean;
   showSearch: boolean;
+  importantAutoRotate: boolean;
+  importantRotateSeconds: number;
+  importantCardsCount: number;
   defaultImageAssetId: string;
   defaultImageUrl: string;
   ctaTitleAr: string;
@@ -66,6 +69,9 @@ export const defaultBlogSettings: BlogSettings = {
   showImportant: true,
   showCategories: true,
   showSearch: true,
+  importantAutoRotate: true,
+  importantRotateSeconds: 12,
+  importantCardsCount: 12,
   defaultImageAssetId: "",
   defaultImageUrl: "",
   ctaTitleAr: "هل تريد تحويل الفكرة إلى خطة عملية؟",
@@ -134,6 +140,9 @@ export function blogSettingsFromItems(items: CmsContentItem[]): BlogSettings {
     showImportant: bool(meta.showImportant, true),
     showCategories: bool(meta.showCategories, true),
     showSearch: bool(meta.showSearch, true),
+    importantAutoRotate: bool(meta.importantAutoRotate, true),
+    importantRotateSeconds: number(meta.importantRotateSeconds, 12, 5, 120),
+    importantCardsCount: number(meta.importantCardsCount, 12, 3, 18),
     defaultImageAssetId: text(meta.defaultImageAssetId),
     defaultImageUrl: text(meta.defaultImageUrl),
     ctaTitleAr: text(meta.ctaTitleAr, defaultBlogSettings.ctaTitleAr),
