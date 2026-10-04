@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export type RandomPopupArticle = {
   slug: string;
@@ -37,6 +37,7 @@ export function RandomArticlePopup({
   const source = useMemo(() => articles.filter((article) => article.slug && article.href && article.title), [articles]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [visible, setVisible] = useState(false);
+  const hideTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     setVisible(false);
@@ -46,10 +47,26 @@ export function RandomArticlePopup({
     const showRandomArticle = () => {
       setCurrentIndex((previous) => pickDifferent(source.length, previous));
       setVisible(true);
+
+      if (hideTimerRef.current !== null) {
+        window.clearTimeout(hideTimerRef.current);
+      }
+
+      hideTimerRef.current = window.setTimeout(() => {
+        setVisible(false);
+        hideTimerRef.current = null;
+      }, 2000);
     };
 
     const timer = window.setInterval(showRandomArticle, Math.max(5, intervalSeconds) * 1000);
-    return () => window.clearInterval(timer);
+
+    return () => {
+      window.clearInterval(timer);
+      if (hideTimerRef.current !== null) {
+        window.clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = null;
+      }
+    };
   }, [allowedPath, intervalSeconds, pathname, source.length]);
 
   if (!allowedPath || !visible || currentIndex < 0 || !source[currentIndex]) return null;
