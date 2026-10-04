@@ -8,6 +8,8 @@ import TrackingManager from "@/components/integrations/TrackingManager";
 import { integrationConfigFromMeta } from "@/lib/integrations";
 import ContentProtection from "@/components/security/ContentProtection";
 
+// Public content protection is mounted here.
+
 const plex = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-latin", display: "swap" });
 
 export const metadata: Metadata = {
