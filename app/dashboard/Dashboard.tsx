@@ -186,6 +186,7 @@ const homeSections = [
   { key: "experience", label: "الخبرة" },
   { key: "services", label: "الخدمات" },
   { key: "stats", label: "الإحصائيات" },
+  { key: "relatedProjects", label: "المشاريع ذات الصلة" },
   { key: "training", label: "الدورات" },
   { key: "expertise", label: "محاور الخبرة" },
   { key: "insights", label: "المقالات" },
