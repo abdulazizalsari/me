@@ -62,11 +62,22 @@ const tabs: { type: "overview" | CmsContentType | "media" | "redirects" | "trash
 
 const navGroups: { label: string; items: typeof tabs }[] = [
   { label: "الرئيسية", items: tabs.filter((tab) => tab.type === "overview") },
-  { label: "المحتوى", items: tabs.filter((tab) => ["article", "wordpress-import", "blog-settings", "service", "course", "cv", "experience", "education", "qualification", "skill"].includes(tab.type)) },
+  { label: "المحتوى", items: tabs.filter((tab) => ["article", "wordpress-import", "blog-settings", "service", "course", "project", "cv", "experience", "education", "qualification", "skill"].includes(tab.type)) },
   { label: "الصفحات", items: tabs.filter((tab) => ["homepage", "contact", "consultation", "privacy", "cta"].includes(tab.type)) },
   { label: "الوسائط", items: tabs.filter((tab) => tab.type === "media") },
   { label: "الرسائل", items: tabs.filter((tab) => tab.type === "form") },
   { label: "الإعدادات", items: tabs.filter((tab) => ["settings", "navigation", "footer", "whatsapp", "seo", "integration", "redirects", "trash"].includes(tab.type)) }
+];
+
+const editorTabs = new Set<DashboardTab>(["overview", "article", "service", "course", "form"]);
+
+const advancedLinks = [
+  { href: "/admin/pages", label: "محرر الصفحات", icon: LayoutDashboard, roles: ["admin", "editor"] as const },
+  { href: "/admin/translations", label: "الترجمات", icon: FileText, roles: ["admin", "editor"] as const },
+  { href: "/admin/requests", label: "مركز الطلبات", icon: FileText, roles: ["admin", "editor"] as const },
+  { href: "/admin/languages", label: "اللغات", icon: Settings, roles: ["admin"] as const },
+  { href: "/admin/users", label: "المستخدمون", icon: Settings, roles: ["admin"] as const },
+  { href: "/admin/backup", label: "النسخ الاحتياطي", icon: ArchiveRestore, roles: ["admin"] as const }
 ];
 
 const dashboardPaths: Partial<Record<DashboardTab, string>> = {
@@ -902,6 +913,10 @@ export function Dashboard({
   }
 
   const activeIsContent = contentTypes.includes(active as CmsContentType) && active !== "integration" && active !== "whatsapp";
+  const visibleNavGroups = navGroups
+    .map((group) => ({ ...group, items: group.items.filter((item) => user.role === "admin" || editorTabs.has(item.type)) }))
+    .filter((group) => group.items.length > 0);
+  const visibleAdvancedLinks = advancedLinks.filter((item) => item.roles.includes(user.role as "admin" | "editor"));
   const integrationItem = items.find((item) => item.type === "integration" && item.slug === "site-integrations") ?? items.find((item) => item.type === "integration");
   const whatsappItem = items.find((item) => item.type === "whatsapp" && item.slug === "whatsapp-settings") ?? items.find((item) => item.type === "whatsapp");
   const blogSettingsItem = items.find((item) => item.type === "blog-settings" && item.slug === "blog-settings") ?? items.find((item) => item.type === "blog-settings");
@@ -918,7 +933,7 @@ export function Dashboard({
           <X size={20} />
         </button>
         <nav className="dashboard-nav" aria-label="تنقل لوحة التحكم">
-          {navGroups.map((group) => (
+          {visibleNavGroups.map((group) => (
             <div className="dashboard-nav-group" key={group.label}>
               <p>{group.label}</p>
               {group.items.map(({ type, label, icon: Icon }) => (
@@ -929,10 +944,19 @@ export function Dashboard({
               ))}
             </div>
           ))}
+          <div className="dashboard-nav-group">
+            <p>إدارة متقدمة</p>
+            {visibleAdvancedLinks.map(({ href, label, icon: Icon }) => (
+              <Link key={href} href={href}>
+                <Icon size={18} />
+                <span>{label}</span>
+              </Link>
+            ))}
+          </div>
         </nav>
         <div className="sidebar-profile">
           <span className="profile-avatar">ع</span>
-          <span><strong>{user.email}</strong><small>مدير الموقع</small></span>
+          <span><strong>{user.email}</strong><small>{user.role === "admin" ? "مدير الموقع" : "محرر"}</small></span>
         </div>
       </aside>
       <button className={`dashboard-overlay ${sidebarOpen ? "is-open" : ""}`} type="button" aria-label="إغلاق القائمة" onClick={() => setSidebarOpen(false)} />
@@ -957,7 +981,7 @@ export function Dashboard({
                 <button type="button" onClick={() => startNew("article")}>مقال جديد</button>
                 <button type="button" onClick={() => startNew("service")}>خدمة جديدة</button>
                 <button type="button" onClick={() => startNew("course")}>دورة جديدة</button>
-                <button type="button" onClick={() => setActiveModule("media")}>رفع صورة</button>
+                {user.role === "admin" && <button type="button" onClick={() => setActiveModule("media")}>رفع صورة</button>}
               </div>
             </details>
             <button className="cms-ghost-button" type="button" onClick={logout}>
