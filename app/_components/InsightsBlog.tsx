@@ -340,33 +340,49 @@ function BlogSidebar({ locale, articles, categories, settings }: { locale: Local
 export function HomeInsightsSection({ locale, cmsItems, homepageMeta }: { locale: Locale; cmsItems: CmsContentItem[]; homepageMeta?: Record<string, unknown> }) {
   const ar = locale === "ar";
   if (homepageMeta?.insightsVisible === false) return null;
+
   const settings = blogSettingsFromItems(cmsItems);
   const articles = articleRows(publicItemsForLocale(cmsItems, locale), settings.defaultImageUrl);
   if (!articles.length) return null;
-  const count = typeof homepageMeta?.insightsArticleCount === "number" ? homepageMeta.insightsArticleCount : 3;
-  const featured = selectFeatured(articles, typeof homepageMeta?.insightsFeaturedSlug === "string" ? homepageMeta.insightsFeaturedSlug : undefined);
-  const pool = articles.filter((article) => article.slug !== featured?.slug).sort(byEditorialPriority).slice(0, Math.max(2, count - 1));
-  const heading = localizedMetaText(homepageMeta?.insightsHeading, locale) || (ar ? "أحدث الرؤى والمقالات" : "Latest Insights & Articles");
-  const description = localizedMetaText(homepageMeta?.insightsDescription, locale) || (ar ? "مقالات عملية في التسويق الرقمي، تطوير الأعمال، التجارة الدولية، الاستراتيجية، والتدريب." : "Practical articles on digital marketing, business development, international trade, strategy, and training.");
-  const tickerLabel = localizedMetaText(homepageMeta?.insightsTickerLabel, locale) || (ar ? "أهم المقالات" : "Important articles");
+
+  const importantArticles = selectImportant(articles, 4);
+
   return (
-    <section className="section home-insights editorial-home-insights" data-ticker-label={tickerLabel}>
+    <section className="section home-important-articles" aria-labelledby="home-important-articles-title">
       <div className="container">
-        <div className="home-insights-heading">
-          <div className="section-head">
-            <div>
-              <p className="eyebrow">{ar ? "رؤى وأفكار" : "Insights & Ideas"}</p>
-              <h2 className="h2">{heading}</h2>
-              <p>{description}</p>
-            </div>
+        <div className="home-important-heading">
+          <div>
+            <p className="eyebrow">{ar ? "مختارات رؤى" : "Selected insights"}</p>
+            <h2 className="h2" id="home-important-articles-title">{ar ? "أهم المقالات" : "Important Articles"}</h2>
           </div>
-          {homepageMeta?.insightsShowAllButton !== false && <a className="btn btn-secondary" href={withLocale(locale, "/ruaa")}>{ar ? "عرض جميع المقالات" : "View all articles"}</a>}
+          {homepageMeta?.insightsShowAllButton !== false && (
+            <a className="text-link" href={withLocale(locale, "/ruaa")}>
+              {ar ? "عرض جميع المقالات" : "View all articles"}
+            </a>
+          )}
         </div>
-        <div className="home-editorial-layout">
-          {featured && <FeaturedArticle article={featured} locale={locale} settings={settings} />}
-          <div className="home-editorial-side">
-            {pool.slice(0, 4).map((article) => <CompactArticle article={article} locale={locale} settings={settings} key={article.slug} />)}
-          </div>
+
+        <div className="home-important-grid">
+          {importantArticles.map((article) => (
+            <a className="home-important-card" href={withLocale(locale, `/ruaa/${article.slug}`)} key={article.slug}>
+              <span className="home-important-copy">
+                <em>{article.category[locale]}</em>
+                <strong>{article.title[locale]}</strong>
+                <small>
+                  {settings.showAuthor && <span>{article.author}</span>}
+                  {settings.showReadingTime && <span>{readingMinutes(article, locale)} {ar ? "دقائق قراءة" : "min read"}</span>}
+                </small>
+              </span>
+              <span className="home-important-media">
+                <Image
+                  src={article.image}
+                  alt={article.imageAlt?.[locale] || article.title[locale]}
+                  fill
+                  sizes="(max-width: 720px) 100vw, 260px"
+                />
+              </span>
+            </a>
+          ))}
         </div>
       </div>
     </section>
