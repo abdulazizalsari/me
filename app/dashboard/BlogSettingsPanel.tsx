@@ -143,14 +143,23 @@ export function BlogSettingsPanel({ initialItem, media }: { initialItem?: CmsCon
             ["showShare", "إظهار المشاركة"],
             ["showRelated", "إظهار المقالات المرتبطة"],
             ["showToc", "جدول المحتويات"],
-            ["showFeatured", "قسم المقال المميز"],
-            ["showImportant", "قسم أهم المقالات"],
+            ["showFeatured", "القسم الأول: المقالات المميزة"],
+            ["showImportant", "القسم الرابع: أهم المقالات"],
             ["showCategories", "التصنيفات"],
             ["showSearch", "بحث المقالات"]
           ] as const).map(([key, label]) => (
             <label className="cms-check" key={key}><input type="checkbox" checked={Boolean(settings[key])} onChange={(event) => patch(key, event.target.checked)} /> {label}</label>
           ))}
         </div>
+      </div>
+
+      <div className="cms-section-settings">
+        <div className="panel-heading"><div><h3>القسم الرابع — أهم المقالات</h3><p>تحكم بعدد البطاقات وسرعة تبدلها تلقائيًا.</p></div></div>
+        <div className="cms-form-row">
+          <label>عدد البطاقات الظاهرة<input type="number" min="3" max="18" value={settings.importantCardsCount} onChange={(event) => patch("importantCardsCount", Number(event.target.value))} /></label>
+          <label>مدة التبديل بالثواني<input type="number" min="5" max="120" value={settings.importantRotateSeconds} onChange={(event) => patch("importantRotateSeconds", Number(event.target.value))} /></label>
+        </div>
+        <label className="cms-check"><input type="checkbox" checked={settings.importantAutoRotate} onChange={(event) => patch("importantAutoRotate", event.target.checked)} /> تبديل بطاقات أهم المقالات تلقائيًا</label>
       </div>
 
       <div className="cms-section-settings">
