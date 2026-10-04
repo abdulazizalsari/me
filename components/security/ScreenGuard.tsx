@@ -215,7 +215,6 @@ export default function ScreenGuard({
   return (
     <ScreenGuardContext.Provider value={contextValue}>
       <div className={contentClass}>{children}</div>
-      <div className={styles.watermark} aria-hidden="true" />
       {resolvedMode === "hide" && hidden && (
         <div className={styles.overlay} role="alert" aria-live="assertive">
           {english ? "Protected content" : "المحتوى محمي"}
