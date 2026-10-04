@@ -16,6 +16,7 @@ import { sanitizeCmsHtml, stripHtml } from "@/lib/cms/sanitize";
 import { siteUrl } from "@/data/site";
 import { RotatingImportantArticles } from "@/app/_components/RotatingImportantArticles";
 import { RandomArticlePopup } from "@/app/_components/RandomArticlePopup";
+import { StableShowcaseSlots, StableLightArticleSlots, StableDarkArticleSlots } from "@/app/_components/StableBlogArticleSlots";
 
 type LocalizedText = Record<Locale, string>;
 
@@ -410,17 +411,7 @@ export function EditorialInsightsPage({ locale, cmsItems = [], searchParams = {}
   });
 
   const featured = selectFeatured(allArticles);
-  const showcaseSmall = allArticles
-    .filter((article) => article.slug !== featured?.slug)
-    .sort(byEditorialPriority)
-    .slice(0, 4);
-
   const newest = [...searched].sort(newestFirst);
-  const sectionTwoArticles = newest.filter((article) => article.slug !== featured?.slug).slice(0, 4);
-  const sectionTwoSlugs = new Set(sectionTwoArticles.map((article) => article.slug));
-  const sectionThreePool = newest.filter((article) => article.slug !== featured?.slug && !sectionTwoSlugs.has(article.slug));
-  const sectionThreeArticles = (sectionThreePool.length >= 4 ? sectionThreePool : newest.filter((article) => article.slug !== featured?.slug)).slice(0, 4);
-
   const latestPool = searched.filter((article) => article.slug !== featured?.slug).sort(newestFirst);
   const pageSizeValue = settings.articlesPerPage;
   const totalPages = Math.max(1, Math.ceil(latestPool.length / pageSizeValue));
@@ -455,30 +446,7 @@ export function EditorialInsightsPage({ locale, cmsItems = [], searchParams = {}
           <InsightsTicker locale={locale} articles={allArticles} count={6} />
           <AdSlot config={integrationConfig} placement="insightsTop" locale={locale} />
           {settings.showFeatured && featured && (
-            <div className="blog-showcase-grid">
-              <a className="blog-showcase-main" href={withLocale(locale, `/ruaa/${featured.slug}`)}>
-                <Image src={featured.image} alt={featured.imageAlt?.[locale] || featured.title[locale]} fill priority sizes="(max-width: 900px) 100vw, 54vw" />
-                <span className="blog-showcase-overlay" />
-                <span className="blog-showcase-content">
-                  <em>{featured.category[locale]}</em>
-                  <strong>{featured.title[locale]}</strong>
-                  <small>{settings.showReadingTime ? `${readingMinutes(featured, locale)} ${ar ? "دقائق قراءة" : "min read"}` : dateLabel(featured.date, locale)}</small>
-                </span>
-              </a>
-              <div className="blog-showcase-small-grid">
-                {showcaseSmall.map((article) => (
-                  <a className="blog-showcase-small" href={withLocale(locale, `/ruaa/${article.slug}`)} key={article.slug}>
-                    <Image src={article.image} alt={article.imageAlt?.[locale] || article.title[locale]} fill sizes="(max-width: 900px) 50vw, 22vw" />
-                    <span className="blog-showcase-overlay" />
-                    <span className="blog-showcase-content">
-                      <em>{article.category[locale]}</em>
-                      <strong>{article.title[locale]}</strong>
-                      <small>{readingMinutes(article, locale)} {ar ? "دقائق قراءة" : "min read"}</small>
-                    </span>
-                  </a>
-                ))}
-              </div>
-            </div>
+            <StableShowcaseSlots locale={locale} articles={importantPool} intervalSeconds={12} />
           )}
         </div>
       </section>
@@ -493,20 +461,7 @@ export function EditorialInsightsPage({ locale, cmsItems = [], searchParams = {}
               </div>
               <a className="text-link" href="#all-articles">{ar ? "مشاهدة الكل" : "View all"}</a>
             </div>
-            <div className="blog-reference-two-grid">
-              {sectionTwoArticles.map((article) => (
-                <a className="blog-reference-two-card" href={withLocale(locale, `/ruaa/${article.slug}`)} key={article.slug}>
-                  <span className="blog-reference-two-media">
-                    <Image src={article.image} alt={article.imageAlt?.[locale] || article.title[locale]} fill sizes="(max-width: 760px) 42vw, 240px" />
-                  </span>
-                  <span className="blog-reference-two-copy">
-                    <em>{article.category[locale]}</em>
-                    <strong>{article.title[locale]}</strong>
-                    <small>{article.author} • {readingMinutes(article, locale)} {ar ? "دقائق قراءة" : "min read"}</small>
-                  </span>
-                </a>
-              ))}
-            </div>
+            <StableLightArticleSlots locale={locale} articles={newest} intervalSeconds={12} />
           </main>
           {settings.showCategories && (
             <aside className="blog-category-rail" aria-label={ar ? "تصفح حسب الفئة" : "Browse by category"}>
@@ -533,21 +488,7 @@ export function EditorialInsightsPage({ locale, cmsItems = [], searchParams = {}
                 <h2 className="h2" id="section-three-title">{ar ? "أحدث المقالات" : "Latest articles"}</h2>
               </div>
             </div>
-            <div className="blog-dark-card-grid">
-              {sectionThreeArticles.map((article) => (
-                <a className="blog-dark-card" href={withLocale(locale, `/ruaa/${article.slug}`)} key={article.slug}>
-                  <span className="blog-dark-card-media">
-                    <Image src={article.image} alt={article.imageAlt?.[locale] || article.title[locale]} fill sizes="(max-width: 760px) 100vw, 36vw" />
-                    <em>{article.category[locale]}</em>
-                  </span>
-                  <span className="blog-dark-card-copy">
-                    <strong>{article.title[locale]}</strong>
-                    <small>{article.author} • {readingMinutes(article, locale)} {ar ? "دقائق قراءة" : "min read"}</small>
-                    <i aria-hidden="true">←</i>
-                  </span>
-                </a>
-              ))}
-            </div>
+            <StableDarkArticleSlots locale={locale} articles={newest} intervalSeconds={12} />
 
             {pageArticles.length > 4 && (
               <div className="blog-more-articles">
