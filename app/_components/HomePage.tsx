@@ -212,6 +212,19 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
         </div>
       </section>}
 
+      <div style={{ order: sectionState(homepageMeta, "stats").order + 0.1 }}>
+        <RelatedProjectsSlider
+          locale={locale}
+          title={ar ? "المشاريع ذات الصلة" : "Related Projects"}
+          projects={projects.map((project) => ({
+            slug: project.slug,
+            title: project.title[locale],
+            image: project.image,
+            href: project.href
+          }))}
+        />
+      </div>
+
       {sectionState(homepageMeta, "training").visible && <section className="section" style={{ order: sectionState(homepageMeta, "training").order }}>
         <div className="container">
           <SectionHeader eyebrow={ar ? "الدورات الخاصة" : "Private Courses"} title={ar ? "تعلم التسويق والتصميم بمنهجية عملية" : "Learn Marketing and Design Through Practice"}>
@@ -232,19 +245,6 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
           </div>
         </div>
       </section>}
-
-      <div style={{ order: sectionState(homepageMeta, "training").order + 0.1 }}>
-        <RelatedProjectsSlider
-          locale={locale}
-          title={ar ? "المشاريع ذات الصلة" : "Related Projects"}
-          projects={projects.map((project) => ({
-            slug: project.slug,
-            title: project.title[locale],
-            image: project.image,
-            href: project.href
-          }))}
-        />
-      </div>
 
       {sectionState(homepageMeta, "expertise").visible && <section className="section band" style={{ order: sectionState(homepageMeta, "expertise").order }}>
         <div className="container split">
