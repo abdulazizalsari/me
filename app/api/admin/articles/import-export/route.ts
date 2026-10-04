@@ -4,6 +4,7 @@ import { getCurrentAdmin } from "@/lib/cms/auth";
 import { listContentItems, saveContentItem } from "@/lib/cms/database";
 import type { CmsContentItem, CmsContentSeed, CmsStatus } from "@/lib/cms/types";
 import { importWordPressRemoteImage } from "@/lib/cms/wordpress-media-import";
+import { normalizeContentSlug } from "@/lib/cms/slug";
 
 type DuplicateStrategy = "skip" | "update" | "copy";
 type ImportAction = "preview" | "import";
@@ -79,9 +80,7 @@ function normalizeStatus(value: string): CmsStatus {
 }
 
 function safeSlug(title: string, fallback: string) {
-  let source = fallback || title || crypto.randomUUID();
-  try { source = decodeURIComponent(source); } catch { /* keep original value */ }
-  return source.trim().toLowerCase().replace(/[^a-z0-9\u0600-\u06ff-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || crypto.randomUUID();
+  return normalizeContentSlug(fallback || title || crypto.randomUUID()) || crypto.randomUUID();
 }
 
 function parseWorkbook(buffer: ArrayBuffer) {
