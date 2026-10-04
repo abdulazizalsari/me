@@ -217,6 +217,13 @@ const footerPresets = [
   { value: "geometric", label: "هندسي" }
 ];
 
+function activityActionLabel(action?: string) {
+  if (action === "insert") return "إضافة";
+  if (action === "update") return "تعديل";
+  if (action === "delete") return "حذف";
+  return "عملية";
+}
+
 function typeLabel(type: CmsContentType) {
   const labels: Record<CmsContentType, string> = {
     homepage: "قسم رئيسية",
@@ -1054,7 +1061,13 @@ export function Dashboard({
               <div className="cms-activity-log">
                 <h3>سجل التعديلات</h3>
                 {activity.length ? activity.slice(0, 8).map((entry) => (
-                  <p key={entry.id}><span>{new Date(entry.createdAt).toLocaleString("ar")}</span>{entry.event}</p>
+                  <p key={entry.id}>
+                    <span>{new Date(entry.createdAt).toLocaleString("ar")}</span>
+                    <strong>{entry.action ? activityActionLabel(entry.action) : "نشاط"}</strong>
+                    <span>{entry.entityType || ""}{entry.entityId ? ` · ${entry.entityId}` : ""}</span>
+                    <span>{entry.actorEmail || "النظام"}</span>
+                    {!entry.entityType && <span>{entry.event}</span>}
+                  </p>
                 )) : <p><span>-</span>لا توجد تعديلات مسجلة بعد.</p>}
               </div>
             </section>
