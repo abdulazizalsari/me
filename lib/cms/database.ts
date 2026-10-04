@@ -61,7 +61,19 @@ function rowToMedia(row: Row): CmsMediaAsset {
 function rowToRevision(row: Row): CmsRevision {
   return { id: String(row.id), contentId: String(row.content_id), snapshot: (typeof row.snapshot_json === "string" ? JSON.parse(row.snapshot_json) : row.snapshot_json) as CmsContentItem, createdAt: String(row.created_at ?? "") };
 }
-function rowToActivity(row: Row): CmsActivityLog { return { id: String(row.id), event: String(row.event), createdAt: String(row.created_at ?? "") }; }
+function rowToActivity(row: Row): CmsActivityLog {
+  return {
+    id: String(row.id),
+    event: String(row.event),
+    createdAt: String(row.created_at ?? ""),
+    actorId: row.actor_id ? String(row.actor_id) : undefined,
+    actorEmail: row.actor_email ? String(row.actor_email) : undefined,
+    entityType: row.entity_type ? String(row.entity_type) : undefined,
+    entityId: row.entity_id ? String(row.entity_id) : undefined,
+    action: row.action ? String(row.action) : undefined,
+    details: parseMeta(row.details_json)
+  };
+}
 function rowToRedirect(row: Row): CmsRedirect { return { id: String(row.id), oldUrl: String(row.old_url), newUrl: String(row.new_url ?? ""), statusCode: Number(row.status_code) as 301|302|410, active: Boolean(row.active), createdAt: String(row.created_at ?? "") }; }
 function rowToSubmission(row: Row): CmsFormSubmission { return { id: String(row.id), name: String(row.name ?? ""), email: String(row.email ?? ""), phone: String(row.phone ?? ""), message: String(row.message ?? ""), source: String(row.source ?? "contact"), status: String(row.status ?? "new") as CmsFormSubmission["status"], notes: String(row.notes ?? ""), payload: parseMeta(row.payload_json), createdAt: String(row.created_at ?? "") }; }
 function rowToNotFound(row: Row): CmsNotFoundHit { return { id: String(row.id), path: String(row.path), referrer: String(row.referrer ?? ""), userAgent: String(row.user_agent ?? ""), count: Number(row.count ?? 1), firstSeenAt: String(row.first_seen_at ?? ""), lastSeenAt: String(row.last_seen_at ?? "") }; }
@@ -142,9 +154,9 @@ export async function saveContentItem(input: Partial<CmsContentItem> & CmsConten
   const rows=await supabaseRequest<Row[]>(`/rest/v1/content_items?on_conflict=id`,{method:"POST",body:row,headers:{Prefer:"resolution=merge-duplicates,return=representation"}});
   const saved=rowToContent(rows[0]);
   if(previous&&previous.slug!==saved.slug){ const oldUrl=contentPublicPath(previous),newUrl=contentPublicPath(saved); if(oldUrl&&newUrl) await saveRedirect({oldUrl,newUrl,statusCode:301}); }
-  await logActivity(`${previous?"Updated":"Created"} ${saved.type}: ${saved.titleAr||saved.titleEn||saved.slug}`); return saved;
+  return saved;
 }
-export async function deleteContentItem(id:string){ const item=await getContentById(id); if(!item)return false; await supabaseRequest(`/rest/v1/content_items?id=eq.${enc(id)}`,{method:"PATCH",body:{deleted_at:now(),status:"archived",updated_at:now()},headers:{Prefer:"return=minimal"}}); await logActivity(`Archived ${item.type}: ${item.titleAr||item.titleEn||item.slug}`); return true; }
+export async function deleteContentItem(id:string){ const item=await getContentById(id); if(!item)return false; await supabaseRequest(`/rest/v1/content_items?id=eq.${enc(id)}`,{method:"PATCH",body:{deleted_at:now(),status:"archived",updated_at:now()},headers:{Prefer:"return=minimal"}}); return true; }
 export async function restoreContentItem(id:string){ await supabaseRequest(`/rest/v1/content_items?id=eq.${enc(id)}`,{method:"PATCH",body:{deleted_at:null,status:"draft",updated_at:now()},headers:{Prefer:"return=minimal"}}); return getContentById(id); }
 export async function listRevisions(contentId:string){ const rows=await supabaseRequest<Row[]>(`/rest/v1/content_revisions?select=*&content_id=eq.${enc(contentId)}&order=created_at.desc`); return rows.map(rowToRevision); }
 export async function listActivityLogs(limit=30){ const rows=await supabaseRequest<Row[]>(`/rest/v1/activity_logs?select=*&order=created_at.desc&limit=${limit}`); return rows.map(rowToActivity); }
