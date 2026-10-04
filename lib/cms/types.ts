@@ -80,6 +80,12 @@ export type CmsActivityLog = {
   id: string;
   event: string;
   createdAt: string;
+  actorId?: string;
+  actorEmail?: string;
+  entityType?: string;
+  entityId?: string;
+  action?: "insert" | "update" | "delete" | string;
+  details?: Record<string, unknown>;
 };
 
 export type CmsRedirect = {
