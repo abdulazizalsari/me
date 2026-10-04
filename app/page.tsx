@@ -6,6 +6,8 @@ import HomeScreenGuardServer from "@/components/security/HomeScreenGuardServer";
 
 export const metadata = routeMetadata("home", "ar", "/");
 
+// Homepage watermark intentionally disabled; capture protection remains active.
+
 export default async function Page() {
   return (
     <HomeScreenGuardServer locale="ar" watermark={false}>
