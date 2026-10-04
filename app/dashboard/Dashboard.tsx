@@ -310,6 +310,7 @@ export function Dashboard({
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [draggedHomeSection, setDraggedHomeSection] = useState<string | null>(null);
   const [mediaPicker, setMediaPicker] = useState<MediaPickerState | null>(null);
   const [mediaSearch, setMediaSearch] = useState("");
   const [mediaCategory, setMediaCategory] = useState<MediaCategoryFilter>("all");
@@ -468,6 +469,22 @@ export function Dashboard({
   function updateHomeSection(key: string, patch: { visible?: boolean; order?: number }) {
     const next = getHomeSectionSettings().map((section) => section.key === key ? { ...section, ...patch } : section);
     updateMetaField("homeSections", next.map((section) => ({ key: section.key, visible: section.visible, order: section.order })));
+  }
+
+  function reorderHomeSections(sourceKey: string, targetKey: string) {
+    if (!sourceKey || sourceKey === targetKey) return;
+    const current = getHomeSectionSettings();
+    const from = current.findIndex((section) => section.key === sourceKey);
+    const to = current.findIndex((section) => section.key === targetKey);
+    if (from < 0 || to < 0) return;
+    const next = [...current];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    updateMetaField("homeSections", next.map((section, index) => ({
+      key: section.key,
+      visible: section.visible,
+      order: index + 1
+    })));
   }
 
   function removeMetaField(...keys: string[]) {
@@ -1280,8 +1297,22 @@ export function Dashboard({
                     <div className="panel-heading"><div><h3>إعدادات قسم رؤى</h3><p>تحكم في القسم التحريري من دون تعديل الكود.</p></div></div>
                     <div className="cms-home-section-manager">
                       <h3>أقسام الصفحة الرئيسية</h3>
+                      <p className="cms-form-note">اسحب الأقسام لترتيبها، أو استخدم رقم الترتيب عند الحاجة.</p>
                       {getHomeSectionSettings().map((section) => (
-                        <article key={section.key}>
+                        <article
+                          key={section.key}
+                          draggable
+                          className={draggedHomeSection === section.key ? "is-dragging" : ""}
+                          onDragStart={() => setDraggedHomeSection(section.key)}
+                          onDragEnd={() => setDraggedHomeSection(null)}
+                          onDragOver={(event) => event.preventDefault()}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            if (draggedHomeSection) reorderHomeSections(draggedHomeSection, section.key);
+                            setDraggedHomeSection(null);
+                          }}
+                        >
+                          <span className="cms-drag-handle" aria-hidden="true">⋮⋮</span>
                           <label className="cms-check"><input type="checkbox" checked={section.visible} onChange={(event) => updateHomeSection(section.key, { visible: event.target.checked })} /> {section.label}</label>
                           <label>الترتيب<input type="number" min="1" max="20" value={section.order} onChange={(event) => updateHomeSection(section.key, { order: Number(event.target.value) })} /></label>
                         </article>
