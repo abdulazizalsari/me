@@ -7,9 +7,15 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { DocumentLocale } from "@/components/seo/DocumentLocale";
 import { listContentByType } from "@/lib/cms/database";
 import { cmsImage } from "@/lib/cms/media";
+import { whatsappSettingsFromItem } from "@/lib/cms/whatsapp";
 
 export async function LocaleShell({ locale, children }: { locale: Locale; children: React.ReactNode }) {
-  const navigation = (await listContentByType("navigation", { publishedOnly: true }))[0];
+  const [navigationItems, whatsappItems] = await Promise.all([
+    listContentByType("navigation", { publishedOnly: true }),
+    listContentByType("whatsapp", { publishedOnly: true })
+  ]);
+  const navigation = navigationItems[0];
+  const whatsappSettings = whatsappSettingsFromItem(whatsappItems[0]);
   const logo = cmsImage(navigation?.meta, "headerLogoImageAssetId", "/images/brand/abdulaziz-logo-mark.png");
   return (
     <div lang={locale} dir={localeConfig[locale].dir}>
@@ -18,7 +24,7 @@ export async function LocaleShell({ locale, children }: { locale: Locale; childr
       <JsonLd locale={locale} />
       <main id="main">{children}</main>
       <Footer locale={locale} />
-      <aside aria-label={locale === "ar" ? "تواصل سريع" : "Quick contact"}><WhatsAppCTA /></aside>
+      <aside aria-label={locale === "ar" ? "تواصل سريع" : "Quick contact"}><WhatsAppCTA settings={whatsappSettings} /></aside>
       <CustomCursor />
     </div>
   );
