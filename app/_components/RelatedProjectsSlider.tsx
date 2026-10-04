@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type RelatedProject = {
@@ -75,7 +75,7 @@ export function RelatedProjectsSlider({
             <div
               className="related-projects-page"
               data-count={current.length}
-              style={{ "--project-columns": columns } as React.CSSProperties}
+              style={{ "--project-columns": columns } as CSSProperties}
             >
               {current.map((project) => {
                 const content = (
