@@ -345,40 +345,41 @@ export function HomeInsightsSection({ locale, cmsItems, homepageMeta }: { locale
   const articles = articleRows(publicItemsForLocale(cmsItems, locale), settings.defaultImageUrl);
   if (!articles.length) return null;
 
-  const importantArticles = selectImportant(articles, 4);
+  const importantArticles = selectImportant(articles, 6);
 
   return (
     <section className="section home-important-articles" aria-labelledby="home-important-articles-title">
       <div className="container">
         <div className="home-important-heading">
-          <div>
-            <p className="eyebrow">{ar ? "مختارات رؤى" : "Selected insights"}</p>
+          <div className="home-important-title-row">
             <h2 className="h2" id="home-important-articles-title">{ar ? "أهم المقالات" : "Important Articles"}</h2>
+            <span aria-hidden="true" />
           </div>
           {homepageMeta?.insightsShowAllButton !== false && (
-            <a className="text-link" href={withLocale(locale, "/ruaa")}>
+            <a className="home-important-view-all" href={withLocale(locale, "/ruaa")}>
               {ar ? "عرض جميع المقالات" : "View all articles"}
             </a>
           )}
         </div>
 
         <div className="home-important-grid">
-          {importantArticles.map((article) => (
+          {importantArticles.map((article, index) => (
             <a className="home-important-card" href={withLocale(locale, `/ruaa/${article.slug}`)} key={article.slug}>
+              <span className="home-important-number">{index + 1}</span>
               <span className="home-important-copy">
-                <em>{article.category[locale]}</em>
                 <strong>{article.title[locale]}</strong>
                 <small>
                   {settings.showAuthor && <span>{article.author}</span>}
                   {settings.showReadingTime && <span>{readingMinutes(article, locale)} {ar ? "دقائق قراءة" : "min read"}</span>}
                 </small>
+                <em>{article.category[locale]}</em>
               </span>
               <span className="home-important-media">
                 <Image
                   src={article.image}
                   alt={article.imageAlt?.[locale] || article.title[locale]}
                   fill
-                  sizes="(max-width: 720px) 100vw, 260px"
+                  sizes="(max-width: 720px) 100vw, 150px"
                 />
               </span>
             </a>
