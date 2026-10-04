@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { defaultContent } from "./default-content";
+import { normalizeContentSlug } from "./slug";
 import { supabaseRequest } from "@/lib/supabase-rest";
 import type {
   CmsActivityLog,
