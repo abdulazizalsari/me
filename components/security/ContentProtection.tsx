@@ -47,8 +47,8 @@ export default function ContentProtection() {
     observer.observe(document.body, { childList: true, subtree: true });
 
     const preventContextMenu = (event: MouseEvent) => {
-      if (isEditable(event.target)) return;
-      event.preventDefault();
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("img, [data-protected-image='true']")) event.preventDefault();
     };
 
     const preventCopy = (event: ClipboardEvent) => {
@@ -72,9 +72,7 @@ export default function ContentProtection() {
       if (isEditable(event.target)) return;
       const key = event.key.toLowerCase();
       const modifier = event.ctrlKey || event.metaKey;
-      const blockedCombo = modifier && ["c", "s", "u", "p"].includes(key);
-      const devtoolsCombo = event.key === "F12" || (modifier && event.shiftKey && ["i", "j", "c"].includes(key));
-      if (blockedCombo || devtoolsCombo) {
+      if (modifier && (key === "c" || key === "s")) {
         event.preventDefault();
         event.stopPropagation();
       }
