@@ -260,7 +260,6 @@ export default function HomeScreenGuard({
   return (
     <HomeGuardContext.Provider value={value}>
       <div ref={contentRef} className={styles.content}>{children}</div>
-      <div className={styles.watermark} aria-hidden="true" />
       <div
         ref={overlayRef}
         className={styles.overlay}
