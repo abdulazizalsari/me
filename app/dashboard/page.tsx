@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getCurrentAdmin } from "@/lib/cms/auth";
+import { getCurrentCmsUser } from "@/lib/cms/auth";
 import { listActivityLogs, listContentItems, listDeletedContentItems, listFormSubmissions, listMediaAssets, listNotFoundHits, listRedirects } from "@/lib/cms/database";
 import { Dashboard } from "./Dashboard";
 
@@ -10,11 +10,18 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardPage() {
-  const user = await getCurrentAdmin();
+  const user = await getCurrentCmsUser();
   if (!user) redirect("/dashboard/login");
 
-  const [items, deletedItems, media, activity, redirects, notFoundHits, submissions] = await Promise.all([
-    listContentItems(), listDeletedContentItems(), listMediaAssets(), listActivityLogs(), listRedirects(), listNotFoundHits(), listFormSubmissions()
+  const isAdmin = user.role === "admin";
+  const [items, submissions, deletedItems, media, activity, redirects, notFoundHits] = await Promise.all([
+    listContentItems(),
+    listFormSubmissions(),
+    isAdmin ? listDeletedContentItems() : Promise.resolve([]),
+    isAdmin ? listMediaAssets() : Promise.resolve([]),
+    isAdmin ? listActivityLogs() : Promise.resolve([]),
+    isAdmin ? listRedirects() : Promise.resolve([]),
+    isAdmin ? listNotFoundHits() : Promise.resolve([])
   ]);
 
   return <Dashboard initialItems={items} initialDeletedItems={deletedItems} initialMedia={media} initialActivity={activity} initialRedirects={redirects} initialNotFoundHits={notFoundHits} initialSubmissions={submissions} user={user} />;
