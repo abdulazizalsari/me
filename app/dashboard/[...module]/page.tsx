@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { getCurrentAdmin } from "@/lib/cms/auth";
+import { getCurrentCmsUser } from "@/lib/cms/auth";
 import { listActivityLogs, listContentItems, listDeletedContentItems, listFormSubmissions, listMediaAssets, listNotFoundHits, listRedirects } from "@/lib/cms/database";
 import type { CmsContentType } from "@/lib/cms/types";
 import { Dashboard } from "../Dashboard";
@@ -42,15 +42,25 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardModulePage({ params }: { params: Promise<{ module: string[] }> }) {
-  const user = await getCurrentAdmin();
+  const user = await getCurrentCmsUser();
   if (!user) redirect("/dashboard/login");
 
   const segments = (await params).module;
   const active = routeModules[segments[0]];
   if (!active || segments.length > 2) notFound();
 
-  const [items, deletedItems, media, activity, redirects, notFoundHits, submissions] = await Promise.all([
-    listContentItems(), listDeletedContentItems(), listMediaAssets(), listActivityLogs(), listRedirects(), listNotFoundHits(), listFormSubmissions()
+  const editorModules: DashboardTab[] = ["overview", "article", "service", "course", "form"];
+  if (user.role === "editor" && !editorModules.includes(active)) redirect("/dashboard");
+
+  const isAdmin = user.role === "admin";
+  const [items, submissions, deletedItems, media, activity, redirects, notFoundHits] = await Promise.all([
+    listContentItems(),
+    listFormSubmissions(),
+    isAdmin ? listDeletedContentItems() : Promise.resolve([]),
+    isAdmin ? listMediaAssets() : Promise.resolve([]),
+    isAdmin ? listActivityLogs() : Promise.resolve([]),
+    isAdmin ? listRedirects() : Promise.resolve([]),
+    isAdmin ? listNotFoundHits() : Promise.resolve([])
   ]);
 
   return (
