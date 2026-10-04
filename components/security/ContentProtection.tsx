@@ -13,7 +13,8 @@ function isEditable(target: EventTarget | null) {
 
 export default function ContentProtection() {
   const pathname = usePathname();
-  const protectedPage = !(pathname ?? "").startsWith("/dashboard");
+  const currentPath = pathname ?? "";
+  const protectedPage = !currentPath.startsWith("/dashboard") && !currentPath.startsWith("/admin");
 
   useEffect(() => {
     if (!protectedPage) {
