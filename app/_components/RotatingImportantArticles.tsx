@@ -64,7 +64,7 @@ export function RotatingImportantArticles({
               <a
                 className="blog-important-card"
                 href={withLocale(locale, `/ruaa/${article.slug}`)}
-                key={`${article.slug}-${offset}-${index}`}
+                key={`important-slot-${index}`}
               >
                 <span className="blog-important-number">{String(index + 1).padStart(2, "0")}</span>
                 <span className="blog-important-image">
