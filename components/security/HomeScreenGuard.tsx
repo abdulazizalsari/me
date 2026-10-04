@@ -30,11 +30,13 @@ function isEditable() {
 export default function HomeScreenGuard({
   children,
   disabled = false,
-  locale = "ar"
+  locale = "ar",
+  watermark = true
 }: {
   children: React.ReactNode;
   disabled?: boolean;
   locale?: "ar" | "en";
+  watermark?: boolean;
 }) {
   const [active, setActive] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -260,6 +262,7 @@ export default function HomeScreenGuard({
   return (
     <HomeGuardContext.Provider value={value}>
       <div ref={contentRef} className={styles.content}>{children}</div>
+      {watermark && <div className={styles.watermark} aria-hidden="true" />}
       <div
         ref={overlayRef}
         className={styles.overlay}

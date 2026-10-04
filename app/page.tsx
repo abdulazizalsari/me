@@ -8,7 +8,7 @@ export const metadata = routeMetadata("home", "ar", "/");
 
 export default async function Page() {
   return (
-    <HomeScreenGuardServer locale="ar">
+    <HomeScreenGuardServer locale="ar" watermark={false}>
       <LocaleShell locale="ar"><HomePage locale="ar" cmsItems={await listContentItems({ publishedOnly: true })} /></LocaleShell>
     </HomeScreenGuardServer>
   );
