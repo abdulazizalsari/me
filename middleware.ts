@@ -39,6 +39,9 @@ function isPublicAdminPath(pathname: string) {
 
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  if (pathname === "/tr" || pathname.startsWith("/tr/")) {
+    const url=request.nextUrl.clone(); url.pathname=pathname.replace(/^\/tr/,"")||"/"; url.search=search; return NextResponse.redirect(url,308);
+  }
   if (pathname === "/ar" || pathname.startsWith("/ar/")) {
     const url=request.nextUrl.clone(); url.pathname=pathname.replace(/^\/ar/,"")||"/"; url.search=search; return NextResponse.redirect(url,308);
   }
@@ -68,4 +71,4 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-export const config = { matcher: ["/ar/:path*","/privacy","/en/privacy","/insights/:path*","/en/insights/:path*","/admin/:path*","/dashboard/:path*","/api/admin/:path*"] };
+export const config = { matcher: ["/tr/:path*","/ar/:path*","/privacy","/en/privacy","/insights/:path*","/en/insights/:path*","/admin/:path*","/dashboard/:path*","/api/admin/:path*"] };
