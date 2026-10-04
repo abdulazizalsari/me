@@ -4664,3 +4664,187 @@ button, input, textarea, select { font: inherit; }
     min-height: 210px;
   }
 }
+
+
+/* Homepage important articles six-card dark layout 2026 */
+.home-important-articles {
+  padding: clamp(52px, 6vw, 82px) 0;
+  background:
+    radial-gradient(circle at 84% 8%, rgba(0, 102, 110, .16), transparent 30%),
+    linear-gradient(145deg, #071f23 0%, #0a2d32 48%, #082327 100%);
+  color: #fff;
+}
+.home-important-heading {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.home-important-title-row {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 16px;
+}
+.home-important-title-row .h2 {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: #f1f8f7;
+  color: var(--brand-primary);
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+}
+.home-important-title-row > span {
+  height: 2px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent 0%, var(--brand-orange) 28%, #36aeb3 100%);
+}
+.home-important-view-all {
+  width: fit-content;
+  color: #92dfe0;
+  font-size: .78rem;
+  font-weight: 850;
+}
+.home-important-view-all:hover {
+  color: #fff;
+}
+.home-important-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 14px 16px;
+}
+.home-important-card {
+  direction: inherit;
+  display: grid;
+  grid-template-columns: 42px minmax(0,1fr) 126px;
+  align-items: stretch;
+  min-height: 122px;
+  overflow: hidden;
+  border: 1px solid rgba(99, 206, 208, .16);
+  border-radius: 14px;
+  background: rgba(12, 49, 54, .9);
+  color: #fff;
+  box-shadow: 0 14px 30px rgba(0, 17, 20, .18);
+  transition: transform .2s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+.home-important-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 90, 25, .52);
+  background: #0d3b40;
+  box-shadow: 0 20px 38px rgba(0, 17, 20, .28);
+}
+.home-important-number {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  background: #0b4a50;
+  color: #7bd7d9;
+  font-size: 1rem;
+  font-weight: 900;
+}
+.home-important-copy {
+  display: grid;
+  align-content: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 14px 16px;
+}
+.home-important-copy strong {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #fff;
+  font-size: .96rem;
+  line-height: 1.55;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.home-important-copy small {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  color: rgba(255,255,255,.58);
+  font-size: .68rem;
+  font-weight: 700;
+}
+.home-important-copy small span + span::before {
+  content: "•";
+  margin-inline-end: 7px;
+  color: var(--brand-orange);
+}
+.home-important-copy em {
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(0, 121, 128, .28);
+  color: #91e0e1;
+  font-size: .64rem;
+  font-style: normal;
+  font-weight: 850;
+}
+.home-important-media {
+  position: relative;
+  min-height: 122px;
+  overflow: hidden;
+  background: #061719;
+}
+.home-important-media img {
+  object-fit: cover;
+  transition: transform .28s ease, filter .28s ease;
+}
+.home-important-card:hover .home-important-media img {
+  transform: scale(1.04);
+  filter: saturate(1.06);
+}
+[data-theme="dark"] .home-important-articles {
+  background:
+    radial-gradient(circle at 84% 8%, rgba(0, 102, 110, .14), transparent 30%),
+    #06191c;
+}
+[data-theme="dark"] .home-important-card {
+  background: rgba(12, 49, 54, .94);
+  border-color: rgba(99, 206, 208, .16);
+}
+[data-theme="dark"] .home-important-copy strong {
+  color: #fff;
+}
+@media (max-width: 920px) {
+  .home-important-card {
+    grid-template-columns: 38px minmax(0,1fr) 110px;
+  }
+}
+@media (max-width: 720px) {
+  .home-important-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-important-card {
+    min-height: 114px;
+    grid-template-columns: 38px minmax(0,1fr) 104px;
+  }
+  .home-important-media {
+    min-height: 114px;
+  }
+}
+@media (max-width: 460px) {
+  .home-important-title-row {
+    align-items: flex-start;
+  }
+  .home-important-title-row .h2 {
+    font-size: 1.05rem;
+  }
+  .home-important-card {
+    grid-template-columns: 34px minmax(0,1fr) 88px;
+    min-height: 108px;
+  }
+  .home-important-media {
+    min-height: 108px;
+  }
+  .home-important-copy {
+    padding: 11px 12px;
+  }
+  .home-important-copy strong {
+    font-size: .86rem;
+  }
+  .home-important-copy small {
+    font-size: .62rem;
+  }
+}
