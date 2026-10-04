@@ -5260,3 +5260,23 @@ button, input, textarea, select { font: inherit; }
     transition: none;
   }
 }
+
+
+/* ScreenGuard print protection 2026 */
+@media print {
+  html.sg-print-protected::before {
+    content: "المحتوى محمي — Protected content";
+    display: grid;
+    min-height: 100vh;
+    place-items: center;
+    padding: 24px;
+    background: #fff;
+    color: #111;
+    font: 700 20px/1.6 Arial, sans-serif;
+    text-align: center;
+  }
+
+  body.sg-print-protected {
+    display: none !important;
+  }
+}
