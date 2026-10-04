@@ -1,13 +1,9 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans } from "next/font/google";
-import { headers } from "next/headers";
 import "@fontsource-variable/noto-kufi-arabic";
 import "./globals.css";
 import { siteUrl } from "@/data/site";
 import { getContentBySlug } from "@/lib/cms/database";
-import ContentProtection from "@/components/security/ContentProtection";
-import ScreenGuard from "@/components/security/ScreenGuard";
-import { isScreenGuardCrawler } from "@/lib/security/screen-guard-config";
 import TrackingManager from "@/components/integrations/TrackingManager";
 import { integrationConfigFromMeta } from "@/lib/integrations";
 
@@ -22,12 +18,8 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const [integrationItem, requestHeaders] = await Promise.all([
-    getContentBySlug("integration", "site-integrations"),
-    headers()
-  ]);
+  const integrationItem = await getContentBySlug("integration", "site-integrations");
   const config = integrationConfigFromMeta(integrationItem?.meta);
-  const skipScreenGuard = isScreenGuardCrawler(requestHeaders.get("user-agent") ?? "");
 
   return (
     <html lang="ar" dir="rtl" className={plex.variable}>
@@ -42,12 +34,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       </head>
       <body>
         <TrackingManager config={config} />
-        {skipScreenGuard ? children : (
-          <>
-            <ContentProtection />
-            <ScreenGuard>{children}</ScreenGuard>
-          </>
-        )}
+        {children}
       </body>
     </html>
   );
