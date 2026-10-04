@@ -2689,13 +2689,32 @@ button, input, textarea, select { font: inherit; }
 .cms-home-section-manager h3 { margin: 0 0 4px; }
 .cms-home-section-manager article {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 120px;
+  grid-template-columns: 28px minmax(0, 1fr) 120px;
   gap: 10px;
   align-items: center;
   padding: 8px;
   border: 1px solid #eef2f1;
   border-radius: 10px;
+  background: #fff;
+  transition: opacity .18s ease, transform .18s ease, border-color .18s ease;
 }
+.cms-home-section-manager article.is-dragging {
+  opacity: .55;
+  transform: scale(.995);
+  border-color: rgba(0,62,70,.28);
+}
+.cms-drag-handle {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  min-height: 34px;
+  border-radius: 8px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  cursor: grab;
+  user-select: none;
+}
+.cms-drag-handle:active { cursor: grabbing; }
 .cms-home-section-manager input[type="number"] { min-height: 34px; padding: 6px 8px; }
 .home-page-sections {
   display: flex;
