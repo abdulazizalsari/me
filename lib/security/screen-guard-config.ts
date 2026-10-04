@@ -10,7 +10,7 @@ export function getScreenGuardMode(pathname: string, override?: ScreenGuardMode)
   return SCREEN_GUARD_ROUTE_MODES[pathname] ?? "base";
 }
 
-const CRAWLER_RE = /(googlebot|bingbot|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|discordbot|whatsapp|telegrambot|pinterestbot|applebot)/i;
+const CRAWLER_RE = /(googlebot|google-inspectiontool|googleother|adsbot-google|mediapartners-google|bingbot|bingpreview|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|discordbot|whatsapp|telegrambot|pinterestbot|applebot)/i;
 
 export function isScreenGuardCrawler(userAgent: string) {
   return CRAWLER_RE.test(userAgent);
