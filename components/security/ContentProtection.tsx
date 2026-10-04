@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 const IMAGE_EXT = /\.(?:avif|webp|png|jpe?g|gif|svg)(?:\?.*)?$/i;
@@ -13,7 +13,6 @@ function isEditable(target: EventTarget | null) {
 
 export default function ContentProtection() {
   const pathname = usePathname();
-  const [screenMask, setScreenMask] = useState(false);
   const protectedPage = !(pathname ?? "").startsWith("/dashboard");
 
   useEffect(() => {
@@ -79,11 +78,6 @@ export default function ContentProtection() {
         event.preventDefault();
         event.stopPropagation();
       }
-      if (event.key === "PrintScreen") {
-        setScreenMask(true);
-        window.setTimeout(() => setScreenMask(false), 1100);
-        void navigator.clipboard?.writeText("Protected content — AbdulAziz Alsari").catch(() => undefined);
-      }
     };
 
     document.addEventListener("contextmenu", preventContextMenu, true);
@@ -108,43 +102,18 @@ export default function ContentProtection() {
   if (!protectedPage) return null;
 
   return (
-    <>
-      <style>{`
-        body.content-protected :not(input):not(textarea):not(select):not([contenteditable='true']):not([contenteditable='']) {
-          -webkit-user-select: none !important;
-          user-select: none !important;
-          -webkit-touch-callout: none !important;
-        }
-        body.content-protected img,
-        body.content-protected [data-protected-image='true'] {
-          -webkit-user-drag: none !important;
-          user-select: none !important;
-          -webkit-touch-callout: none !important;
-        }
-        @media print {
-          body.content-protected > *:not([data-print-blocker='true']) { visibility: hidden !important; }
-          [data-print-blocker='true'] { display: grid !important; }
-        }
-      `}</style>
-      <div
-        aria-hidden="true"
-        data-print-blocker="true"
-        style={{
-          display: screenMask ? "grid" : "none",
-          position: "fixed",
-          inset: 0,
-          zIndex: 2147483647,
-          placeItems: "center",
-          padding: 24,
-          textAlign: "center",
-          background: "#071918",
-          color: "#fff",
-          fontWeight: 800,
-          fontSize: "clamp(18px, 3vw, 34px)"
-        }}
-      >
-        المحتوى والصور محمية — AbdulAziz Alsari
-      </div>
-    </>
+    <style>{`
+      body.content-protected :not(input):not(textarea):not(select):not([contenteditable='true']):not([contenteditable='']) {
+        -webkit-user-select: none !important;
+        user-select: none !important;
+        -webkit-touch-callout: none !important;
+      }
+      body.content-protected img,
+      body.content-protected [data-protected-image='true'] {
+        -webkit-user-drag: none !important;
+        user-select: none !important;
+        -webkit-touch-callout: none !important;
+      }
+    `}</style>
   );
 }
