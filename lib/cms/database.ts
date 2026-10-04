@@ -111,14 +111,21 @@ export async function listContentByType(type: CmsContentType, { publishedOnly = 
   }
 }
 export async function getContentBySlug(type: CmsContentType, slug: string) {
-  const rows = await supabaseRequest<Row[]>(`/rest/v1/content_items?select=*&type=eq.${enc(type)}&slug=eq.${enc(slug)}&deleted_at=is.null&limit=1`);
-  return rows[0] ? rowToContent(rows[0]) : null;
+  let decoded = slug;
+  try { decoded = decodeURIComponent(slug); } catch { /* keep raw value */ }
+  const normalized = normalizeContentSlug(decoded);
+  const candidates = Array.from(new Set([decoded, normalized].filter(Boolean)));
+  for (const candidate of candidates) {
+    const rows = await supabaseRequest<Row[]>(`/rest/v1/content_items?select=*&type=eq.${enc(type)}&slug=eq.${enc(candidate)}&deleted_at=is.null&limit=1`);
+    if (rows[0]) return rowToContent(rows[0]);
+  }
+  return null;
 }
 export async function getContentById(id: string) {
   const rows = await supabaseRequest<Row[]>(`/rest/v1/content_items?select=*&id=eq.${enc(id)}&deleted_at=is.null&limit=1`);
   return rows[0] ? rowToContent(rows[0]) : null;
 }
-function cleanSlug(slug: string) { return slug.trim().toLowerCase().replace(/[^a-z0-9\u0600-\u06ff-]+/g,"-").replace(/-+/g,"-").replace(/^-|-$/g,""); }
+function cleanSlug(slug: string) { return normalizeContentSlug(slug); }
 function contentPublicPath(item: CmsContentItem) {
   if (item.type==="article") return `/ruaa/${item.slug}`;
   if (item.type==="service") return `/services/${item.slug}`;
