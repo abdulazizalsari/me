@@ -31,29 +31,6 @@ export function LanguagesClient({initialLanguages}:{initialLanguages:CmsLanguage
     return true;
   }
 
-  async function addLanguage(e:React.FormEvent<HTMLFormElement>){
-    e.preventDefault();
-    const form=e.currentTarget;
-    const fd=new FormData(form);
-    const code=String(fd.get("code")||"").trim();
-    const language:CmsLanguage={
-      code,
-      nameAr:String(fd.get("nameAr")||"").trim(),
-      nameNative:String(fd.get("nameNative")||"").trim(),
-      direction:fd.get("direction")==="rtl"?"rtl":"ltr",
-      enabled:true,
-      sortOrder:Number(fd.get("sortOrder")||100)
-    };
-    if(languages.some(item=>item.code===code)){
-      setMessage("رمز اللغة موجود مسبقًا.");
-      return;
-    }
-    if(await persist(language)){
-      setLanguages(cur=>[...cur,language].sort((a,b)=>a.sortOrder-b.sortOrder||a.code.localeCompare(b.code)));
-      form.reset();
-    }
-  }
-
   async function toggleLanguage(language:CmsLanguage){
     if(language.code==="ar")return;
     const next={...language,enabled:!language.enabled};
@@ -87,24 +64,16 @@ export function LanguagesClient({initialLanguages}:{initialLanguages:CmsLanguage
     <section className="admin-card admin-language-manager">
       <div className="admin-card-heading">
         <div>
-          <h2>إضافة لغة جديدة</h2>
-          <p className="admin-muted">استخدم رمز ISO مختصرًا مثل en أو tr أو fr. بعد الإضافة ستظهر اللغة تلقائيًا داخل جدول الترجمة.</p>
+          <h2>لغات الموقع</h2>
+          <p className="admin-muted">العربية هي اللغة الأم، والإنجليزية هي اللغة الثانية الوحيدة المعتمدة في الموقع.</p>
         </div>
       </div>
-      <form className="admin-add-language admin-language-create" onSubmit={addLanguage}>
-        <label>رمز اللغة<input name="code" dir="ltr" placeholder="fr" pattern="[a-z]{2,3}(-[A-Z]{2})?" required/></label>
-        <label>الاسم بالعربية<input name="nameAr" placeholder="الفرنسية" required/></label>
-        <label>الاسم الأصلي<input name="nameNative" placeholder="Français" required/></label>
-        <label>الاتجاه<select name="direction" defaultValue="ltr"><option value="ltr">LTR</option><option value="rtl">RTL</option></select></label>
-        <label>الترتيب<input name="sortOrder" type="number" min="1" defaultValue="100"/></label>
-        <button className="admin-primary-button" type="submit">إضافة اللغة</button>
-      </form>
       {message&&<p className="admin-message">{message}</p>}
     </section>
 
     <section className="admin-card">
       <div className="admin-card-heading">
-        <div><h2>لغات الموقع</h2><p className="admin-muted">التعطيل يخفي اللغة من الاستخدام العام مع إبقاء بياناتها. الحذف يزيل إعداد اللغة نهائيًا.</p></div>
+        <div><h2>العربية والإنجليزية</h2><p className="admin-muted">لا توجد لغة ثالثة في الموقع. العربية ثابتة كلغة أم والإنجليزية هي اللغة الثانية.</p></div>
       </div>
       <div className="admin-table-wrap">
         <table className="admin-languages-table">
@@ -124,10 +93,7 @@ export function LanguagesClient({initialLanguages}:{initialLanguages:CmsLanguage
                 <td><span className={`admin-status ${language.enabled?"published":"draft"}`}>{language.enabled?"مفعلة":"متوقفة"}</span></td>
                 <td>
                   <div className="admin-language-actions">
-                    {primary?<span className="admin-muted">ثابتة</span>:<>
-                      <button type="button" disabled={busy===language.code} onClick={()=>toggleLanguage(language)}>{language.enabled?"إيقاف":"تفعيل"}</button>
-                      <button className="danger" type="button" disabled={busy===language.code} onClick={()=>removeLanguage(language)}>حذف</button>
-                    </>}
+                    <span className="admin-muted">{primary?"اللغة الأم":"اللغة الثانية"}</span>
                   </div>
                 </td>
               </tr>;
