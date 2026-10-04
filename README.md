@@ -10,13 +10,13 @@ The site includes one client-side screenshot deterrence provider:
 - `components/security/ScreenGuard.module.css`
 - `lib/security/screen-guard-config.ts`
 
-It is mounted once in the root layout. The route configuration currently uses:
+It is mounted once in the root layout. The active route configuration currently uses:
 
 - `/` → `hide`
 - `/en` → `hide`
-- every other route → `base`
+- every other route → `off`
 
-`hide` uses a black protection overlay for capture/window-loss/visibility/DevTools-heuristic triggers. `base` uses a strong temporary blur for capture keys and a light blur when the tab/window loses focus.
+Only the homepage uses screenshot deterrence. Inner pages do not use screenshot masking or blur. They use the separate lightweight content protection layer for text-copy prevention and best-effort image-save/drag prevention.
 
 Googlebot, Google Inspection Tool, Bingbot, Bing Preview, and common social-preview crawlers bypass ScreenGuard server-side so the full server-rendered HTML remains available to search engines and link-preview crawlers.
 
@@ -38,11 +38,11 @@ and clear the override with `setModeOverride()`.
 
 ### It can deter
 
-- casual use of PrintScreen and common OS screenshot keyboard shortcuts when the browser receives those key events;
-- screenshots attempted immediately after switching away from the protected browser window;
+- casual use of PrintScreen and common OS screenshot keyboard shortcuts on the homepage when the browser receives those key events;
+- screenshots attempted immediately after switching away from the homepage;
 - some capture attempts while DevTools appears to be open on the homepage;
-- clean captures by adding a persistent low-opacity site watermark;
-- normal browser printing through the protected UI.
+- normal browser printing on the protected homepage;
+- copying page text and casual image saving/dragging on inner pages.
 
 ### It cannot truly prevent screenshots
 
@@ -71,11 +71,11 @@ The protected page content stays in the server-rendered HTML for SEO. Visual mas
 - [ ] Verify capture shortcuts on both `keydown` and `keyup`.
 - [ ] Verify clipboard is replaced with the short protection message after a detected capture shortcut.
 - [ ] Homepage: switch tabs/windows → instant black mask after the 150ms blur debounce; restore ~500ms after focus returns.
-- [ ] Inner pages: switch tabs/windows → light blur only; restore immediately on focus.
+- [ ] Inner pages: no screenshot blur or black overlay; text copy and casual image save/drag prevention remain active.
 - [ ] Homepage: DevTools-open heuristic triggers the black mask on desktop/fine-pointer environments.
 - [ ] Contact and consultation forms remain usable while typing; blur/visibility protection must not fire solely because focus leaves the browser while an editable field is active.
 - [ ] Scrolling, zooming, clicking, selecting form controls, and keyboard navigation do not trigger ScreenGuard.
-- [ ] Persistent tiled logo/domain watermark is visible at approximately 6–8% opacity and does not intercept pointer events.
+- [ ] No watermark is rendered anywhere on the site.
 - [ ] Printing hides the protected body and shows the short protected-content message.
 - [ ] Chrome desktop.
 - [ ] Safari desktop.
