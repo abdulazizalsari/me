@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   if (body.action === "language") {
     if (!await getCurrentAdmin()) return NextResponse.json({ ok: false, message: "إدارة اللغات للمدير فقط." }, { status: 403 });
     const code = String(body.code ?? "").trim();
-    if (!/^[a-z]{2,3}(-[A-Z]{2})?$/.test(code)) return NextResponse.json({ ok: false, message: "رمز اللغة غير صالح." }, { status: 400 });
+    if (!["ar","en"].includes(code)) return NextResponse.json({ ok: false, message: "الموقع يدعم العربية والإنجليزية فقط." }, { status: 400 });
     await upsertLanguage({
       code,
       nameAr: String(body.nameAr ?? code),
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   if (!await getCurrentAdmin()) return NextResponse.json({ ok: false, message: "إدارة اللغات للمدير فقط." }, { status: 403 });
   const code = new URL(request.url).searchParams.get("code") || "";
-  if (!code || code === "ar") return NextResponse.json({ ok: false, message: "لا يمكن حذف اللغة الأم." }, { status: 400 });
+  if (!code || ["ar","en"].includes(code)) return NextResponse.json({ ok: false, message: "العربية والإنجليزية لغتان ثابتتان في الموقع." }, { status: 400 });
   await deleteLanguage(code);
   return NextResponse.json({ ok: true });
 }
