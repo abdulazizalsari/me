@@ -480,7 +480,16 @@ export function Dashboard({
   async function removeMedia(id: string) {
     if (!window.confirm("حذف الصورة من مكتبة الوسائط؟")) return;
     const response = await fetch(`/api/admin/media/${id}`, { method: "DELETE" });
-    if (!response.ok) { setMessage("تعذر حذف الصورة."); return; }
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (response.status === 409 && Array.isArray(data.usage)) {
+        const locations = data.usage.slice(0, 4).map((entry: { title?: string }) => entry.title || "عنصر مرتبط").join("، ");
+        setMessage(`لا يمكن حذف الصورة لأنها مستخدمة في: ${locations}${data.usage.length > 4 ? " وغيرها" : ""}.`);
+      } else {
+        setMessage(data.message ?? "تعذر حذف الصورة.");
+      }
+      return;
+    }
     setMedia((current) => current.filter((asset) => asset.id !== id));
     if (String(readMeta().imageAssetId ?? "") === id) removeMetaField("imageAssetId", "image", "imageAltAr", "imageAltEn");
     setMessage("تم حذف الصورة.");
