@@ -28,6 +28,7 @@ import { RichTextEditor } from "./RichTextEditor";
 import { IntegrationSettings } from "./IntegrationSettings";
 import { WordPressImportPanel } from "./WordPressImportPanel";
 import { BlogSettingsPanel } from "./BlogSettingsPanel";
+import { WhatsAppSettingsPanel } from "./WhatsAppSettingsPanel";
 
 const tabs: { type: "overview" | CmsContentType | "media" | "redirects" | "trash" | "settings" | "wordpress-import"; label: string; icon: typeof LayoutDashboard }[] = [
   { type: "overview", label: "نظرة عامة", icon: LayoutDashboard },
@@ -900,8 +901,9 @@ export function Dashboard({
     window.location.href = "/dashboard/login";
   }
 
-  const activeIsContent = contentTypes.includes(active as CmsContentType) && active !== "integration";
+  const activeIsContent = contentTypes.includes(active as CmsContentType) && active !== "integration" && active !== "whatsapp";
   const integrationItem = items.find((item) => item.type === "integration" && item.slug === "site-integrations") ?? items.find((item) => item.type === "integration");
+  const whatsappItem = items.find((item) => item.type === "whatsapp" && item.slug === "whatsapp-settings") ?? items.find((item) => item.type === "whatsapp");
   const blogSettingsItem = items.find((item) => item.type === "blog-settings" && item.slug === "blog-settings") ?? items.find((item) => item.type === "blog-settings");
   const blogCategories = Array.isArray(blogSettingsItem?.meta?.categories) ? blogSettingsItem.meta.categories.filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === "object" && !Array.isArray(entry) && entry.enabled !== false) : [];
 
@@ -976,7 +978,7 @@ export function Dashboard({
               </nav>
               <p className="dashboard-kicker">إدارة الموقع</p>
               <h1>{active === "overview" ? "لوحة إدارة المحتوى" : tabs.find((tab) => tab.type === active)?.label}</h1>
-              <p>{active === "overview" ? "نظرة عامة على حالة المحتوى والنشاط دون تحرير مباشر." : active === "wordpress-import" ? "استيراد مقالات WordPress من ملف WXR/XML مع الصور والبيانات المرتبطة بها." : active === "blog-settings" ? "إدارة مركزية لصفحة رؤى والتصنيفات والوسوم وعناصر صفحة المقال." : "هذا القسم مستقل ويعرض حقوله ومحتواه فقط مع حفظ دائم وآمن في Supabase."}</p>
+              <p>{active === "overview" ? "نظرة عامة على حالة المحتوى والنشاط دون تحرير مباشر." : active === "wordpress-import" ? "استيراد مقالات WordPress من ملف WXR/XML مع الصور والبيانات المرتبطة بها." : active === "blog-settings" ? "إدارة مركزية لصفحة رؤى والتصنيفات والوسوم وعناصر صفحة المقال." : active === "whatsapp" ? "إدارة كاملة لأيقونة واتساب والنافذة والرسائل والألوان والظهور من مكان واحد." : "هذا القسم مستقل ويعرض حقوله ومحتواه فقط مع حفظ دائم وآمن في Supabase."}</p>
               {lastAutosave && <p className="cms-form-note">آخر Autosave محلي: {lastAutosave}</p>}
             </div>
           </div>
@@ -994,7 +996,7 @@ export function Dashboard({
             </section>
           )}
 
-{active !== "wordpress-import" && active !== "blog-settings" && (
+{active !== "wordpress-import" && active !== "blog-settings" && active !== "whatsapp" && (
           <div className="dashboard-stats cms-stats">
             <article className="dashboard-stat"><div><span>منشور</span><strong>{counts.published}</strong></div></article>
             <article className="dashboard-stat"><div><span>مسودات</span><strong>{counts.draft}</strong></div></article>
@@ -1008,6 +1010,8 @@ export function Dashboard({
           {active === "wordpress-import" && <WordPressImportPanel />}
 
           {active === "blog-settings" && <BlogSettingsPanel initialItem={items.find((item) => item.type === "blog-settings") ?? null} media={media} />}
+
+          {active === "whatsapp" && <WhatsAppSettingsPanel initialItem={whatsappItem ?? null} onSaved={(item) => setItems((current) => [item, ...current.filter((entry) => entry.id !== item.id && entry.type !== "whatsapp")])} />}
 
           {active === "overview" && (
             <section className="dashboard-panel cms-panel">
