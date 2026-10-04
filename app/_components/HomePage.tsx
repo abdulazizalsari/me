@@ -12,6 +12,7 @@ import { AnimatedMetric } from "@/components/ui/AnimatedMetric";
 import { WhatsAppLink } from "@/components/layout/WhatsAppLink";
 import { cmsImage } from "@/lib/cms/media";
 import { HomeInsightsSection } from "@/app/_components/InsightsBlog";
+import { RelatedProjectsSlider } from "@/app/_components/RelatedProjectsSlider";
 
 function publicItemsForLocale(items: CmsContentItem[], locale: Locale) {
   if (locale === "ar") return items;
@@ -40,8 +41,15 @@ function cmsProjects(items: CmsContentItem[]) {
     description: { ar: item.summaryAr, en: item.summaryEn },
     services: Array.isArray(item.meta?.services) ? item.meta.services.map(String) : [item.category || "Business"],
     image: cmsImage(item.meta, "imageAssetId", typeof item.meta?.image === "string" ? item.meta.image : "").url,
-    imageAlt: { ar: cmsImage(item.meta, "imageAssetId", "").altAr, en: cmsImage(item.meta, "imageAssetId", "").altEn }
-  })) : staticProjects.map((project) => ({ ...project, image: "image" in project && typeof project.image === "string" ? project.image : "", imageAlt: undefined }));
+    imageAlt: { ar: cmsImage(item.meta, "imageAssetId", "").altAr, en: cmsImage(item.meta, "imageAssetId", "").altEn },
+    href: typeof item.meta?.projectUrl === "string"
+      ? item.meta.projectUrl
+      : typeof item.meta?.websiteUrl === "string"
+        ? item.meta.websiteUrl
+        : typeof item.meta?.url === "string"
+          ? item.meta.url
+          : undefined
+  })) : staticProjects.map((project) => ({ ...project, image: "image" in project && typeof project.image === "string" ? project.image : "", imageAlt: undefined, href: undefined }));
 }
 
 function cmsCourses(items: CmsContentItem[]) {
@@ -224,6 +232,19 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
           </div>
         </div>
       </section>}
+
+      <div style={{ order: sectionState(homepageMeta, "training").order + 0.1 }}>
+        <RelatedProjectsSlider
+          locale={locale}
+          title={ar ? "المشاريع ذات الصلة" : "Related Projects"}
+          projects={projects.map((project) => ({
+            slug: project.slug,
+            title: project.title[locale],
+            image: project.image,
+            href: project.href
+          }))}
+        />
+      </div>
 
       {sectionState(homepageMeta, "expertise").visible && <section className="section band" style={{ order: sectionState(homepageMeta, "expertise").order }}>
         <div className="container split">
