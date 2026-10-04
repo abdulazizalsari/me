@@ -212,7 +212,7 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
         </div>
       </section>}
 
-      <div style={{ order: sectionState(homepageMeta, "stats").order + 0.1 }}>
+      <div style={{ order: sectionState(homepageMeta, "stats").order }}>
         <RelatedProjectsSlider
           locale={locale}
           title={ar ? "المشاريع ذات الصلة" : "Related Projects"}
