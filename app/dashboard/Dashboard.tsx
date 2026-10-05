@@ -1694,7 +1694,22 @@ export function Dashboard({
                 ) : (
                   <>
                     <div className="related-projects-admin-summary">
-                      <strong>الحالة:</strong> {getHomeSectionSettings().find((section) => section.key === "relatedProjects")?.visible === false ? "القسم مخفي" : "القسم ظاهر"}
+                      <label className="cms-check">
+                        <input
+                          type="checkbox"
+                          checked={getHomeSectionSettings().find((section) => section.key === "relatedProjects")?.visible !== false}
+                          onChange={(event) => {
+                            const currentSections = getHomeSectionSettings();
+                            const nextSections = currentSections.map((section) => section.key === "relatedProjects" ? { ...section, visible: event.target.checked } : section);
+                            const homepageNow = items.find((item) => item.type === "homepage");
+                            if (!homepageNow) return;
+                            const next = { ...homepageNow, meta: { ...(homepageNow.meta ?? {}), homeSections: nextSections.map((section, index) => ({ key: section.key, visible: section.visible, order: section.order ?? index + 1 })) } };
+                            setItems((current) => current.map((item) => item.id === next.id ? next : item));
+                            setSelected(next);
+                            setMetaText(formatMeta(next.meta));
+                          }}
+                        /> إظهار قسم المشاريع ذات الصلة
+                      </label>
                       <span>·</span>
                       <strong>المختار:</strong> {activeSlugs.length}
                       <span>·</span>
