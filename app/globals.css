@@ -5566,3 +5566,75 @@ button, input, textarea, select { font: inherit; }
     transition: none !important;
   }
 }
+
+
+/* Dark mode contrast refinement — Hero and homepage cards */
+[data-theme="dark"] .hero .h1 {
+  color: var(--text-primary);
+  text-shadow: 0 1px 18px rgba(0,0,0,.18);
+}
+
+[data-theme="dark"] .hero .lead {
+  color: #d4e0dd;
+}
+
+[data-theme="dark"] .hero .eyebrow {
+  color: #ff8a5b;
+  background: rgba(255,90,25,.14);
+  border-color: rgba(255,138,91,.34);
+}
+
+[data-theme="dark"] .hero::before {
+  opacity: .7;
+}
+
+[data-theme="dark"] .signature-service-card-featured {
+  color: #f3f7f5;
+}
+
+[data-theme="dark"] .signature-service-card:not(.signature-service-card-featured) .signature-service-copy p {
+  color: #cbd8d5;
+}
+
+[data-theme="dark"] .signature-service-card:not(.signature-service-card-featured) .signature-service-topline > span {
+  color: #9fb1ad;
+}
+
+[data-theme="dark"] .signature-service-card:not(.signature-service-card-featured) .signature-icon {
+  color: #ff7b46;
+  background: rgba(255,90,25,.12);
+  border-color: rgba(255,138,91,.28);
+}
+
+[data-theme="dark"] .related-projects-slider {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(255,90,25,.08), transparent 24%),
+    linear-gradient(180deg, #0b1718 0%, #102122 100%);
+}
+
+[data-theme="dark"] .related-projects-heading h2 {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .related-project-card {
+  border-color: rgba(255,255,255,.12);
+  background: linear-gradient(180deg, #162b2c, #102122);
+  color: var(--text-primary);
+  box-shadow: 0 18px 42px rgba(0,0,0,.24);
+}
+
+[data-theme="dark"] .related-projects-logo {
+  background:
+    radial-gradient(circle at 50% 44%, rgba(255,90,25,.08), transparent 56%),
+    linear-gradient(180deg, #1a3031, #142829);
+}
+
+[data-theme="dark"] .related-project-card > strong {
+  border-top-color: rgba(255,255,255,.10);
+}
+
+[data-theme="dark"] .related-projects-arrow {
+  border-color: rgba(255,255,255,.16);
+  background: var(--surface);
+  color: var(--text-primary);
+}
