@@ -30,10 +30,11 @@ import { WordPressImportPanel } from "./WordPressImportPanel";
 import { BlogSettingsPanel } from "./BlogSettingsPanel";
 import { WhatsAppSettingsPanel } from "./WhatsAppSettingsPanel";
 
-const tabs: { type: "overview" | CmsContentType | "media" | "redirects" | "trash" | "settings" | "wordpress-import"; label: string; icon: typeof LayoutDashboard }[] = [
+const tabs: { type: "overview" | CmsContentType | "related-projects" | "media" | "redirects" | "trash" | "settings" | "wordpress-import"; label: string; icon: typeof LayoutDashboard }[] = [
   { type: "overview", label: "نظرة عامة", icon: LayoutDashboard },
   { type: "article", label: "رؤى", icon: FileText },
   { type: "wordpress-import", label: "استيراد WordPress", icon: Upload },
+  { type: "related-projects", label: "المشاريع ذات الصلة", icon: BriefcaseBusiness },
   { type: "blog-settings", label: "إعدادات المدونة", icon: Settings },
   { type: "service", label: "الخدمات", icon: BriefcaseBusiness },
   { type: "course", label: "الدورات", icon: BarChart3 },
@@ -62,7 +63,7 @@ const tabs: { type: "overview" | CmsContentType | "media" | "redirects" | "trash
 
 const navGroups: { label: string; items: typeof tabs }[] = [
   { label: "الرئيسية", items: tabs.filter((tab) => tab.type === "overview") },
-  { label: "المحتوى", items: tabs.filter((tab) => ["article", "wordpress-import", "blog-settings", "service", "course", "project", "cv", "experience", "education", "qualification", "skill"].includes(tab.type)) },
+  { label: "المحتوى", items: tabs.filter((tab) => ["article", "wordpress-import", "related-projects", "blog-settings", "service", "course", "project", "cv", "experience", "education", "qualification", "skill"].includes(tab.type)) },
   { label: "الصفحات", items: tabs.filter((tab) => ["homepage", "contact", "consultation", "privacy", "cta"].includes(tab.type)) },
   { label: "الوسائط", items: tabs.filter((tab) => tab.type === "media") },
   { label: "الرسائل", items: tabs.filter((tab) => tab.type === "form") },
@@ -84,6 +85,7 @@ const dashboardPaths: Partial<Record<DashboardTab, string>> = {
   overview: "/dashboard",
   article: "/dashboard/articles",
   "wordpress-import": "/dashboard/import-wordpress",
+  "related-projects": "/dashboard/related-projects",
   "blog-settings": "/dashboard/blog-settings",
   service: "/dashboard/services",
   course: "/dashboard/courses",
@@ -381,6 +383,18 @@ export function Dashboard({
         return `${asset.filename} ${asset.altAr} ${asset.altEn}`.toLowerCase().includes(search);
       });
   }, [media, mediaCategory, mediaSearch]);
+
+  function ensureHomepageSelected() {
+    const homepage = items.find((item) => item.type === "homepage");
+    if (homepage) {
+      setSelected(homepage);
+      setMetaText(formatMeta(homepage.meta));
+      setActiveLanguage("ar");
+      setRevisions([]);
+      return homepage;
+    }
+    return null;
+  }
 
   function setActiveModule(type: DashboardTab) {
     setActive(type);
@@ -1164,7 +1178,7 @@ export function Dashboard({
 
               <section className="dashboard-panel cms-panel">
                 <div className="panel-heading"><div><h2>{selected.id ? "تحرير المحتوى" : "محتوى جديد"}</h2><p>استخدم JSON للحقول الإضافية مثل icon أو year أو services.</p></div></div>
-                <form className="cms-form" onSubmit={saveItem}>
+                <form id="cms-content-form" className="cms-form" onSubmit={saveItem}>
                   <div className="cms-form-row">
                     {lockedActive ? <label>نوع المحتوى<input value={typeLabel(selected.type)} readOnly /></label> : <label>النوع<select value={selected.type} onChange={(event) => setSelected({ ...selected, type: event.target.value as CmsContentType })}>{contentTypes.map((type) => <option value={type} key={type}>{typeLabel(type)}</option>)}</select></label>}
                     <label>الحالة<select value={selected.status} onChange={(event) => setSelected({ ...selected, status: event.target.value as CmsStatus })}><option value="draft">مسودة</option><option value="published">منشور</option><option value="scheduled">مجدول</option><option value="archived">مؤرشف</option></select></label>
@@ -1641,6 +1655,85 @@ export function Dashboard({
             </div>
           )}
 
+          {active === "related-projects" && (() => {
+            const homepage = items.find((item) => item.type === "homepage");
+            const allProjects = items.filter((item) => item.type === "project" && item.status === "published").sort((a, b) => a.sortOrder - b.sortOrder);
+            const configured = Array.isArray(homepage?.meta?.relatedProjectSlugs)
+              ? (homepage?.meta?.relatedProjectSlugs as unknown[]).filter((value): value is string => typeof value === "string")
+              : [];
+            const activeSlugs = configured.length ? configured.filter((slug) => allProjects.some((project) => project.slug === slug)) : allProjects.map((project) => project.slug);
+            const saveRelated = (slugs: string[]) => {
+              if (!homepage) return;
+              const next = { ...homepage, meta: { ...(homepage.meta ?? {}), relatedProjectSlugs: slugs } };
+              setItems((current) => current.map((item) => item.id === homepage.id ? next : item));
+              setSelected(next);
+              setMetaText(formatMeta(next.meta));
+            };
+            const move = (slug: string, direction: -1 | 1) => {
+              const next = activeSlugs.slice();
+              const index = next.indexOf(slug);
+              const target = index + direction;
+              if (index < 0 || target < 0 || target >= next.length) return;
+              [next[index], next[target]] = [next[target], next[index]];
+              saveRelated(next);
+            };
+            const toggle = (slug: string, enabled: boolean) => {
+              saveRelated(enabled ? [...activeSlugs, slug] : activeSlugs.filter((value) => value !== slug));
+            };
+            return (
+              <section className="dashboard-panel cms-panel">
+                <div className="panel-heading">
+                  <div>
+                    <h2>المشاريع ذات الصلة</h2>
+                    <p>تحكم مستقل في المشاريع التي تظهر على الصفحة الرئيسية، ترتيبها، وإظهار/إخفاء القسم.</p>
+                  </div>
+                  <button className="btn btn-primary" type="button" disabled={!homepage || busy} onClick={() => { if (homepage) { setSelected(homepage); setMetaText(formatMeta(homepage.meta)); setActive("homepage"); } }}>فتح إعدادات الصفحة الرئيسية</button>
+                </div>
+                {!homepage ? (
+                  <p className="cms-form-note">لم يتم العثور على إعداد الصفحة الرئيسية في CMS.</p>
+                ) : (
+                  <>
+                    <div className="related-projects-admin-summary">
+                      <strong>الحالة:</strong> {getHomeSectionSettings().find((section) => section.key === "relatedProjects")?.visible === false ? "القسم مخفي" : "القسم ظاهر"}
+                      <span>·</span>
+                      <strong>المختار:</strong> {activeSlugs.length}
+                      <span>·</span>
+                      <strong>إجمالي المشاريع المنشورة:</strong> {allProjects.length}
+                    </div>
+                    <div className="related-projects-admin-list">
+                      {allProjects.map((project) => {
+                        const enabled = activeSlugs.includes(project.slug);
+                        const activeIndex = activeSlugs.indexOf(project.slug);
+                        const imageId = typeof project.meta?.imageAssetId === "string" ? project.meta.imageAssetId : "";
+                        const asset = imageId ? media.find((item) => item.id === imageId) : null;
+                        const projectUrl = typeof project.meta?.projectUrl === "string" ? project.meta.projectUrl : typeof project.meta?.websiteUrl === "string" ? project.meta.websiteUrl : typeof project.meta?.url === "string" ? project.meta.url : "";
+                        return (
+                          <article className={`related-project-admin-row ${enabled ? "is-enabled" : ""}`} key={project.id}>
+                            <label className="cms-check related-project-admin-toggle">
+                              <input type="checkbox" checked={enabled} onChange={(event) => toggle(project.slug, event.target.checked)} />
+                              <span className="related-project-admin-preview">{asset ? <img src={asset.url} alt={asset.altAr || project.titleAr} /> : <span>{(project.titleAr || project.titleEn).slice(0, 2)}</span>}</span>
+                              <span className="related-project-admin-copy"><strong>{project.titleAr || project.titleEn}</strong><small dir="ltr">{projectUrl || "لا يوجد رابط للمشروع بعد"}</small></span>
+                            </label>
+                            {enabled && <div className="related-project-admin-actions"><span>{activeIndex + 1}</span><button type="button" disabled={activeIndex <= 0} onClick={() => move(project.slug, -1)}>أعلى</button><button type="button" disabled={activeIndex >= activeSlugs.length - 1} onClick={() => move(project.slug, 1)}>أسفل</button></div>}
+                          </article>
+                        );
+                      })}
+                    </div>
+                    <div className="cms-form-actions">
+                      <button className="btn btn-primary" type="button" disabled={busy} onClick={() => {
+                        const homepageNow = items.find((item) => item.type === "homepage");
+                        if (!homepageNow) return;
+                        setSelected(homepageNow);
+                        setMetaText(formatMeta(homepageNow.meta));
+                        const form = document.querySelector<HTMLFormElement>("#cms-content-form");
+                        form?.requestSubmit();
+                      }}>حفظ التغييرات</button>
+                    </div>
+                  </>
+                )}
+              </section>
+            );
+          })()}
           {active === "integration" && <IntegrationSettings initialMeta={integrationItem?.meta ?? {}} />}
 
           {active === "redirects" && (
