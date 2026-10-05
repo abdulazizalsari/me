@@ -1318,6 +1318,77 @@ export function Dashboard({
                         </article>
                       ))}
                     </div>
+                    <div className="cms-section-settings related-projects-admin-panel">
+                      <div className="panel-heading">
+                        <div>
+                          <h3>إدارة قسم المشاريع ذات الصلة</h3>
+                          <p>اختر المشاريع التي تظهر في قسم «المشاريع ذات الصلة» على الصفحة الرئيسية، ورتب ظهورها. صورة/شعار ورابط كل مشروع يتم التحكم بهما من قسم «المشاريع».</p>
+                        </div>
+                      </div>
+                      <div className="cms-form-note">
+                        <strong>طريقة الاستخدام:</strong> فعّل المشاريع المطلوبة ثم استخدم أزرار «أعلى» و«أسفل» لتحديد ترتيبها. إذا لم تحدد أي مشروع سيظهر جميع المشاريع المنشورة تلقائياً.
+                      </div>
+                      <div className="related-projects-admin-list">
+                        {(() => {
+                          const allProjects = items
+                            .filter((item) => item.type === "project" && item.status === "published")
+                            .sort((a, b) => a.sortOrder - b.sortOrder);
+                          const configured = Array.isArray(readMeta().relatedProjectSlugs)
+                            ? (readMeta().relatedProjectSlugs as unknown[]).filter((value): value is string => typeof value === "string")
+                            : [];
+                          const activeSlugs = configured.length ? configured.filter((slug) => allProjects.some((project) => project.slug === slug)) : allProjects.map((project) => project.slug);
+                          const ordered = [
+                            ...activeSlugs.map((slug) => allProjects.find((project) => project.slug === slug)).filter((project): project is CmsContentItem => Boolean(project)),
+                            ...allProjects.filter((project) => !activeSlugs.includes(project.slug))
+                          ];
+                          const moveRelatedProject = (slug: string, direction: -1 | 1) => {
+                            const current = activeSlugs.slice();
+                            const index = current.indexOf(slug);
+                            const nextIndex = index + direction;
+                            if (index < 0 || nextIndex < 0 || nextIndex >= current.length) return;
+                            [current[index], current[nextIndex]] = [current[nextIndex], current[index]];
+                            updateMetaField("relatedProjectSlugs", current);
+                          };
+                          const toggleRelatedProject = (slug: string, checked: boolean) => {
+                            const current = activeSlugs.slice();
+                            const next = checked ? [...current, slug] : current.filter((value) => value !== slug);
+                            updateMetaField("relatedProjectSlugs", next);
+                          };
+                          return ordered.length ? ordered.map((project, index) => {
+                            const enabled = activeSlugs.includes(project.slug);
+                            const activeIndex = activeSlugs.indexOf(project.slug);
+                            const imageId = typeof project.meta?.imageAssetId === "string" ? project.meta.imageAssetId : "";
+                            const asset = imageId ? media.find((item) => item.id === imageId) : null;
+                            const projectUrl = typeof project.meta?.projectUrl === "string"
+                              ? project.meta.projectUrl
+                              : typeof project.meta?.websiteUrl === "string"
+                                ? project.meta.websiteUrl
+                                : typeof project.meta?.url === "string" ? project.meta.url : "";
+                            return (
+                              <article className={`related-project-admin-row ${enabled ? "is-enabled" : ""}`} key={project.id}>
+                                <label className="cms-check related-project-admin-toggle">
+                                  <input type="checkbox" checked={enabled} onChange={(event) => toggleRelatedProject(project.slug, event.target.checked)} />
+                                  <span className="related-project-admin-preview">
+                                    {asset ? <img src={asset.url} alt={asset.altAr || project.titleAr} /> : <span>{(project.titleAr || project.titleEn).slice(0, 2)}</span>}
+                                  </span>
+                                  <span className="related-project-admin-copy">
+                                    <strong>{project.titleAr || project.titleEn}</strong>
+                                    <small dir="ltr">{projectUrl || "لا يوجد رابط للمشروع بعد"}</small>
+                                  </span>
+                                </label>
+                                {enabled && (
+                                  <div className="related-project-admin-actions">
+                                    <span>{activeIndex + 1}</span>
+                                    <button type="button" disabled={activeIndex <= 0} onClick={() => moveRelatedProject(project.slug, -1)}>أعلى</button>
+                                    <button type="button" disabled={activeIndex < 0 || activeIndex >= activeSlugs.length - 1} onClick={() => moveRelatedProject(project.slug, 1)}>أسفل</button>
+                                  </div>
+                                )}
+                              </article>
+                            );
+                          }) : <p className="cms-form-note">لا توجد مشاريع منشورة حالياً. أضف المشاريع من قسم «المشاريع» أولاً.</p>;
+                        })()}
+                      </div>
+                    </div>
                     <label className="cms-check"><input type="checkbox" checked={readMeta().insightsVisible !== false} onChange={(event) => updateMetaField("insightsVisible", event.target.checked)} /> إظهار قسم رؤى في الصفحة الرئيسية</label>
                     <label className="cms-check"><input type="checkbox" checked={readMeta().insightsTickerVisible !== false} onChange={(event) => updateMetaField("insightsTickerVisible", event.target.checked)} /> إظهار شريط آخر المقالات</label>
                     <div className="cms-form-row">
