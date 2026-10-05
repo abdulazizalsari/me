@@ -964,7 +964,7 @@ export function Dashboard({
   const visibleNavGroups = navGroups
     .map((group) => ({ ...group, items: group.items.filter((item) => user.role === "admin" || editorTabs.has(item.type)) }))
     .filter((group) => group.items.length > 0);
-  const visibleAdvancedLinks = advancedLinks.filter((item) => item.roles.includes(user.role as "admin" | "editor"));
+  const visibleAdvancedLinks = advancedLinks.filter((item) => item.roles.some((role) => role === user.role));
   const integrationItem = items.find((item) => item.type === "integration" && item.slug === "site-integrations") ?? items.find((item) => item.type === "integration");
   const whatsappItem = items.find((item) => item.type === "whatsapp" && item.slug === "whatsapp-settings") ?? items.find((item) => item.type === "whatsapp");
   const blogSettingsItem = items.find((item) => item.type === "blog-settings" && item.slug === "blog-settings") ?? items.find((item) => item.type === "blog-settings");
