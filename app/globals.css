@@ -5638,3 +5638,76 @@ button, input, textarea, select { font: inherit; }
   background: var(--surface);
   color: var(--text-primary);
 }
+
+
+/* Dark mode final contrast correction — homepage hero on mobile */
+html[data-theme="dark"] .home-page-sections .hero {
+  background:
+    radial-gradient(circle at 8% 12%, rgba(255,90,25,.10), transparent 30%),
+    linear-gradient(180deg, #0b1718 0%, #102122 72%, #0d1c1d 100%) !important;
+  color: #f3f7f5;
+}
+
+html[data-theme="dark"] .home-page-sections .hero::before {
+  background: radial-gradient(circle, rgba(255,90,25,.13), transparent 64%);
+  opacity: 1;
+}
+
+html[data-theme="dark"] .home-page-sections .hero .h1 {
+  color: #f7fbf9 !important;
+  text-shadow: 0 2px 18px rgba(0,0,0,.32);
+}
+
+html[data-theme="dark"] .home-page-sections .hero .lead {
+  color: #d6e2df !important;
+}
+
+html[data-theme="dark"] .home-page-sections .hero .eyebrow {
+  color: #ff9a73 !important;
+  background: rgba(255,90,25,.14) !important;
+  border-color: rgba(255,154,115,.38) !important;
+}
+
+html[data-theme="dark"] .home-page-sections .hero .portrait-card {
+  background:
+    radial-gradient(circle at 72% 18%, rgba(255,90,25,.18), transparent 30%),
+    linear-gradient(145deg, #002b31 0%, #003E46 48%, #101615 100%);
+}
+
+html[data-theme="dark"] .home-page-sections .hero .btn-secondary {
+  background: #162b2c !important;
+  color: #f3f7f5 !important;
+  border-color: rgba(255,255,255,.20) !important;
+}
+
+html[data-theme="dark"] .home-page-sections .signature-services-section {
+  background:
+    radial-gradient(circle at 86% 8%, rgba(255,90,25,.06), transparent 28%),
+    linear-gradient(180deg, #0b1718 0%, #102122 100%) !important;
+}
+
+html[data-theme="dark"] .home-page-sections .signature-service-card:not(.signature-service-card-featured) {
+  background:
+    linear-gradient(135deg, #162b2c, #102122) !important;
+  color: #f3f7f5;
+  border-color: rgba(255,255,255,.12);
+}
+
+html[data-theme="dark"] .home-page-sections .signature-service-card:not(.signature-service-card-featured) .h3 {
+  color: #f3f7f5 !important;
+}
+
+html[data-theme="dark"] .home-page-sections .signature-service-card:not(.signature-service-card-featured) .signature-service-copy p {
+  color: #cbd8d5 !important;
+}
+
+@media (max-width: 760px) {
+  html[data-theme="dark"] .home-page-sections .hero {
+    min-height: 0;
+    padding-bottom: 54px;
+  }
+
+  html[data-theme="dark"] .home-page-sections .hero-layout {
+    gap: 22px;
+  }
+}
