@@ -5711,3 +5711,109 @@ html[data-theme="dark"] .home-page-sections .signature-service-card:not(.signatu
     gap: 22px;
   }
 }
+
+
+/* Related projects dashboard controls */
+.related-projects-admin-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border, rgba(0,0,0,.12));
+  border-radius: 14px;
+}
+.related-projects-admin-list {
+  display: grid;
+  gap: 10px;
+}
+.related-project-admin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid var(--border, rgba(0,0,0,.12));
+  border-radius: 14px;
+  background: var(--surface, rgba(255,255,255,.03));
+}
+.related-project-admin-row.is-enabled {
+  border-color: var(--brand-accent, #f85b18);
+}
+.related-project-admin-toggle {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+.related-project-admin-preview {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba(128,128,128,.12);
+}
+.related-project-admin-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.related-project-admin-preview > span {
+  font-weight: 800;
+  font-size: 16px;
+}
+.related-project-admin-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+.related-project-admin-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.related-project-admin-copy small {
+  opacity: .65;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: min(560px, 70vw);
+}
+.related-project-admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.related-project-admin-actions span {
+  min-width: 28px;
+  text-align: center;
+  font-weight: 800;
+}
+.related-project-admin-actions button {
+  border: 1px solid var(--border, rgba(0,0,0,.12));
+  background: transparent;
+  border-radius: 9px;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+.related-project-admin-actions button:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+@media (max-width: 700px) {
+  .related-project-admin-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .related-project-admin-actions {
+    justify-content: flex-end;
+  }
+  .related-project-admin-copy small {
+    max-width: 100%;
+  }
+}
