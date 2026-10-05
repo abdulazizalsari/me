@@ -1720,13 +1720,26 @@ export function Dashboard({
                       })}
                     </div>
                     <div className="cms-form-actions">
-                      <button className="btn btn-primary" type="button" disabled={busy} onClick={() => {
+                      <button className="btn btn-primary" type="button" disabled={busy} onClick={async () => {
                         const homepageNow = items.find((item) => item.type === "homepage");
                         if (!homepageNow) return;
-                        setSelected(homepageNow);
-                        setMetaText(formatMeta(homepageNow.meta));
-                        const form = document.querySelector<HTMLFormElement>("#cms-content-form");
-                        form?.requestSubmit();
+                        setBusy(true);
+                        setMessage("");
+                        const response = await fetch("/api/admin/content", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ ...homepageNow, meta: { ...(homepageNow.meta ?? {}), relatedProjectSlugs: activeSlugs }, metaText: JSON.stringify({ ...(homepageNow.meta ?? {}), relatedProjectSlugs: activeSlugs }, null, 2) })
+                        });
+                        const data = await response.json().catch(() => ({}));
+                        setBusy(false);
+                        if (!response.ok || !data.item) {
+                          setMessage(data.message ?? "تعذر حفظ إعدادات المشاريع ذات الصلة.");
+                          return;
+                        }
+                        setItems((current) => current.map((item) => item.id === data.item.id ? data.item : item));
+                        setSelected(data.item);
+                        setMetaText(formatMeta(data.item.meta));
+                        setMessage("تم حفظ إعدادات المشاريع ذات الصلة بنجاح.");
                       }}>حفظ التغييرات</button>
                     </div>
                   </>
