@@ -95,6 +95,15 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
     .map((slug) => courses.find((course) => course.slug === slug) ?? projects.find((project) => project.slug === slug) ?? staticProjects.find((project) => project.slug === slug))
     .filter((project): project is NonNullable<typeof project> => Boolean(project));
 
+  const configuredRelatedSlugs = Array.isArray(homepageMeta?.relatedProjectSlugs)
+    ? (homepageMeta.relatedProjectSlugs as unknown[]).filter((value): value is string => typeof value === "string")
+    : [];
+  const relatedProjects = configuredRelatedSlugs.length
+    ? configuredRelatedSlugs
+        .map((slug) => projects.find((project) => project.slug === slug))
+        .filter((project): project is NonNullable<typeof project> => Boolean(project))
+    : projects;
+
   return (
     <div className="home-page-sections">
       {sectionState(homepageMeta, "hero").visible && <section className="hero" style={{ order: sectionState(homepageMeta, "hero").order }}>
@@ -212,18 +221,20 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
         </div>
       </section>}
 
-      <div style={{ order: sectionState(homepageMeta, "stats").order }}>
+      {sectionState(homepageMeta, "relatedProjects").visible && <div style={{ order: sectionState(homepageMeta, "relatedProjects").order }}>
         <RelatedProjectsSlider
           locale={locale}
-          title={ar ? "المشاريع ذات الصلة" : "Related Projects"}
-          projects={projects.map((project) => ({
+          title={ar
+            ? String((homepageMeta?.relatedProjectsHeading as Record<string, unknown> | undefined)?.ar ?? "المشاريع ذات الصلة")
+            : String((homepageMeta?.relatedProjectsHeading as Record<string, unknown> | undefined)?.en ?? "Related Projects")}
+          projects={relatedProjects.map((project) => ({
             slug: project.slug,
             title: project.title[locale],
             image: project.image,
             href: project.href
           }))}
         />
-      </div>
+      </div>}
 
       {sectionState(homepageMeta, "training").visible && <section className="section" style={{ order: sectionState(homepageMeta, "training").order }}>
         <div className="container">
