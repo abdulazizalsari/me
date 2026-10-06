@@ -12,7 +12,6 @@ const items = [
   { href: "/admin/related-projects", label: "المشاريع ذات الصلة", icon: BriefcaseBusiness, roles: ["admin","editor"] },
   { href: "/admin/content", label: "المحتوى", icon: FileText, roles: ["admin","editor"] },
   { href: "/admin/pages", label: "إدارة الصفحات", icon: PanelsTopLeft, roles: ["admin","editor"] },
-  { href: "/admin/media", label: "مكتبة الوسائط", icon: FileText, roles: ["admin","editor"] },
   { href: "/admin/requests", label: "الطلبات", icon: Inbox, roles: ["admin","editor"] },
   { href: "/admin/translations", label: "الترجمة", icon: Languages, roles: ["admin","editor"] },
   { href: "/admin/languages", label: "اللغات", icon: Globe2, roles: ["admin"] },
