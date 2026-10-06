@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 export function AdminLoginForm() {
@@ -37,7 +38,8 @@ export function AdminLoginForm() {
           <label>كلمة المرور<input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></label>
           {message && <p className="cms-form-error">{message}</p>}
           <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "جار التحقق..." : "دخول"}</button>
-        <p><a href="/admin/forgot-password">نسيت كلمة المرور؟</a></p>\n        </form>
+        <p><Link href="/admin/forgot-password">نسيت كلمة المرور؟</Link></p>
+        </form>
       </section>
     </main>
   );
