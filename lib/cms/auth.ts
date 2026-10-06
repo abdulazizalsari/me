@@ -19,7 +19,7 @@ async function setAuthCookies(data: AuthResponse) {
 }
 
 async function profileFor(userId: string, token: string) {
-  const rows = await supabaseRequest<Array<{ role: CmsRole; email?: string; display_name?: string }>>(
+  const rows = await supabaseRequest<Array<{ role: CmsRole; permissions?: string[]; email?: string; display_name?: string }>>(
     `/rest/v1/admin_profiles?select=role,email,display_name&user_id=eq.${encodeURIComponent(userId)}&limit=1`,
     { token }
   );
@@ -37,7 +37,7 @@ export async function loginCmsUser(email: string, password: string) {
   const data = await response.json() as AuthResponse;
   if (!data.access_token || !data.user?.id) return null;
   const profile = await profileFor(data.user.id, data.access_token).catch(() => null);
-  if (!profile || !["admin", "editor"].includes(profile.role)) return null;
+  if (!profile || !["admin", "editor", "writer", "reviewer"].includes(profile.role)) return null;
   await setAuthCookies(data);
   return {
     id: data.user.id,
