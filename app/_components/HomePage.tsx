@@ -101,7 +101,8 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
   const relatedConfig = homepageMeta?.relatedProjectConfig && typeof homepageMeta.relatedProjectConfig === "object"
     ? homepageMeta.relatedProjectConfig as Record<string, unknown>
     : {};
-  const relatedProjects = configuredRelatedSlugs.length
+  const relatedProjectsConfigured = homepageMeta?.relatedProjectsConfigured === true;
+  const relatedProjects = relatedProjectsConfigured
     ? configuredRelatedSlugs
         .map((slug) => {
           const project = projects.find((item) => item.slug === slug);
