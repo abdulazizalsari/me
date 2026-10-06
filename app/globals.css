@@ -5946,3 +5946,59 @@ html[data-theme="dark"] .home-page-sections .signature-service-card:not(.signatu
 .homepage-editor .admin-form{max-width:900px}
 .homepage-editor h3{margin:20px 0 8px}
 @media(max-width:900px){.homepage-admin{grid-template-columns:1fr}.homepage-section-list{position:static}.homepage-section-row{grid-template-columns:minmax(0,1fr) auto}.homepage-section-row>div{grid-column:1/-1}}
+
+
+/* Related projects — flexible CMS presentation */
+.related-projects-slider {
+  --related-gap: 22px;
+  --related-radius: 22px;
+  --related-card-height: 286px;
+}
+.related-projects-page {
+  gap: var(--related-gap);
+}
+.related-project-card {
+  min-height: var(--related-card-height);
+  border-radius: var(--related-radius);
+  transition: transform .55s cubic-bezier(.22,1,.36,1), opacity .45s ease, filter .45s ease, box-shadow .35s ease;
+}
+.related-projects-transition-fade .related-projects-page {
+  animation: relatedProjectsFade .55s ease both;
+}
+.related-projects-transition-zoom .related-projects-page {
+  animation: relatedProjectsZoom .55s cubic-bezier(.22,1,.36,1) both;
+}
+.related-projects-transition-slide .related-projects-page {
+  animation: relatedProjectsSlide .55s cubic-bezier(.22,1,.36,1) both;
+}
+.related-project-card:hover {
+  transform: translateY(-8px) scale(1.012);
+  box-shadow: 0 28px 64px rgba(0,62,70,.16);
+}
+.related-projects-logo {
+  transition: background .35s ease, transform .45s ease;
+}
+.related-project-card:hover .related-projects-logo {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255,90,25,.10), transparent 58%),
+    linear-gradient(180deg,#fff,#f7fbfa);
+}
+@keyframes relatedProjectsFade {
+  from { opacity: .15; }
+  to { opacity: 1; }
+}
+@keyframes relatedProjectsZoom {
+  from { opacity: .25; transform: scale(.965); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes relatedProjectsSlide {
+  from { opacity: .35; transform: translateX(18px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .related-projects-transition-fade .related-projects-page,
+  .related-projects-transition-zoom .related-projects-page,
+  .related-projects-transition-slide .related-projects-page {
+    animation: none !important;
+  }
+}
