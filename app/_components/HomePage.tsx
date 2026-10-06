@@ -242,12 +242,21 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
           title={ar
             ? String((homepageMeta?.relatedProjectsHeading as Record<string, unknown> | undefined)?.ar ?? "المشاريع ذات الصلة")
             : String((homepageMeta?.relatedProjectsHeading as Record<string, unknown> | undefined)?.en ?? "Related Projects")}
-          projects={relatedProjects.map((project) => ({
-            slug: project.slug,
-            title: project.title[locale],
-            image: project.image,
-            href: project.href
-          }))}
+          autoPlay={homepageMeta?.relatedProjectsAutoPlay !== false}
+          autoPlayInterval={typeof homepageMeta?.relatedProjectsInterval === "number" ? homepageMeta.relatedProjectsInterval * 1000 : 8000}
+          projects={relatedProjects.map((project) => {
+            const override = relatedConfig[project.slug] && typeof relatedConfig[project.slug] === "object"
+              ? relatedConfig[project.slug] as Record<string, unknown>
+              : {};
+            return {
+              slug: project.slug,
+              title: project.title[locale],
+              image: project.image,
+              href: project.href,
+              isProtected: override.isProtected !== false,
+              watermarkEnabled: override.watermarkEnabled === true
+            };
+          })}
         />
       </div>}
 
