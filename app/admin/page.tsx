@@ -6,6 +6,7 @@ import { listPuckPages } from "@/lib/cms/puck";
 import { AdminFrame } from "./AdminFrame";
 import { AdminPageHeader } from "./AdminPageHeader";
 import { RelatedProjectsAdminClient } from "./related-projects/RelatedProjectsAdminClient";
+import { UsersClient } from "./users/UsersClient";
 
 export default async function AdminPage() {
   const user=await getCurrentCmsUser();
@@ -47,5 +48,10 @@ export default async function AdminPage() {
       <AdminPageHeader title="المشاريع ذات الصلة" description="إدارة كاملة للقسم من اللوحة الرئيسية: الظهور، العناوين، السلايدر، المشاريع، الصور، الروابط، الحماية، العلامة المائية والترتيب."/>
       <RelatedProjectsAdminClient projects={projects} homepage={homepages[0] ?? null} role={user.role} />
     </section>
+
+    {user.role === "admin" && <section className="admin-dashboard-users">
+      <AdminPageHeader title="المستخدمون" description="إدارة الحسابات والأدوار والصلاحيات وكلمات المرور من اللوحة الرئيسية دون فتح لوحة منفصلة." />
+      <UsersClient />
+    </section>}
   </AdminFrame>;
 }
