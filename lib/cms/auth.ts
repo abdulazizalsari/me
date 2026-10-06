@@ -20,7 +20,7 @@ async function setAuthCookies(data: AuthResponse) {
 
 async function profileFor(userId: string, token: string) {
   const rows = await supabaseRequest<Array<{ role: CmsRole; permissions?: string[]; email?: string; display_name?: string }>>(
-    `/rest/v1/admin_profiles?select=role,email,display_name&user_id=eq.${encodeURIComponent(userId)}&limit=1`,
+    `/rest/v1/admin_profiles?select=role,permissions,email,display_name&user_id=eq.${encodeURIComponent(userId)}&limit=1`,
     { token }
   );
   return rows[0] ?? null;
