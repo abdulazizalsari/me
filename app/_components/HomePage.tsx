@@ -135,7 +135,11 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
           return {
             ...project,
             image: typeof override.image === "string" && override.image.trim() ? override.image : project.image,
-            href: typeof override.href === "string" && override.href.trim() ? override.href : project.href
+            href: typeof override.href === "string" && override.href.trim() ? override.href : project.href,
+            title: {
+              ar: typeof override.titleAr === "string" && override.titleAr ? override.titleAr : project.title.ar,
+              en: typeof override.titleEn === "string" && override.titleEn ? override.titleEn : project.title.en
+            }
           };
         })
         .filter((project): project is NonNullable<typeof project> => Boolean(project))
@@ -250,9 +254,11 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
       {sectionState(homepageMeta, "relatedProjects").visible && <div style={{ order: sectionState(homepageMeta, "relatedProjects").order }}>
         <RelatedProjectsSlider
           locale={locale}
+          titleVisible={(homepageMeta?.relatedProjectsDesign as Record<string, unknown> | undefined)?.titleVisible !== false}
           title={ar
-            ? String((homepageMeta?.relatedProjectsHeading as Record<string, unknown> | undefined)?.ar ?? "المشاريع ذات الصلة")
-            : String((homepageMeta?.relatedProjectsHeading as Record<string, unknown> | undefined)?.en ?? "Related Projects")}
+            ? String((homepageMeta?.relatedProjectsHeading as Record<string, unknown> | undefined)?.ar ?? "")
+            : String((homepageMeta?.relatedProjectsHeading as Record<string, unknown> | undefined)?.en ?? "")}
+          design={homepageMeta?.relatedProjectsDesign as Record<string, unknown> | undefined}
           autoPlay={homepageMeta?.relatedProjectsAutoPlay !== false}
           autoPlayInterval={typeof homepageMeta?.relatedProjectsInterval === "number" ? homepageMeta.relatedProjectsInterval * 1000 : 8000}
           projects={relatedProjects.map((project) => {
@@ -265,7 +271,8 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
               image: project.image,
               href: project.href,
               isProtected: override.isProtected !== false,
-              watermarkEnabled: override.watermarkEnabled === true
+              watermarkEnabled: override.watermarkEnabled === true,
+              titleOverride: locale === "ar" ? String(override.titleAr || project.title.ar) : String(override.titleEn || project.title.en)
             };
           })}
         />
