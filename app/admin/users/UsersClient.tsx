@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-type Role = "admin" | "editor" | "writer" | "reviewer";
+type Role = "admin" | "assistant" | "editor" | "writer" | "reviewer";
 type UserRow = { id:string; email:string; displayName:string; role:Role; permissions:string[]; createdAt:string; lastSignInAt:string };
 const permissionOptions = [
  ["dashboard_view","الوصول إلى لوحة التحكم"],["articles_create","إنشاء المقالات"],["articles_edit","تعديل المقالات"],["articles_submit","إرسال المقالات للمراجعة"],["articles_publish","نشر المقالات"],["media_manage","إدارة الوسائط"],["pages_manage","إدارة الصفحات"],["related_projects_manage","إدارة المشاريع ذات الصلة"],["requests_manage","إدارة الطلبات والنماذج"],["seo_manage","إدارة SEO"],["languages_manage","إدارة اللغات والترجمات"],["settings_manage","إدارة الإعدادات"],["users_manage","إدارة المستخدمين"],["activity_view","عرض سجل النشاط"]
 ] as const;
-const roleDefaults:Record<Role,string[]>={admin:permissionOptions.map(x=>x[0]),editor:["dashboard_view","articles_create","articles_edit","articles_submit","media_manage","pages_manage","related_projects_manage","requests_manage","seo_manage"],writer:["dashboard_view","articles_create","articles_edit","articles_submit"],reviewer:["dashboard_view","articles_edit","articles_publish"]};
+const roleDefaults:Record<Role,string[]>={admin:permissionOptions.map(x=>x[0]),assistant:["dashboard_view","articles_create","articles_edit","media_manage","requests_manage"],editor:["dashboard_view","articles_create","articles_edit","articles_submit","media_manage","pages_manage","related_projects_manage","requests_manage","seo_manage"],writer:["dashboard_view","articles_create","articles_edit","articles_submit"],reviewer:["dashboard_view","articles_edit","articles_publish"]};
 export function UsersClient(){
  const [users,setUsers]=useState<UserRow[]>([]),[message,setMessage]=useState(""),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[showPassword,setShowPassword]=useState(true);
  async function load(){setLoading(true);const r=await fetch("/api/admin/users",{cache:"no-store"});const d=await r.json().catch(()=>({}));setLoading(false);if(r.ok)setUsers(d.users||[]);else setMessage(d.message||"تعذر تحميل المستخدمين.");}
