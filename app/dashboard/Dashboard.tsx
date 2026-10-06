@@ -1656,7 +1656,7 @@ export function Dashboard({
                     )) : <p className="cms-form-note">لا توجد نسخ سابقة لهذا العنصر بعد.</p>}
                   </div>}
                   <div className="cms-form-actions">
-                    <button className="btn btn-primary" type="submit" disabled={busy}><Save size={18} /> {busy ? "جار الحفظ..." : "حفظ"}</button>
+                    <button className="btn btn-primary" type="submit" disabled={busy}><Save size={18} /> {busy ? "جار الحفظ..." : "حفظ"}</button>\n                    {selected.id && selected.type === "article" && user.role === "writer" && user.permissions.includes("articles_submit") && <button className="cms-ghost-button" type="button" disabled={busy} onClick={sendArticleForReview}>إرسال للنشر</button>}\n                    {selected.id && selected.type === "article" && user.role === "reviewer" && user.permissions.includes("articles_publish") && <button className="btn btn-primary" type="button" disabled={busy} onClick={publishArticle}>نشر المقال</button>}
                     {selected.id && selected.type === "article" && <a className="cms-ghost-button" href={`/dashboard/preview/article/${selected.id}`} target="_blank" rel="noreferrer">معاينة المقال</a>}
                     {selected.id && <button className="cms-danger-button" type="button" onClick={() => deleteItem(selected.id)}><Trash2 size={17} /> حذف</button>}
                   </div>
@@ -1997,4 +1997,47 @@ function ContentTable({
       </table>
     </div>
   );
-}
+}\n\n  async function sendArticleForReview() {
+    if (selected.type !== "article" || !selected.id) {
+      setMessage("احفظ المقال أولاً ثم أرسله للمراجعة.");
+      return;
+    }
+    setBusy(true);
+    setMessage("");
+    let meta: Record<string, unknown> = {};
+    try { meta = metaText.trim() ? JSON.parse(metaText) : {}; } catch { setBusy(false); setMessage("بيانات المقال الإضافية غير صحيحة."); return; }
+    meta = { ...meta, workflowStatus: "pending_review", submittedForReviewAt: new Date().toISOString(), submittedBy: user.id };
+    const response = await fetch("/api/admin/content", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...selected, status: "draft", metaText: JSON.stringify(meta) })
+    });
+    const data = await response.json().catch(() => ({}));
+    setBusy(false);
+    if (!response.ok || !data.item) { setMessage(data.message ?? "تعذر إرسال المقال للمراجعة."); return; }
+    setItems((current) => [...current.filter((item) => item.id !== data.item.id), data.item].sort((a,b)=>a.sortOrder-b.sortOrder));
+    setSelected(data.item);
+    setMetaText(formatMeta(data.item.meta));
+    setMessage("تم إرسال المقال إلى قائمة المراجعة والنشر.");
+  }
+
+  async function publishArticle() {
+    if (selected.type !== "article" || !selected.id) return;
+    setBusy(true);
+    setMessage("");
+    let meta: Record<string, unknown> = {};
+    try { meta = metaText.trim() ? JSON.parse(metaText) : {}; } catch { setBusy(false); setMessage("بيانات المقال الإضافية غير صحيحة."); return; }
+    meta = { ...meta, workflowStatus: "published", publishedAt: new Date().toISOString(), publishedBy: user.id };
+    const response = await fetch("/api/admin/content", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...selected, status: "published", metaText: JSON.stringify(meta) })
+    });
+    const data = await response.json().catch(() => ({}));
+    setBusy(false);
+    if (!response.ok || !data.item) { setMessage(data.message ?? "تعذر نشر المقال."); return; }
+    setItems((current) => [...current.filter((item) => item.id !== data.item.id), data.item].sort((a,b)=>a.sortOrder-b.sortOrder));
+    setSelected(data.item);
+    setMetaText(formatMeta(data.item.meta));
+    setMessage("تم نشر المقال بنجاح.");
+  }
