@@ -1526,9 +1526,7 @@ export function Dashboard({
                       <label dir="ltr">Author bio<textarea dir="ltr" rows={3} value={String(readMeta().authorBioEn ?? "")} onChange={(event) => updateMetaField("authorBioEn", event.target.value)} /></label>
                     </div>
                     <label>الوسوم<input value={Array.isArray(readMeta().tags) ? (readMeta().tags as string[]).join(", ") : ""} onChange={(event) => updateMetaField("tags", event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean))} placeholder="تسويق رقمي، تجارة دولية، مواقع" /></label>
-                    <label>المراجع والمصادر<textarea rows={4} value={Array.isArray(readMeta().references) ? (readMeta().references as string[]).join("
-") : ""} onChange={(event) => updateMetaField("references", event.target.value.split("
-").map((line) => line.trim()).filter(Boolean))} placeholder="مرجع أو رابط في كل سطر" /></label>
+                    <label>المراجع والمصادر<textarea rows={4} value={Array.isArray(readMeta().references) ? (readMeta().references as string[]).join("\n") : ""} onChange={(event) => updateMetaField("references", event.target.value.split("\n").map((line) => line.trim()).filter(Boolean))} placeholder="مرجع أو رابط في كل سطر" /></label>
                     <div className="cms-form-row">
                       <label>CTA عنوان عربي<input value={String(readMeta().ctaTitleAr ?? "")} onChange={(event) => updateMetaField("ctaTitleAr", event.target.value)} /></label>
                       <label dir="ltr">CTA English<input dir="ltr" value={String(readMeta().ctaTitleEn ?? "")} onChange={(event) => updateMetaField("ctaTitleEn", event.target.value)} /></label>
@@ -1575,9 +1573,7 @@ export function Dashboard({
                       <label>الأيقونة<input value={String(readMeta().icon ?? "")} onChange={(event) => updateMetaField("icon", event.target.value)} placeholder="Search / Code2 / Palette" /></label>
                       <label>CTA URL<input dir="ltr" value={String(readMeta().ctaUrl ?? "")} onChange={(event) => updateMetaField("ctaUrl", event.target.value)} placeholder="/consultation" /></label>
                     </div>
-                    <label>المزايا<textarea rows={3} value={Array.isArray(readMeta().features) ? (readMeta().features as string[]).join("
-") : ""} onChange={(event) => updateMetaField("features", event.target.value.split("
-").map((line) => line.trim()).filter(Boolean))} placeholder="ميزة في كل سطر" /></label>
+                    <label>المزايا<textarea rows={3} value={Array.isArray(readMeta().features) ? (readMeta().features as string[]).join("\n") : ""} onChange={(event) => updateMetaField("features", event.target.value.split("\n").map((line) => line.trim()).filter(Boolean))} placeholder="ميزة في كل سطر" /></label>
                   </div>}
                   {selected.type === "course" && <div className="cms-section-settings">
                     <div className="panel-heading"><div><h3>حقول الدورة</h3><p>إدارة مستقلة للدورات الحالية، ومنها دورة الوردبريس، بدون خلطها مع المشاريع.</p></div></div>
@@ -1594,15 +1590,9 @@ export function Dashboard({
                       <label>رابط الدورة<input dir="ltr" value={String(readMeta().courseUrl ?? "")} onChange={(event) => updateMetaField("courseUrl", event.target.value)} /></label>
                     </div>
                     <label className="cms-check"><input type="checkbox" checked={Boolean(readMeta().featured)} onChange={(event) => updateMetaField("featured", event.target.checked)} /> دورة مميزة</label>
-                    <label>ماذا ستتعلم؟<textarea rows={4} value={Array.isArray(readMeta().learningOutcomes) ? (readMeta().learningOutcomes as string[]).join("
-") : ""} onChange={(event) => updateMetaField("learningOutcomes", event.target.value.split("
-").map((line) => line.trim()).filter(Boolean))} placeholder="نقطة في كل سطر" /></label>
-                    <label>المتطلبات<textarea rows={3} value={Array.isArray(readMeta().requirements) ? (readMeta().requirements as string[]).join("
-") : ""} onChange={(event) => updateMetaField("requirements", event.target.value.split("
-").map((line) => line.trim()).filter(Boolean))} placeholder="متطلب في كل سطر" /></label>
-                    <label>محتوى الدورة / Curriculum<textarea rows={5} value={Array.isArray(readMeta().curriculum) ? (readMeta().curriculum as string[]).join("
-") : ""} onChange={(event) => updateMetaField("curriculum", event.target.value.split("
-").map((line) => line.trim()).filter(Boolean))} placeholder="وحدة أو درس في كل سطر" /></label>
+                    <label>ماذا ستتعلم؟<textarea rows={4} value={Array.isArray(readMeta().learningOutcomes) ? (readMeta().learningOutcomes as string[]).join("\n") : ""} onChange={(event) => updateMetaField("learningOutcomes", event.target.value.split("\n").map((line) => line.trim()).filter(Boolean))} placeholder="نقطة في كل سطر" /></label>
+                    <label>المتطلبات<textarea rows={3} value={Array.isArray(readMeta().requirements) ? (readMeta().requirements as string[]).join("\n") : ""} onChange={(event) => updateMetaField("requirements", event.target.value.split("\n").map((line) => line.trim()).filter(Boolean))} placeholder="متطلب في كل سطر" /></label>
+                    <label>محتوى الدورة / Curriculum<textarea rows={5} value={Array.isArray(readMeta().curriculum) ? (readMeta().curriculum as string[]).join("\n") : ""} onChange={(event) => updateMetaField("curriculum", event.target.value.split("\n").map((line) => line.trim()).filter(Boolean))} placeholder="وحدة أو درس في كل سطر" /></label>
                   </div>}
                   {selected.type === "project" && <div className="cms-section-settings">
                     <div className="panel-heading"><div><h3>حقول المشروع</h3><p>تفاصيل Portfolio فقط: العميل، التقنيات، النتائج، وروابط المشروع.</p></div></div>
@@ -1611,12 +1601,8 @@ export function Dashboard({
                       <label>السنة<input value={String(readMeta().year ?? "")} onChange={(event) => updateMetaField("year", event.target.value)} /></label>
                     </div>
                     <label>رابط المشروع<input dir="ltr" value={String(readMeta().projectUrl ?? "")} onChange={(event) => updateMetaField("projectUrl", event.target.value)} /></label>
-                    <label>التقنيات<textarea rows={3} value={Array.isArray(readMeta().technologies) ? (readMeta().technologies as string[]).join("
-") : ""} onChange={(event) => updateMetaField("technologies", event.target.value.split("
-").map((line) => line.trim()).filter(Boolean))} /></label>
-                    <label>النتائج<textarea rows={3} value={Array.isArray(readMeta().results) ? (readMeta().results as string[]).join("
-") : ""} onChange={(event) => updateMetaField("results", event.target.value.split("
-").map((line) => line.trim()).filter(Boolean))} /></label>
+                    <label>التقنيات<textarea rows={3} value={Array.isArray(readMeta().technologies) ? (readMeta().technologies as string[]).join("\n") : ""} onChange={(event) => updateMetaField("technologies", event.target.value.split("\n").map((line) => line.trim()).filter(Boolean))} /></label>
+                    <label>النتائج<textarea rows={3} value={Array.isArray(readMeta().results) ? (readMeta().results as string[]).join("\n") : ""} onChange={(event) => updateMetaField("results", event.target.value.split("\n").map((line) => line.trim()).filter(Boolean))} /></label>
                   </div>}
                   {selected.type === "experience" && <div className="cms-section-settings">
                     <div className="panel-heading"><div><h3>حقول الخبرة</h3><p>خبرة مستقلة عن المهارات، مع تاريخ ودور ونقاط إنجاز.</p></div></div>
@@ -1628,9 +1614,7 @@ export function Dashboard({
                       <label>تاريخ البداية<input type="date" value={String(readMeta().startDate ?? "")} onChange={(event) => updateMetaField("startDate", event.target.value)} /></label>
                       <label>تاريخ النهاية<input type="date" value={String(readMeta().endDate ?? "")} onChange={(event) => updateMetaField("endDate", event.target.value)} /></label>
                     </div>
-                    <label>أبرز النقاط<textarea rows={3} value={Array.isArray(readMeta().highlights) ? (readMeta().highlights as string[]).join("
-") : ""} onChange={(event) => updateMetaField("highlights", event.target.value.split("
-").map((line) => line.trim()).filter(Boolean))} /></label>
+                    <label>أبرز النقاط<textarea rows={3} value={Array.isArray(readMeta().highlights) ? (readMeta().highlights as string[]).join("\n") : ""} onChange={(event) => updateMetaField("highlights", event.target.value.split("\n").map((line) => line.trim()).filter(Boolean))} /></label>
                   </div>}
                   {selected.type === "skill" && <div className="cms-section-settings">
                     <div className="panel-heading"><div><h3>حقول المهارة</h3><p>اسم المهارة، التصنيف، المستوى، الأيقونة، وإظهارها في الواجهة.</p></div></div>
