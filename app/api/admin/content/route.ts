@@ -14,13 +14,13 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null) as (Partial<CmsContentSeed> & { id?: string; metaText?: string }) | null;
   if (!body) return NextResponse.json({ ok: false, message: "بيانات غير صالحة." }, { status: 400 });
   const type = (body.type ?? "service") as CmsContentType;
-  if (user.role === "editor" && !editorTypes.includes(type)) {
+  if (user.role === "assistant" && !["article", "service", "course"].includes(type)) {\n    return NextResponse.json({ ok: false, message: "المساعد يعمل فقط ضمن المحتوى المصرح له." }, { status: 403 });\n  }\n  if (user.role === "editor" && !editorTypes.includes(type)) {
     return NextResponse.json({ ok: false, message: "المحرر يستطيع تعديل المقالات والدورات والخدمات فقط." }, { status: 403 });
   }
-  if (user.role === "writer" && type !== "article") {
+  if (user.role === "assistant" && type !== "article" && !user.permissions.includes("pages_manage")) {\n    return NextResponse.json({ ok: false, message: "لا تملك صلاحية تعديل هذا القسم." }, { status: 403 });\n  }\n  if (user.role === "writer" && type !== "article") {
     return NextResponse.json({ ok: false, message: "كاتب المقالات يستطيع العمل على المقالات فقط." }, { status: 403 });
   }
-  if (user.role === "writer" && type === "article" && !user.permissions.some((p) => ["articles_create", "articles_edit"].includes(p))) {
+  if (user.role !== "admin" && type === "article" && !user.permissions.some((p) => ["articles_create", "articles_edit", "articles_publish"].includes(p))) {
     return NextResponse.json({ ok: false, message: "لا تملك صلاحية تعديل المقالات." }, { status: 403 });
   }
   if (user.role === "reviewer" && type !== "article") {
