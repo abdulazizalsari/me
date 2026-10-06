@@ -44,7 +44,8 @@ export async function POST(request: Request) {
       const value = body.relatedProjectConfig?.[slug];
       config[slug] = {
         image: typeof value?.image === "string" ? value.image.trim() : "",
-        href: typeof value?.href === "string" ? value.href.trim() : "",\n        isProtected: value?.isProtected !== false,\n        watermarkEnabled: value?.watermarkEnabled === true
+        href: typeof value?.href === "string" ? value.href.trim() : "",
+        isProtected: value?.isProtected !== false,\n        watermarkEnabled: value?.watermarkEnabled === true
       };
     }
 
