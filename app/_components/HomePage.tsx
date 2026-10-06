@@ -177,7 +177,7 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
               <strong>{homeText(heroContent.portraitRole, { ar: "مدرب ومطور", en: "TRAINER & DEVELOPER" }, locale)}</strong>
             </div>
             <div className="portrait-location">
-              {(Array.isArray(heroContent.portraitTags) ? heroContent.portraitTags : []).map((item, index) => (
+              {(Array.isArray(heroContent.portraitTags) && heroContent.portraitTags.length ? heroContent.portraitTags : [{ ar: "تسويق رقمي", en: "Digital Marketing" }, { ar: "تطوير أعمال", en: "Business Development" }, { ar: "تجارة دولية", en: "International Trade" }]).map((item, index) => (
                 <span key={index}>{homeText(item, { ar: "", en: "" }, locale)}</span>
               ))}
             </div>
@@ -207,7 +207,7 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
             <a className="btn btn-primary" href={homeUrl((experienceContent.button as Record<string, unknown> | undefined)?.url, "/cv", locale)}>{homeText(experienceContent.button, { ar: "عرض السيرة الذاتية", en: "View Professional Profile" }, locale)}</a>
           </div>
           <div className="experience-points">
-            {(Array.isArray(experienceContent.points) ? experienceContent.points : []).map((item, index) => (
+            {(Array.isArray(experienceContent.points) && experienceContent.points.length ? experienceContent.points : ["التسويق الرقمي","تطوير الأعمال","التدريب والاستشارات","التخطيط الاستراتيجي","تصميم المواقع","الحملات الإعلانية","التصميم الجرافيكي","إدارة المشاريع","التجارة الدولية"].map(value => ({ ar: value, en: value }))).map((item, index) => (
               <span className="experience-chip" key={index}><CheckCircle2 size={17} aria-hidden />{homeText(item, { ar: "", en: "" }, locale)}</span>
             ))}
           </div>
@@ -299,7 +299,7 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
             <h2 className="h2">{homeText(expertiseContent.title, { ar: "استراتيجيات تسويقية فعالة وأداء رقمي قابل للقياس", en: "Effective Marketing Strategies and Measurable Digital Performance" }, locale)}</h2>
           </div>
           <div className="grid">
-            {(Array.isArray(expertiseContent.points) ? expertiseContent.points : []).map((item, index) => <div className="check-item" key={index}><CheckCircle2 color="var(--brand-accent)" /><span>{homeText(item, { ar: "", en: "" }, locale)}</span></div>)}
+            {(Array.isArray(expertiseContent.points) && expertiseContent.points.length ? expertiseContent.points : ["تحسين موقعك وأدائك الرقمي","تحسين محركات البحث","تسويق B2B والتصدير","أدوات الذكاء الاصطناعي لتسريع أعمالك"].map(value => ({ ar: value, en: value }))).map((item, index) => <div className="check-item" key={index}><CheckCircle2 color="var(--brand-accent)" /><span>{homeText(item, { ar: "", en: "" }, locale)}</span></div>)}
           </div>
         </div>
       </section>}
