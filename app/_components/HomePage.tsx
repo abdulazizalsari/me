@@ -98,9 +98,23 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
   const configuredRelatedSlugs = Array.isArray(homepageMeta?.relatedProjectSlugs)
     ? (homepageMeta.relatedProjectSlugs as unknown[]).filter((value): value is string => typeof value === "string")
     : [];
+  const relatedConfig = homepageMeta?.relatedProjectConfig && typeof homepageMeta.relatedProjectConfig === "object"
+    ? homepageMeta.relatedProjectConfig as Record<string, unknown>
+    : {};
   const relatedProjects = configuredRelatedSlugs.length
     ? configuredRelatedSlugs
-        .map((slug) => projects.find((project) => project.slug === slug))
+        .map((slug) => {
+          const project = projects.find((item) => item.slug === slug);
+          if (!project) return null;
+          const override = relatedConfig[slug] && typeof relatedConfig[slug] === "object"
+            ? relatedConfig[slug] as Record<string, unknown>
+            : {};
+          return {
+            ...project,
+            image: typeof override.image === "string" && override.image.trim() ? override.image : project.image,
+            href: typeof override.href === "string" && override.href.trim() ? override.href : project.href
+          };
+        })
         .filter((project): project is NonNullable<typeof project> => Boolean(project))
     : projects;
 
