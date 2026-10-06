@@ -6,7 +6,7 @@ import type { CmsContentSeed, CmsContentType, CmsStatus } from "@/lib/cms/types"
 import { sanitizeCmsHtml } from "@/lib/cms/sanitize";
 
 const cmsStatuses: CmsStatus[] = ["draft", "published", "scheduled", "archived"];
-const editorTypes: CmsContentType[] = ["article", "course", "service"];
+const editorTypes: CmsContentType[] = ["article", "course", "service", "homepage"];
 
 export async function POST(request: Request) {
   const user = await getCurrentCmsUser();
