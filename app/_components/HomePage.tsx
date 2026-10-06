@@ -53,7 +53,7 @@ function cmsProjects(items: CmsContentItem[]) {
 }
 
 function cmsCourses(items: CmsContentItem[]) {
-  const trainingSlugs = ["digital-marketing-course", "graphic-design-course", "wordpress-course"];
+  const trainingSlugs = Array.isArray(trainingContent.slugs) && trainingContent.slugs.length ? trainingContent.slugs.filter((v): v is string => typeof v === "string") : ["digital-marketing-course", "graphic-design-course", "wordpress-course"];
   const rows = items.filter((item) => item.type === "course");
   const sourceRows = rows.length ? rows : items.filter((item) => item.type === "project" && trainingSlugs.includes(item.slug));
   return sourceRows.map((item) => ({
@@ -243,7 +243,7 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
 
       {sectionState(homepageMeta, "stats").visible && <section className="section band" style={{ order: sectionState(homepageMeta, "stats").order }}>
         <div className="container grid stat-grid">
-          {person.metrics.map((metric) => <div className="card stat" key={metric.value}><AnimatedMetric value={metric.value} /><span>{metric.label[locale]}</span></div>)}
+          {(Array.isArray(statsContent.items) && statsContent.items.some((item) => item && typeof item === "object" && String((item as Record<string, unknown>).value || "").trim()) ? statsContent.items : person.metrics.map((metric) => ({ value: metric.value, ar: metric.label.ar, en: metric.label.en }))).map((metric, index) => <div className="card stat" key={String((metric as Record<string, unknown>).value || index)}><AnimatedMetric value={String((metric as Record<string, unknown>).value || "")} /><span>{homeText(metric, { ar: "", en: "" }, locale)}</span></div>)}
         </div>
       </section>}
 
@@ -273,8 +273,8 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
 
       {sectionState(homepageMeta, "training").visible && <section className="section" style={{ order: sectionState(homepageMeta, "training").order }}>
         <div className="container">
-          <SectionHeader eyebrow={ar ? "الدورات الخاصة" : "Private Courses"} title={ar ? "تعلم التسويق والتصميم بمنهجية عملية" : "Learn Marketing and Design Through Practice"}>
-            {ar ? "برامج تدريبية واضحة تجمع بين المعرفة والتطبيق العملي." : "Structured training programs that connect knowledge with real execution."}
+          <SectionHeader eyebrow={homeText(trainingContent.eyebrow, { ar: "الدورات الخاصة", en: "Private Courses" }, locale)} title={homeText(trainingContent.title, { ar: "تعلم التسويق والتصميم بمنهجية عملية", en: "Learn Marketing and Design Through Practice" }, locale)}>
+            {homeText(trainingContent.description, { ar: "برامج تدريبية واضحة تجمع بين المعرفة والتطبيق العملي.", en: "Structured training programs that connect knowledge with real execution." }, locale)}
           </SectionHeader>
           <div className="grid portfolio-grid">
             {trainingCourses.map((project) => (
@@ -295,14 +295,11 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
       {sectionState(homepageMeta, "expertise").visible && <section className="section band" style={{ order: sectionState(homepageMeta, "expertise").order }}>
         <div className="container split">
           <div>
-            <p className="eyebrow">{ar ? "خبرة عملية" : "Practical Expertise"}</p>
-            <h2 className="h2">{ar ? "استراتيجيات تسويقية فعالة وأداء رقمي قابل للقياس" : "Effective Marketing Strategies and Measurable Digital Performance"}</h2>
+            <p className="eyebrow">{homeText(expertiseContent.eyebrow, { ar: "خبرة عملية", en: "Practical Expertise" }, locale)}</p>
+            <h2 className="h2">{homeText(expertiseContent.title, { ar: "استراتيجيات تسويقية فعالة وأداء رقمي قابل للقياس", en: "Effective Marketing Strategies and Measurable Digital Performance" }, locale)}</h2>
           </div>
           <div className="grid">
-            {(ar
-              ? ["تحسين موقعك وأدائك الرقمي", "تحسين محركات البحث", "تسويق B2B والتصدير", "أدوات الذكاء الاصطناعي لتسريع أعمالك"]
-              : ["Digital performance improvement", "Search engine optimization", "B2B marketing and export", "AI tools for business acceleration"]
-            ).map((item) => <div className="check-item" key={item}><CheckCircle2 color="var(--brand-accent)" /><span>{item}</span></div>)}
+            {(Array.isArray(expertiseContent.points) ? expertiseContent.points : []).map((item, index) => <div className="check-item" key={index}><CheckCircle2 color="var(--brand-accent)" /><span>{homeText(item, { ar: "", en: "" }, locale)}</span></div>)}
           </div>
         </div>
       </section>}
@@ -312,12 +309,12 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
       {sectionState(homepageMeta, "cta").visible && <section className="section" style={{ order: sectionState(homepageMeta, "cta").order }}>
         <div className="container cta">
           <div>
-            <h2 className="h2">{ar ? "مستعد ترفع مستوى مشروعك؟" : "Ready to Raise Your Project Level?"}</h2>
-            <p className="lead">{ar ? "لا تدع منافسيك يتقدمون عليك — تواصل معنا الآن عبر واتساب واحصل على استشارة مجانية." : "Start with a practical conversation and a clear next step."}</p>
+            <h2 className="h2">{homeText(ctaContent.title, { ar: "مستعد ترفع مستوى مشروعك؟", en: "Ready to Raise Your Project Level?" }, locale)}</h2>
+            <p className="lead">{homeText(ctaContent.description, { ar: "لا تدع منافسيك يتقدمون عليك — تواصل معنا الآن عبر واتساب واحصل على استشارة مجانية.", en: "Start with a practical conversation and a clear next step." }, locale)}</p>
           </div>
           <div className="hero-actions">
-            <WhatsAppLink>{ar ? "تواصل عبر واتساب" : "WhatsApp"}</WhatsAppLink>
-            <a className="btn btn-secondary" href={withLocale(locale, "/contact")}>{c.contact}</a>
+            <WhatsAppLink>{homeText(ctaContent.whatsapp, { ar: "تواصل عبر واتساب", en: "WhatsApp" }, locale)}</WhatsAppLink>
+            <a className="btn btn-secondary" href={withLocale(locale, "/contact")}>{homeText(ctaContent.contact, { ar: c.contact, en: c.contact }, locale)}</a>
           </div>
         </div>
       </section>}
