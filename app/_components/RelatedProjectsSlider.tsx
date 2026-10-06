@@ -20,11 +20,15 @@ function columnsForWidth(width: number) {
 export function RelatedProjectsSlider({
   projects,
   title,
-  locale
+  locale,
+  autoPlay = true,
+  autoPlayInterval = 8000
 }: {
   projects: RelatedProject[];
   title: string;
   locale: "ar" | "en";
+  autoPlay?: boolean;
+  autoPlayInterval?: number;
 }) {
   const [columns, setColumns] = useState(3);
   const [page, setPage] = useState(0);
@@ -50,6 +54,12 @@ export function RelatedProjectsSlider({
   const canNavigate = pages.length > 1;
   const prev = () => setPage((p) => (p - 1 + pages.length) % pages.length);
   const next = () => setPage((p) => (p + 1) % pages.length);
+
+  useEffect(() => {
+    if (!autoPlay || pages.length <= 1) return;
+    const timer = window.setInterval(() => setPage((p) => (p + 1) % pages.length), Math.max(3000, autoPlayInterval));
+    return () => window.clearInterval(timer);
+  }, [autoPlay, autoPlayInterval, pages.length]);
 
   if (!projects.length) return null;
 
