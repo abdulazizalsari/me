@@ -27,8 +27,10 @@ export default async function AdminPage() {
     <section className="admin-card admin-dashboard-shortcuts">
       <h2>إجراءات سريعة</h2>
       <div className="admin-actions">
-        <Link className="admin-link primary" href="/admin/content">إضافة أو تعديل محتوى</Link>
-        <Link className="admin-link" href="/admin/pages">إنشاء صفحة بالسحب والإفلات</Link>
+        <Link className="admin-link primary" href="/admin/homepage">تعديل الصفحة الرئيسية</Link>
+        <Link className="admin-link" href="/admin/related-projects">إدارة المشاريع ذات الصلة</Link>
+        <Link className="admin-link" href="/admin/content">إدارة المحتوى</Link>
+        <Link className="admin-link" href="/admin/pages">إدارة الصفحات</Link>
         <Link className="admin-link" href="/admin/translations">إدارة الترجمة</Link>
         <Link className="admin-link" href="/admin/requests">متابعة الطلبات</Link>
       </div>
