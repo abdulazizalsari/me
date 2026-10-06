@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 type RelatedProject = {
   slug: string;
   title: string;
+  titleOverride?: string;
   image: string;
   href?: string;
   isProtected?: boolean;
@@ -24,19 +25,30 @@ export function RelatedProjectsSlider({
   title,
   locale,
   autoPlay = true,
-  autoPlayInterval = 8000
+  autoPlayInterval = 8000,
+  titleVisible = true,
+  design
 }: {
   projects: RelatedProject[];
   title: string;
   locale: "ar" | "en";
   autoPlay?: boolean;
   autoPlayInterval?: number;
+  titleVisible?: boolean;
+  design?: Record<string, unknown>;
 }) {
   const [columns, setColumns] = useState(3);
   const [page, setPage] = useState(0);
+  const showArrows = design?.showArrows !== false;
+  const showDots = design?.showDots !== false;
+  const configuredColumns = Math.max(1, Math.min(4, Number(design?.columns) || 3));
+  const gap = Math.max(8, Math.min(48, Number(design?.gap) || 22));
+  const radius = Math.max(0, Math.min(40, Number(design?.radius) || 22));
+  const cardHeight = Math.max(180, Math.min(500, Number(design?.cardHeight) || 286));
+  const transition = ["slide","fade","zoom"].includes(String(design?.transition)) ? String(design?.transition) : "slide";
 
   useEffect(() => {
-    const update = () => setColumns(columnsForWidth(window.innerWidth));
+    const update = () => setColumns(Math.min(configuredColumns, columnsForWidth(window.innerWidth)));
     update();
     window.addEventListener("resize", update, { passive: true });
     return () => window.removeEventListener("resize", update);
@@ -66,14 +78,12 @@ export function RelatedProjectsSlider({
   if (!projects.length) return null;
 
   return (
-    <section className="related-projects-slider" aria-labelledby="related-projects-title">
+    <section className={`related-projects-slider related-projects-transition-${transition}`} aria-labelledby={titleVisible && title ? "related-projects-title" : undefined} style={{ "--related-gap": `${gap}px`, "--related-radius": `${radius}px`, "--related-card-height": `${cardHeight}px` } as CSSProperties}>
       <div className="container">
-        <div className="related-projects-heading">
-          <h2 id="related-projects-title">{title}</h2>
-        </div>
+        {titleVisible && title ? <div className="related-projects-heading"><h2 id="related-projects-title">{title}</h2></div> : null}
 
         <div className="related-projects-shell">
-          <button
+          {showArrows ? <button
             type="button"
             className="related-projects-arrow related-projects-arrow-prev"
             onClick={prev}
@@ -81,7 +91,7 @@ export function RelatedProjectsSlider({
             disabled={!canNavigate}
           >
             {locale === "ar" ? <ChevronRight size={22} /> : <ChevronLeft size={22} />}
-          </button>
+          </button> : null}
 
           <div className="related-projects-viewport">
             <div
@@ -112,7 +122,7 @@ export function RelatedProjectsSlider({
                     <span className="related-projects-logo">
                       {content}
                     </span>
-                    <strong>{project.title}</strong>
+                    {project.titleOverride !== undefined ? <strong>{project.titleOverride}</strong> : <strong>{project.title}</strong>}
                   </>
                 );
 
@@ -129,7 +139,7 @@ export function RelatedProjectsSlider({
             </div>
           </div>
 
-          <button
+          {showArrows ? <button
             type="button"
             className="related-projects-arrow related-projects-arrow-next"
             onClick={next}
@@ -137,10 +147,10 @@ export function RelatedProjectsSlider({
             disabled={!canNavigate}
           >
             {locale === "ar" ? <ChevronLeft size={22} /> : <ChevronRight size={22} />}
-          </button>
+          </button> : null}
         </div>
 
-        {pages.length > 1 && (
+        {showDots && pages.length > 1 && (
           <div className="related-projects-pagination" aria-label={locale === "ar" ? "صفحات المشاريع" : "Project pages"}>
             {pages.map((_, index) => (
               <button
