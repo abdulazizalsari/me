@@ -52,7 +52,7 @@ export function RelatedProjectsSlider({
     update();
     window.addEventListener("resize", update, { passive: true });
     return () => window.removeEventListener("resize", update);
-  }, []);
+  }, [configuredColumns]);
 
   const pages = useMemo(() => {
     const result: RelatedProject[][] = [];
@@ -82,7 +82,7 @@ export function RelatedProjectsSlider({
       <div className="container">
         {titleVisible && title ? <div className="related-projects-heading"><h2 id="related-projects-title">{title}</h2></div> : null}
 
-        <div className="related-projects-shell">
+        <div className={`related-projects-shell ${showArrows ? "" : "no-arrows"}`}>
           {showArrows ? <button
             type="button"
             className="related-projects-arrow related-projects-arrow-prev"
