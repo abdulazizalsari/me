@@ -67,7 +67,7 @@ const navGroups: { label: string; items: typeof tabs }[] = [
   { label: "الرئيسية", items: tabs.filter((tab) => tab.type === "overview") },
   { label: "المحتوى", items: tabs.filter((tab) => ["article", "wordpress-import", "related-projects", "blog-settings", "service", "course", "project", "cv", "experience", "education", "qualification", "skill"].includes(tab.type)) },
   { label: "إدارة الصفحات", items: tabs.filter((tab) => tab.type === "page-manager") },
-  { label: "الصفحات", items: tabs.filter((tab) => ["homepage", "page-manager", "contact", "consultation", "privacy", "cta"].includes(tab.type)) },
+  { label: "الصفحات", items: tabs.filter((tab) => ["homepage", "contact", "consultation", "privacy", "cta"].includes(tab.type)) },
   { label: "الوسائط", items: tabs.filter((tab) => tab.type === "media") },
   { label: "الرسائل", items: tabs.filter((tab) => tab.type === "form") },
   { label: "الإعدادات", items: tabs.filter((tab) => ["settings", "navigation", "footer", "whatsapp", "seo", "integration", "redirects", "trash"].includes(tab.type)) }
