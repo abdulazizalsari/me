@@ -6,7 +6,7 @@ export type TranslationEntry = { key: string; group: string; ar: string; values:
 
 export async function listLanguages() {
   const rows = await supabaseRequest<Row[]>("/rest/v1/site_languages?select=*&order=sort_order.asc,code.asc");
-  return rows.filter((row) => ["ar","en"].includes(String(row.code))).map((row) => ({
+  return rows.map((row) => ({
     code: String(row.code),
     nameAr: String(row.name_ar ?? ""),
     nameNative: String(row.name_native ?? ""),
