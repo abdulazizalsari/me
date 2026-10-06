@@ -1,0 +1,1 @@
+import type {Metadata} from "next";import {ResetPasswordForm} from "@/app/auth/ResetPasswordForm";export const metadata:Metadata={title:"تغيير كلمة المرور"};export default function Page(){return <ResetPasswordForm/>}
