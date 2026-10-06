@@ -1,87 +1,32 @@
 "use client";
 import { useEffect, useState } from "react";
-
 type Role = "admin" | "editor" | "writer" | "reviewer";
 type UserRow = { id:string; email:string; displayName:string; role:Role; permissions:string[]; createdAt:string; lastSignInAt:string };
-
 const permissionOptions = [
-  ["articles_create","إنشاء المقالات"],
-  ["articles_edit","تعديل المقالات"],
-  ["articles_submit","إرسال المقالات للنشر"],
-  ["articles_publish","نشر المقالات"],
-  ["media_manage","إدارة الوسائط"],
-  ["pages_manage","إدارة الصفحات"],
-  ["requests_manage","إدارة الطلبات"],
-  ["seo_manage","إدارة SEO"]
+ ["dashboard_view","الوصول إلى لوحة التحكم"],["articles_create","إنشاء المقالات"],["articles_edit","تعديل المقالات"],["articles_submit","إرسال المقالات للمراجعة"],["articles_publish","نشر المقالات"],["media_manage","إدارة الوسائط"],["pages_manage","إدارة الصفحات"],["related_projects_manage","إدارة المشاريع ذات الصلة"],["requests_manage","إدارة الطلبات والنماذج"],["seo_manage","إدارة SEO"],["languages_manage","إدارة اللغات والترجمات"],["settings_manage","إدارة الإعدادات"],["users_manage","إدارة المستخدمين"],["activity_view","عرض سجل النشاط"]
 ] as const;
-
+const roleDefaults:Record<Role,string[]>={admin:permissionOptions.map(x=>x[0]),editor:["dashboard_view","articles_create","articles_edit","articles_submit","media_manage","pages_manage","related_projects_manage","requests_manage","seo_manage"],writer:["dashboard_view","articles_create","articles_edit","articles_submit"],reviewer:["dashboard_view","articles_edit","articles_publish"]};
 export function UsersClient(){
- const [users,setUsers]=useState<UserRow[]>([]);
- const [message,setMessage]=useState("");
- const [loading,setLoading]=useState(true);
- const [busy,setBusy]=useState(false);\n const [inviteLink,setInviteLink]=useState("");
-
- async function load(){
-  setLoading(true);
-  const r=await fetch("/api/admin/users",{cache:"no-store"});
-  const d=await r.json().catch(()=>({}));
-  setLoading(false);
-  if(r.ok)setUsers(d.users||[]);
-  else setMessage(d.message||"تعذر تحميل المستخدمين.");
- }
- useEffect(()=>{void load();},[]);
-
- async function invite(e:React.FormEvent<HTMLFormElement>){
-  e.preventDefault(); setBusy(true); setMessage("");
-  const fd=new FormData(e.currentTarget);
-  const permissions=permissionOptions.map(([key])=>key).filter(key=>fd.getAll("permissions").includes(key));
-  const r=await fetch("/api/admin/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-    email:fd.get("email"),displayName:fd.get("displayName"),role:fd.get("role"),permissions
-  })});
-  const d=await r.json().catch(()=>({}));
-  setBusy(false);
-  if(!r.ok){setMessage(d.message||"تعذر إرسال الدعوة.");return;}
-  setMessage(d.message||"تم إرسال دعوة المستخدم عبر البريد.");
-  e.currentTarget.reset();
-  void load();
- }
- async function patch(id:string,body:Record<string,unknown>){
-  const r=await fetch("/api/admin/users",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,...body})});
-  if(r.ok) await load(); else setMessage((await r.json().catch(()=>({}))).message||"تعذر التعديل.");
- }
- async function remove(id:string){
-  if(!confirm("حذف هذا المستخدم من Supabase Auth؟"))return;
-  const r=await fetch("/api/admin/users",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})});
-  if(r.ok) await load(); else setMessage((await r.json().catch(()=>({}))).message||"تعذر الحذف.");
- }
- const defaultPermissions=(role:Role)=>role==="admin"?permissionOptions.map(([k])=>k):role==="writer"?["articles_create","articles_edit","articles_submit"]:role==="reviewer"?["articles_publish","articles_edit"]:["articles_create","articles_edit","articles_submit","media_manage"];
+ const [users,setUsers]=useState<UserRow[]>([]),[message,setMessage]=useState(""),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[showPassword,setShowPassword]=useState(true);
+ async function load(){setLoading(true);const r=await fetch("/api/admin/users",{cache:"no-store"});const d=await r.json().catch(()=>({}));setLoading(false);if(r.ok)setUsers(d.users||[]);else setMessage(d.message||"تعذر تحميل المستخدمين.");}
+ useEffect(()=>{void load()},[]);
+ async function create(e:React.FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);setMessage("");const fd=new FormData(e.currentTarget);const permissions=permissionOptions.map(([k])=>k).filter(k=>fd.getAll("permissions").includes(k));const password=String(fd.get("password")||"");const r=await fetch("/api/admin/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:fd.get("email"),displayName:fd.get("displayName"),role:fd.get("role"),password,permissions})});const d=await r.json().catch(()=>({}));setBusy(false);if(!r.ok){setMessage(d.message||"تعذر إنشاء الحساب.");return;}setMessage(d.message||"تم إنشاء الحساب.");e.currentTarget.reset();setShowPassword(true);void load();}
+ async function patch(id:string,body:Record<string,unknown>){const r=await fetch("/api/admin/users",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,...body})});if(r.ok)await load();else setMessage((await r.json().catch(()=>({}))).message||"تعذر التعديل.");}
+ async function remove(id:string){if(!confirm("حذف هذا المستخدم نهائياً؟"))return;const r=await fetch("/api/admin/users",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})});if(r.ok)await load();else setMessage((await r.json().catch(()=>({}))).message||"تعذر الحذف.");}
  return <div className="admin-stack">
-  <form className="admin-card admin-inline-create" onSubmit={invite}>
-   <h2>إضافة حساب</h2>
-   <div className="admin-form-row three">
-    <label>الاسم<input name="displayName" required/></label>
-    <label>البريد<input name="email" type="email" dir="ltr" required/></label>
-    <label>الدور<select name="role" defaultValue="writer" onChange={e=>{const role=e.target.value as Role; document.querySelectorAll<HTMLInputElement>('input[name="permissions"]').forEach((el)=>el.checked=defaultPermissions(role).includes(el.value));}}>
-      <option value="writer">كاتب مقالات</option><option value="editor">محرر محتوى</option><option value="reviewer">مراجع / ناشر</option><option value="admin">مدير</option>
-    </select></label>
-   </div>
-   <div className="admin-permissions-grid">
-    <strong>الصلاحيات</strong>
-    {permissionOptions.map(([key,label])=><label key={key}><input name="permissions" value={key} type="checkbox" defaultChecked={["articles_create","articles_edit","articles_submit"].includes(key)}/>{label}</label>)}
-   </div>
-   <button className="admin-primary-button" disabled={busy}>{busy?"جاري الإرسال...":"إرسال الدعوة"}</button>
-   {message&&<p className="admin-message">{message}</p>}\n   {inviteLink&&<div className="admin-message"><strong>رابط الدعوة:</strong><input dir="ltr" readOnly value={inviteLink}/><button type="button" className="admin-primary-button" onClick={()=>navigator.clipboard.writeText(inviteLink)}>نسخ الرابط</button></div>}
+  <form className="admin-card admin-inline-create" onSubmit={create}>
+   <h2>إنشاء حساب جديد</h2><p className="admin-muted">أنشئ الحساب الآن وحدد كلمة المرور والدور والصلاحيات. يمكن للمستخدم لاحقاً تغيير كلمة المرور أو استعادتها عبر البريد.</p>
+   <div className="admin-form-row three"><label>الاسم<input name="displayName" required/></label><label>البريد<input name="email" type="email" dir="ltr" autoComplete="email" required/></label><label>الدور<select name="role" defaultValue="writer" onChange={e=>{const r=e.target.value as Role;document.querySelectorAll<HTMLInputElement>('input[name="permissions"]').forEach(x=>x.checked=roleDefaults[r].includes(x.value));}}><option value="admin">مدير</option><option value="editor">محرر</option><option value="writer">كاتب مقالات</option><option value="reviewer">مراجع / ناشر</option></select></label></div>
+   <label>كلمة المرور<input name="password" type={showPassword?"text":"password"} minLength={8} autoComplete="new-password" required placeholder="8 أحرف على الأقل"/><small><button type="button" className="admin-link-button" onClick={()=>setShowPassword(v=>!v)}>{showPassword?"إخفاء":"إظهار"} كلمة المرور</button></small></label>
+   <div className="admin-permissions-grid"><strong>الصلاحيات</strong>{permissionOptions.map(([key,label])=><label key={key}><input name="permissions" value={key} type="checkbox" defaultChecked={roleDefaults.writer.includes(key)}/>{label}</label>)}</div>
+   <button className="admin-primary-button" disabled={busy}>{busy?"جاري الإنشاء...":"إنشاء الحساب"}</button>{message&&<p className="admin-message">{message}</p>}
   </form>
-  <section className="admin-card"><div className="admin-table-wrap"><table><thead><tr><th>المستخدم</th><th>البريد</th><th>الدور</th><th>الصلاحيات</th><th>آخر دخول</th><th>إجراء</th></tr></thead><tbody>
-   {users.map(u=><tr key={u.id}>
-    <td><input defaultValue={u.displayName} onBlur={e=>patch(u.id,{displayName:e.target.value})}/></td>
-    <td dir="ltr">{u.email}</td>
-    <td><select value={u.role} onChange={e=>patch(u.id,{role:e.target.value})}><option value="admin">مدير</option><option value="editor">محرر محتوى</option><option value="writer">كاتب مقالات</option><option value="reviewer">مراجع / ناشر</option></select></td>
-    <td><details><summary>تعديل الصلاحيات</summary><div className="admin-permissions-grid">{permissionOptions.map(([key,label])=><label key={key}><input type="checkbox" checked={u.role==="admin"||u.permissions?.includes(key)} disabled={u.role==="admin"} onChange={e=>patch(u.id,{permissions:Array.from(new Set([...(u.permissions||[]).filter(p=>p!==key),...(e.target.checked?[key]:[])]) )})}/>{label}</label>)}</div></details></td>
-    <td>{u.lastSignInAt?new Date(u.lastSignInAt).toLocaleString("ar"):"-"}</td>
-    <td><button className="danger" type="button" onClick={()=>remove(u.id)}>حذف</button></td>
-   </tr>)}
-   {!loading&&!users.length&&<tr><td colSpan={6}>لا يوجد مستخدمون.</td></tr>}
+  <section className="admin-card"><h2>إدارة جميع الحسابات</h2><div className="admin-table-wrap"><table><thead><tr><th>المستخدم</th><th>البريد</th><th>الدور</th><th>كلمة المرور</th><th>الصلاحيات</th><th>آخر دخول</th><th>إجراء</th></tr></thead><tbody>
+   {users.map(u=><tr key={u.id}><td><input defaultValue={u.displayName} onBlur={e=>patch(u.id,{displayName:e.target.value})}/></td><td dir="ltr">{u.email}</td><td><select value={u.role} onChange={e=>patch(u.id,{role:e.target.value})}><option value="admin">مدير</option><option value="editor">محرر</option><option value="writer">كاتب مقالات</option><option value="reviewer">مراجع / ناشر</option></select></td>
+   <td><details><summary>تغيير</summary><form onSubmit={e=>{e.preventDefault();const fd=new FormData(e.currentTarget);void patch(u.id,{password:String(fd.get("password")||"")});e.currentTarget.reset();}}><input name="password" type="password" minLength={8} placeholder="كلمة جديدة"/><button type="submit" className="admin-primary-button">حفظ</button></form></details></td>
+   <td><details><summary>权限 / الصلاحيات</summary><div className="admin-permissions-grid">{permissionOptions.map(([key,label])=><label key={key}><input type="checkbox" checked={u.role==="admin"||u.permissions?.includes(key)} disabled={u.role==="admin"} onChange={e=>{const next=e.target.checked?Array.from(new Set([...(u.permissions||[]),key])):(u.permissions||[]).filter(p=>p!==key);void patch(u.id,{permissions:next})}}/>{label}</label>)}</div></details></td>
+   <td>{u.lastSignInAt?new Date(u.lastSignInAt).toLocaleString("ar"):"-"}</td><td><button className="danger" type="button" onClick={()=>remove(u.id)}>حذف</button></td></tr>)}
+   {!loading&&!users.length&&<tr><td colSpan={7}>لا يوجد مستخدمون.</td></tr>}
   </tbody></table></div></section>
  </div>;
 }
