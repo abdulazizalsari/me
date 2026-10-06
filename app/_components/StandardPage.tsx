@@ -560,10 +560,65 @@ function WordPressCoursePage({ locale, image }: { locale: Locale; image: string 
 
 export function ContactPage({ locale, consultation = false }: { locale: Locale; consultation?: boolean }) {
   const ar = locale === "ar";
-  return <>
-    <PageHero locale={locale} eyebrow={consultation ? (ar ? "استشارة" : "Consultation") : (ar ? "تواصل" : "Contact")} title={consultation ? (ar ? "اطلب استشارة" : "Book a Consultation") : (ar ? "ابدأ المحادثة" : "Start the Conversation")} lead={ar ? "شارك تفاصيل مشروعك أو تحديك، وسنرتب الخطوة التالية بوضوح." : "Share your project or growth challenge and we will shape the next practical step."} />
-    <section className="section"><div className="container split"><div><h2 className="h2">{ar ? "بيانات التواصل" : "Contact Details"}</h2><p><a href={person.phoneHref}><span className="ltr-text">{person.phoneDisplay}</span></a></p><p><a href={`mailto:${person.email}`}><span className="ltr-text">{person.email}</span></a></p><p>{person.location[locale]}</p></div><ContactForm locale={locale} consultation={consultation} /></div></section>
-  </>;
+  const title = consultation ? (ar ? "اطلب استشارة" : "Book a Consultation") : (ar ? "لنبدأ الحديث" : "Let’s Start a Conversation");
+  const lead = consultation
+    ? (ar ? "شارك تفاصيل مشروعك وأهدافك، وسأساعدك على تحويلها إلى خطوة عملية واضحة." : "Share your goals and project details, and let’s turn them into a clear practical next step.")
+    : (ar ? "لديك مشروع أو فكرة أو تحدٍّ تسويقي؟ أرسل التفاصيل وسأعود إليك بالخطوة الأنسب." : "Have a project, idea, or marketing challenge? Send the details and I’ll get back to you with the right next step.");
+  const methods = [
+    { key: "phone", title: ar ? "الهاتف" : "Phone", value: person.phoneDisplay, href: person.phoneHref, icon: "☎" },
+    { key: "whatsapp", title: "WhatsApp", value: ar ? "مراسلة مباشرة" : "Direct message", href: person.whatsapp, icon: "◉" },
+    { key: "email", title: ar ? "البريد الإلكتروني" : "Email", value: person.email, href: `mailto:${person.email}`, icon: "✉" },
+    { key: "location", title: ar ? "الموقع" : "Location", value: person.location[locale], href: undefined, icon: "⌖" }
+  ];
+
+  return (
+    <div className="contact-page">
+      <section className="contact-hero">
+        <div className="container contact-hero-inner">
+          <div className="contact-hero-copy">
+            <p className="eyebrow">{consultation ? (ar ? "استشارة" : "Consultation") : (ar ? "تواصل" : "Contact")}</p>
+            <h1 className="h1">{title}</h1>
+            <p className="lead">{lead}</p>
+            <div className="contact-hero-actions">
+              <a className="btn btn-primary" href={person.whatsapp}>{ar ? "تحدث عبر واتساب" : "Chat on WhatsApp"}</a>
+              <a className="btn btn-secondary" href={person.phoneHref}>{ar ? "اتصل الآن" : "Call Now"}</a>
+            </div>
+          </div>
+          <div className="contact-hero-mark" aria-hidden="true"><span>01</span><strong>{ar ? "تواصل" : "CONNECT"}</strong></div>
+        </div>
+      </section>
+
+      <section className="section contact-section">
+        <div className="container contact-layout">
+          <div className="contact-details">
+            <div className="contact-section-heading">
+              <p className="eyebrow">{ar ? "بيانات التواصل" : "Contact Details"}</p>
+              <h2 className="h2">{ar ? "اختر الطريقة الأنسب لك" : "Choose the way that works for you"}</h2>
+              <p className="muted">{ar ? "يمكنك الاتصال مباشرة أو إرسال تفاصيل مشروعك عبر النموذج." : "Call directly or send your project details through the form."}</p>
+            </div>
+            <div className="contact-methods">
+              {methods.map((method) => (
+                <div className="contact-method" key={method.key}>
+                  <span className="contact-method-icon" aria-hidden="true">{method.icon}</span>
+                  <div className="contact-method-copy">
+                    <span>{method.title}</span>
+                    {method.href ? <a href={method.href} dir={method.key === "email" || method.key === "phone" || method.key === "whatsapp" ? "ltr" : undefined}>{method.value}</a> : <strong>{method.value}</strong>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="contact-form-wrap">
+            <div className="contact-form-heading">
+              <p className="eyebrow">{ar ? "أرسل رسالتك" : "Send a Message"}</p>
+              <h2 className="h2">{ar ? "أخبرني عن مشروعك" : "Tell me about your project"}</h2>
+            </div>
+            <ContactForm locale={locale} consultation={consultation} />
+          </div>
+        </div>
+      </section>
+    </div>
+  );
 }
 
 export function PrivacyPage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?: CmsContentItem[] }) {
