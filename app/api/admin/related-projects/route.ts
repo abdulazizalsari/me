@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     autoPlay?: boolean;
     interval?: number;
     relatedProjectSlugs?: string[];
-    relatedProjectConfig?: Record<string, { image?: string; href?: string }>;
+    relatedProjectConfig?: Record<string, { image?: string; href?: string; isProtected?: boolean; watermarkEnabled?: boolean }>;
   } | null;
 
   if (!body) return NextResponse.json({ ok: false, message: "بيانات غير صالحة." }, { status: 400 });
@@ -39,12 +39,12 @@ export async function POST(request: Request) {
     if (relatedIndex >= 0) sections[relatedIndex] = { ...sections[relatedIndex], ...relatedState };
     else sections.push(relatedState);
 
-    const config: Record<string, { image: string; href: string }> = {};
+    const config: Record<string, { image: string; href: string; isProtected: boolean; watermarkEnabled: boolean }> = {};
     for (const slug of slugs) {
       const value = body.relatedProjectConfig?.[slug];
       config[slug] = {
         image: typeof value?.image === "string" ? value.image.trim() : "",
-        href: typeof value?.href === "string" ? value.href.trim() : ""
+        href: typeof value?.href === "string" ? value.href.trim() : "",\n        isProtected: value?.isProtected !== false,\n        watermarkEnabled: value?.watermarkEnabled === true
       };
     }
 
