@@ -188,36 +188,27 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
       {sectionState(homepageMeta, "intro").visible && <section className="academic-intro" style={{ order: sectionState(homepageMeta, "intro").order }}>
         <div className="container academic-intro-inner">
           <p className="academic-intro-text">
-            {ar
-              ? "أعمل في التسويق الرقمي والتدريب وتطوير الأعمال بخبرة تجمع بين التخطيط، التصميم، الحملات الإعلانية، وإدارة المشاريع. أركز على حلول عملية تناسب هدف المشروع وجمهوره بدل الاكتفاء بمظهر جميل فقط."
-              : "I work across digital marketing, training, and business development with experience in planning, design, advertising campaigns, and project management. I focus on practical solutions shaped around each project's goals and audience."}
+            {homeText(introContent.text, { ar: "أعمل في التسويق الرقمي والتدريب وتطوير الأعمال بخبرة تجمع بين التخطيط، التصميم، الحملات الإعلانية، وإدارة المشاريع. أركز على حلول عملية تناسب هدف المشروع وجمهوره بدل الاكتفاء بمظهر جميل فقط.", en: "I work across digital marketing, training, and business development with experience in planning, design, advertising campaigns, and project management. I focus on practical solutions shaped around each project's goals and audience." }, locale)}
           </p>
-          <a className="btn btn-secondary" href={withLocale(locale, "/about")}>{ar ? "معرفة المزيد" : "Learn More"}</a>
+          <a className="btn btn-secondary" href={homeUrl((introContent.button as Record<string, unknown> | undefined)?.url, "/about", locale)}>{homeText(introContent.button, { ar: "معرفة المزيد", en: "Learn More" }, locale)}</a>
         </div>
       </section>}
 
       {sectionState(homepageMeta, "experience").visible && <section className="section experience-section" style={{ order: sectionState(homepageMeta, "experience").order }}>
         <div className="container split">
           <div className="experience-copy">
-            <p className="eyebrow">{ar ? "خبرة عملية ورؤية متكاملة" : "Practical Experience and Integrated Vision"}</p>
+            <p className="eyebrow">{homeText(experienceContent.eyebrow, { ar: "خبرة عملية ورؤية متكاملة", en: "Practical Experience and Integrated Vision" }, locale)}</p>
             <h2 className="h2">
-              {ar
-                ? "خبرة تجمع بين التسويق، تطوير الأعمال، والتدريب"
-                : "Experience Across Marketing, Business Development, and Training"}
+              {homeText(experienceContent.title, { ar: "خبرة تجمع بين التسويق، تطوير الأعمال، والتدريب", en: "Experience Across Marketing, Business Development, and Training" }, locale)}
             </h2>
             <p className="lead">
-              {ar
-                ? "أجمع بين خبرة عملية في التسويق الرقمي، التخطيط الاستراتيجي، تطوير الأعمال، تصميم المواقع، الحملات الإعلانية، التصميم الجرافيكي، وإدارة المشاريع، مع اهتمام واضح بالتجارة الدولية وبناء قدرات الأفراد والفرق."
-                : "I combine practical experience in digital marketing, strategic planning, business development, websites, advertising campaigns, graphic design, project management, and international trade."}
+              {homeText(experienceContent.description, { ar: "أجمع بين خبرة عملية في التسويق الرقمي، التخطيط الاستراتيجي، تطوير الأعمال، تصميم المواقع، الحملات الإعلانية، التصميم الجرافيكي، وإدارة المشاريع، مع اهتمام واضح بالتجارة الدولية وبناء قدرات الأفراد والفرق.", en: "I combine practical experience in digital marketing, strategic planning, business development, websites, advertising campaigns, graphic design, project management, and international trade." }, locale)}
             </p>
-            <a className="btn btn-primary" href={withLocale(locale, "/cv")}>{ar ? "عرض السيرة الذاتية" : "View Professional Profile"}</a>
+            <a className="btn btn-primary" href={homeUrl((experienceContent.button as Record<string, unknown> | undefined)?.url, "/cv", locale)}>{homeText(experienceContent.button, { ar: "عرض السيرة الذاتية", en: "View Professional Profile" }, locale)}</a>
           </div>
           <div className="experience-points">
-            {(ar
-              ? ["التسويق الرقمي", "تطوير الأعمال", "التدريب والاستشارات", "التخطيط الاستراتيجي", "تصميم المواقع", "الحملات الإعلانية", "التصميم الجرافيكي", "إدارة المشاريع", "التجارة الدولية"]
-              : ["Digital Marketing", "Business Development", "Training and Consulting", "Strategic Planning", "Website Design", "Advertising Campaigns", "Graphic Design", "Project Management", "International Trade"]
-            ).map((item) => (
-              <span className="experience-chip" key={item}><CheckCircle2 size={17} aria-hidden />{item}</span>
+            {(Array.isArray(experienceContent.points) ? experienceContent.points : []).map((item, index) => (
+              <span className="experience-chip" key={index}><CheckCircle2 size={17} aria-hidden />{homeText(item, { ar: "", en: "" }, locale)}</span>
             ))}
           </div>
         </div>
@@ -225,11 +216,11 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
 
       {sectionState(homepageMeta, "services").visible && <section className="section signature-services-section" style={{ order: sectionState(homepageMeta, "services").order }}>
         <div className="container">
-          <SectionHeader eyebrow={ar ? "خدماتنا" : "Services"} title={ar ? "كل ما يحتاجه مشروعك للنجاح" : "Everything Your Project Needs to Succeed"}>
-            {ar ? "تسع خدمات متكاملة مصممة خصيصاً لتناسب رؤيتك." : "Integrated services tailored to fit your goals and growth stage."}
+          <SectionHeader eyebrow={homeText(servicesContent.eyebrow, { ar: "خدماتنا", en: "Services" }, locale)} title={homeText(servicesContent.title, { ar: "كل ما يحتاجه مشروعك للنجاح", en: "Everything Your Project Needs to Succeed" }, locale)}>
+            {homeText(servicesContent.description, { ar: "تسع خدمات متكاملة مصممة خصيصاً لتناسب رؤيتك.", en: "Integrated services tailored to fit your goals and growth stage." }, locale)}
           </SectionHeader>
           <div className="signature-services-grid">
-            {services.slice(0, 5).map((service, index) => {
+            {services.slice(0, typeof servicesContent.limit === "number" ? Math.max(1, Math.min(20, servicesContent.limit)) : 5).map((service, index) => {
               const Icon = service.icon;
               const featured = index === 0;
               return (
