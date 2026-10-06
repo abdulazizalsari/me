@@ -6002,3 +6002,5 @@ html[data-theme="dark"] .home-page-sections .signature-service-card:not(.signatu
     animation: none !important;
   }
 }
+
+.related-projects-shell.no-arrows { grid-template-columns: minmax(0,1fr); }
