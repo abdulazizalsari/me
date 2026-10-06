@@ -1746,23 +1746,35 @@ export function Dashboard({
               saveRelated(next);
             };
             const toggle = (slug: string, enabled: boolean) => {
-              saveRelated(enabled ? [...activeSlugs, slug] : activeSlugs.filter((value) => value !== slug));
+              const next = enabled ? [...activeSlugs, slug] : activeSlugs.filter((value) => value !== slug);
+              saveRelated(next);
             };
             return (
-              <section className="dashboard-panel cms-panel">
-                <div className="panel-heading">
-                  <div>
-                    <h2>المشاريع ذات الصلة</h2>
-                    <p>تحكم مستقل في المشاريع التي تظهر على الصفحة الرئيسية، ترتيبها، وإظهار/إخفاء القسم.</p>
+              <section className="dashboard-panel cms-panel related-projects-modern-panel">
+                <div className="related-projects-modern-head">
+                  <div className="related-projects-modern-title">
+                    <span className="related-projects-modern-icon"><BriefcaseBusiness size={21} /></span>
+                    <div>
+                      <p className="dashboard-kicker">واجهة الموقع · الصفحة الرئيسية</p>
+                      <h2>المشاريع ذات الصلة</h2>
+                      <p>اختر المشاريع التي تظهر في الصفحة الرئيسية، ثم رتّبها بالسحب المنطقي للأعلى والأسفل.</p>
+                    </div>
                   </div>
-                  <button className="btn btn-primary" type="button" disabled={!homepage || busy} onClick={() => { if (homepage) { setSelected(homepage); setMetaText(formatMeta(homepage.meta)); setActive("homepage"); } }}>فتح إعدادات الصفحة الرئيسية</button>
+                  <button className="btn btn-secondary" type="button" disabled={!homepage || busy} onClick={() => { if (homepage) { setSelected(homepage); setMetaText(formatMeta(homepage.meta)); setActive("homepage"); } }}>
+                    إعدادات الصفحة الرئيسية
+                  </button>
                 </div>
+
                 {!homepage ? (
-                  <p className="cms-form-note">لم يتم العثور على إعداد الصفحة الرئيسية في CMS.</p>
+                  <div className="related-projects-empty">
+                    <BriefcaseBusiness size={28} />
+                    <strong>لم يتم العثور على إعداد الصفحة الرئيسية</strong>
+                    <span>أنشئ عنصر الصفحة الرئيسية في الـCMS أولاً ثم عد إلى هذا القسم.</span>
+                  </div>
                 ) : (
                   <>
-                    <div className="related-projects-admin-summary">
-                      <label className="cms-check">
+                    <div className="related-projects-modern-toolbar">
+                      <label className="related-projects-switch">
                         <input
                           type="checkbox"
                           checked={getHomeSectionSettings().find((section) => section.key === "relatedProjects")?.visible !== false}
@@ -1776,14 +1788,17 @@ export function Dashboard({
                             setSelected(next);
                             setMetaText(formatMeta(next.meta));
                           }}
-                        /> إظهار قسم المشاريع ذات الصلة
+                        />
+                        <span className="related-projects-switch-ui" aria-hidden="true" />
+                        <span><strong>إظهار القسم</strong><small>تشغيل/إيقاف على الصفحة الرئيسية</small></span>
                       </label>
-                      <span>·</span>
-                      <strong>المختار:</strong> {activeSlugs.length}
-                      <span>·</span>
-                      <strong>إجمالي المشاريع المنشورة:</strong> {allProjects.length}
+                      <div className="related-projects-modern-stats">
+                        <span><strong>{activeSlugs.length}</strong><small>مختارة</small></span>
+                        <span><strong>{allProjects.length}</strong><small>منشورة</small></span>
+                      </div>
                     </div>
-                    <div className="related-projects-admin-list">
+
+                    <div className="related-projects-admin-list related-projects-modern-list">
                       {allProjects.map((project) => {
                         const enabled = activeSlugs.includes(project.slug);
                         const activeIndex = activeSlugs.indexOf(project.slug);
@@ -1791,18 +1806,33 @@ export function Dashboard({
                         const asset = imageId ? media.find((item) => item.id === imageId) : null;
                         const projectUrl = typeof project.meta?.projectUrl === "string" ? project.meta.projectUrl : typeof project.meta?.websiteUrl === "string" ? project.meta.websiteUrl : typeof project.meta?.url === "string" ? project.meta.url : "";
                         return (
-                          <article className={`related-project-admin-row ${enabled ? "is-enabled" : ""}`} key={project.id}>
+                          <article className={`related-project-admin-row related-project-modern-card ${enabled ? "is-enabled" : ""}`} key={project.id}>
                             <label className="cms-check related-project-admin-toggle">
                               <input type="checkbox" checked={enabled} onChange={(event) => toggle(project.slug, event.target.checked)} />
+                              <span className="related-project-select-box" aria-hidden="true">{enabled ? "✓" : ""}</span>
                               <span className="related-project-admin-preview">{asset ? <img src={asset.url} alt={asset.altAr || project.titleAr} /> : <span>{(project.titleAr || project.titleEn).slice(0, 2)}</span>}</span>
-                              <span className="related-project-admin-copy"><strong>{project.titleAr || project.titleEn}</strong><small dir="ltr">{projectUrl || "لا يوجد رابط للمشروع بعد"}</small></span>
+                              <span className="related-project-admin-copy">
+                                <strong>{project.titleAr || project.titleEn}</strong>
+                                <small>{project.category || "مشروع"}</small>
+                                <small dir="ltr">{projectUrl || "لا يوجد رابط للمشروع بعد"}</small>
+                              </span>
                             </label>
-                            {enabled && <div className="related-project-admin-actions"><span>{activeIndex + 1}</span><button type="button" disabled={activeIndex <= 0} onClick={() => move(project.slug, -1)}>أعلى</button><button type="button" disabled={activeIndex >= activeSlugs.length - 1} onClick={() => move(project.slug, 1)}>أسفل</button></div>}
+                            <div className="related-project-admin-actions">
+                              <span className={enabled ? "project-order-badge" : "project-order-badge muted"}>{enabled ? activeIndex + 1 : "—"}</span>
+                              <button type="button" aria-label="تحريك المشروع للأعلى" disabled={!enabled || activeIndex <= 0} onClick={() => move(project.slug, -1)}>↑</button>
+                              <button type="button" aria-label="تحريك المشروع للأسفل" disabled={!enabled || activeIndex >= activeSlugs.length - 1} onClick={() => move(project.slug, 1)}>↓</button>
+                            </div>
                           </article>
                         );
                       })}
+                      {!allProjects.length && <div className="related-projects-empty"><BriefcaseBusiness size={26} /><strong>لا توجد مشاريع منشورة بعد</strong><span>انشر مشروعًا من قسم المشاريع ليظهر هنا.</span></div>}
                     </div>
-                    <div className="cms-form-actions">
+
+                    <div className="related-projects-modern-footer">
+                      <div>
+                        <strong>جاهز للنشر</strong>
+                        <span>سيظهر ترتيب المشاريع كما هو موضح هنا في الصفحة الرئيسية.</span>
+                      </div>
                       <button className="btn btn-primary" type="button" disabled={busy} onClick={async () => {
                         const homepageNow = items.find((item) => item.type === "homepage");
                         if (!homepageNow) return;
