@@ -30,6 +30,7 @@ import { WordPressImportPanel } from "./WordPressImportPanel";
 import { BlogSettingsPanel } from "./BlogSettingsPanel";
 import { WhatsAppSettingsPanel } from "./WhatsAppSettingsPanel";
 import { PageManagerPanel } from "./PageManagerPanel";
+import { UsersClient } from "../admin/users/UsersClient";
 
 const tabs: { type: "overview" | CmsContentType | "related-projects" | "page-manager" | "media" | "redirects" | "trash" | "settings" | "wordpress-import"; label: string; icon: typeof LayoutDashboard }[] = [
   { type: "overview", label: "نظرة عامة", icon: LayoutDashboard },
@@ -83,7 +84,6 @@ const advancedLinks = [
   { href: "/admin/translations", label: "الترجمات", icon: FileText, roles: ["admin", "editor"] as const },
   { href: "/admin/requests", label: "مركز الطلبات", icon: FileText, roles: ["admin", "editor"] as const },
   { href: "/admin/languages", label: "اللغات", icon: Settings, roles: ["admin"] as const },
-  { href: "/admin/users", label: "المستخدمون", icon: Settings, roles: ["admin"] as const },
   { href: "/admin/backup", label: "النسخ الاحتياطي", icon: ArchiveRestore, roles: ["admin"] as const }
 ];
 
@@ -977,7 +977,7 @@ export function Dashboard({
   const visibleNavGroups = navGroups
     .map((group) => ({ ...group, items: group.items.filter((item) => canUse(item.type)) }))
     .filter((group) => group.items.length > 0);
-  const visibleAdvancedLinks = advancedLinks.filter((item) => item.roles.some((role) => role === user.role) && (user.role === "admin" || (item.href === "/admin/translations" ? user.permissions.includes("pages_manage") : item.href === "/admin/requests" ? user.permissions.includes("requests_manage") : item.href === "/admin/languages" ? user.permissions.includes("languages_manage") : item.href === "/admin/users" ? user.permissions.includes("users_manage") : item.href === "/admin/backup" ? user.permissions.includes("settings_manage") : false)));
+  const visibleAdvancedLinks = advancedLinks.filter((item) => item.roles.some((role) => role === user.role) && (user.role === "admin" || (item.href === "/admin/translations" ? user.permissions.includes("pages_manage") : item.href === "/admin/requests" ? user.permissions.includes("requests_manage") : item.href === "/admin/languages" ? user.permissions.includes("languages_manage") : item.href === "/admin/backup" ? user.permissions.includes("settings_manage") : false)));
   const integrationItem = items.find((item) => item.type === "integration" && item.slug === "site-integrations") ?? items.find((item) => item.type === "integration");
   const whatsappItem = items.find((item) => item.type === "whatsapp" && item.slug === "whatsapp-settings") ?? items.find((item) => item.type === "whatsapp");
   const blogSettingsItem = items.find((item) => item.type === "blog-settings" && item.slug === "blog-settings") ?? items.find((item) => item.type === "blog-settings");
@@ -1115,6 +1115,13 @@ export function Dashboard({
           </div>
 
           {message && <div className="cms-message">{message}</div>}
+
+          {active === "overview" && user.role === "admin" && (
+            <section className="admin-dashboard-users" aria-label="إدارة المستخدمين">
+              <div className="dashboard-section-heading"><div><p className="dashboard-kicker">إدارة النظام</p><h2>المستخدمون والصلاحيات</h2><p>إدارة الحسابات والأدوار والصلاحيات وكلمات المرور مباشرة من اللوحة الرئيسية.</p></div></div>
+              <UsersClient />
+            </section>
+          )}
 
           {active === "overview" && (
             <section className="cms-quick-actions" aria-label="إجراءات سريعة">
