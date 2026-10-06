@@ -71,6 +71,19 @@ function cmsCourses(items: CmsContentItem[]) {
 
 const homeSectionKeys = ["hero", "intro", "experience", "services", "stats", "relatedProjects", "training", "expertise", "insights", "cta"] as const;
 
+type HomeLocaleText = { ar: string; en: string };
+function homeText(value: unknown, fallback: HomeLocaleText, locale: Locale) {
+  if (value && typeof value === "object") {
+    const text = (value as Record<string, unknown>)[locale];
+    if (typeof text === "string" && text.trim()) return text;
+  }
+  return fallback[locale];
+}
+function homeUrl(value: unknown, fallback: string, locale: Locale) {
+  const raw = typeof value === "string" && value.trim() ? value.trim() : fallback;
+  return raw.startsWith("/") ? withLocale(locale, raw) : raw;
+}
+
 function sectionState(meta: Record<string, unknown> | undefined, key: (typeof homeSectionKeys)[number]) {
   const sections = Array.isArray(meta?.homeSections) ? meta.homeSections as Record<string, unknown>[] : [];
   const configured = sections.find((section) => section.key === key);
@@ -89,6 +102,15 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
   const projects = cmsProjects(localizedCmsItems);
   const courses = cmsCourses(localizedCmsItems);
   const homepageMeta = cmsItems.find((item) => item.type === "homepage")?.meta as Record<string, unknown> | undefined;
+  const homepageContent = homepageMeta?.homepageContent && typeof homepageMeta.homepageContent === "object" ? homepageMeta.homepageContent as Record<string, unknown> : {};
+  const heroContent = homepageContent.hero && typeof homepageContent.hero === "object" ? homepageContent.hero as Record<string, unknown> : {};
+  const introContent = homepageContent.intro && typeof homepageContent.intro === "object" ? homepageContent.intro as Record<string, unknown> : {};
+  const experienceContent = homepageContent.experience && typeof homepageContent.experience === "object" ? homepageContent.experience as Record<string, unknown> : {};
+  const servicesContent = homepageContent.services && typeof homepageContent.services === "object" ? homepageContent.services as Record<string, unknown> : {};
+  const statsContent = homepageContent.stats && typeof homepageContent.stats === "object" ? homepageContent.stats as Record<string, unknown> : {};
+  const trainingContent = homepageContent.training && typeof homepageContent.training === "object" ? homepageContent.training as Record<string, unknown> : {};
+  const expertiseContent = homepageContent.expertise && typeof homepageContent.expertise === "object" ? homepageContent.expertise as Record<string, unknown> : {};
+  const ctaContent = homepageContent.cta && typeof homepageContent.cta === "object" ? homepageContent.cta as Record<string, unknown> : {};
   const portrait = cmsImage(homepageMeta, "portraitImageAssetId", "/images/abdulaziz/abdulaziz-alsari.png");
   const trainingSlugs = ["digital-marketing-course", "graphic-design-course", "wordpress-course"];
   const trainingCourses = trainingSlugs
@@ -124,16 +146,14 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
       {sectionState(homepageMeta, "hero").visible && <section className="hero" style={{ order: sectionState(homepageMeta, "hero").order }}>
         <div className="container hero-layout">
           <div className="hero-copy">
-            <div className="eyebrow">{c.tagline}</div>
-            <h1 className="h1">{ar ? "أساعدك على بناء حضور رقمي أقوى بتسويق عملي وتجربة احترافية" : "I help you build a stronger digital presence with practical marketing and polished execution"}</h1>
+            <div className="eyebrow">{homeText(heroContent.eyebrow, { ar: c.tagline, en: c.tagline }, locale)}</div>
+            <h1 className="h1">{homeText(heroContent.title, { ar: "أساعدك على بناء حضور رقمي أقوى بتسويق عملي وتجربة احترافية", en: "I help you build a stronger digital presence with practical marketing and polished execution" }, locale)}</h1>
             <p className="lead">
-              {ar
-                ? "أقدّم خدمات رقمية وتدريبًا عمليًا يجمع بين استراتيجية التسويق، إدارة الحملات، تصميم المواقع، تطوير الأعمال، وبناء تجربة واضحة تساعد مشروعك على النمو بثقة."
-                : "I provide digital services and practical training across marketing strategy, campaign management, website design, business development, and clear execution that helps your project grow with confidence."}
+              {homeText(heroContent.description, { ar: "أقدّم خدمات رقمية وتدريبًا عمليًا يجمع بين استراتيجية التسويق، إدارة الحملات، تصميم المواقع، تطوير الأعمال، وبناء تجربة واضحة تساعد مشروعك على النمو بثقة.", en: "I provide digital services and practical training across marketing strategy, campaign management, website design, business development, and clear execution that helps your project grow with confidence." }, locale)}
             </p>
             <div className="hero-actions">
-              <a className="btn btn-primary" href={withLocale(locale, "/consultation")}>{c.book}</a>
-              <a className="btn btn-secondary" href={withLocale(locale, "/services")}>{ar ? "معرفة المزيد" : "Learn More"}</a>
+              <a className="btn btn-primary" href={homeUrl((heroContent.primary as Record<string, unknown> | undefined)?.url, "/consultation", locale)}>{homeText(heroContent.primary, { ar: c.book, en: c.book }, locale)}</a>
+              <a className="btn btn-secondary" href={homeUrl((heroContent.secondary as Record<string, unknown> | undefined)?.url, "/services", locale)}>{homeText(heroContent.secondary, { ar: "معرفة المزيد", en: "Learn More" }, locale)}</a>
             </div>
           </div>
 
@@ -153,12 +173,12 @@ export function HomePage({ locale, cmsItems = [] }: { locale: Locale; cmsItems?:
             </div>
             <div className="portrait-status">
               <span className="status-dot" aria-hidden="true" />
-              <span>{ar ? "حالة العمل" : "CURRENT STATUS"}</span>
-              <strong>{ar ? "مدرب ومطور" : "TRAINER & DEVELOPER"}</strong>
+              <span>{homeText(heroContent.portraitStatus, { ar: "حالة العمل", en: "CURRENT STATUS" }, locale)}</span>
+              <strong>{homeText(heroContent.portraitRole, { ar: "مدرب ومطور", en: "TRAINER & DEVELOPER" }, locale)}</strong>
             </div>
             <div className="portrait-location">
-              {(ar ? ["تسويق رقمي", "تطوير أعمال", "تجارة دولية"] : ["Digital Marketing", "Business Development", "International Trade"]).map((item) => (
-                <span key={item}>{item}</span>
+              {(Array.isArray(heroContent.portraitTags) ? heroContent.portraitTags : []).map((item, index) => (
+                <span key={index}>{homeText(item, { ar: "", en: "" }, locale)}</span>
               ))}
             </div>
           </figure>
