@@ -40,7 +40,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const metadata = await source.metadata();
     const width = Math.min(metadata.width ?? 1600, 1600);
     let image = source.resize({ width, withoutEnlargement: true });
-    if (asset.isProtected || asset.watermarkEnabled) {
+    if (asset.watermarkEnabled) {
       const height = Math.max(1, Math.round((metadata.height ?? width) * width / (metadata.width ?? width)));
       const watermarkText = asset.watermarkText?.trim() || "AbdulAziz Alsari | abdulazizalsari.net";
       image = image.composite([{ input: watermarkSvg(watermarkText, width, height), gravity: "center" }]);
