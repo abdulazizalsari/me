@@ -21,7 +21,7 @@ export type CmsContentType =
   | "privacy"
   | "blog-settings";
 export type CmsStatus = "draft" | "published" | "scheduled" | "archived";
-export type CmsRole = "admin" | "editor" | "writer" | "reviewer";
+export type CmsRole = "admin" | "assistant" | "editor" | "writer" | "reviewer";
 
 export type CmsContentSeed = {
   type: CmsContentType;
