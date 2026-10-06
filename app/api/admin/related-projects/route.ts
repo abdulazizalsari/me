@@ -15,7 +15,8 @@ export async function POST(request: Request) {
     autoPlay?: boolean;
     interval?: number;
     relatedProjectSlugs?: string[];
-    relatedProjectConfig?: Record<string, { image?: string; href?: string; isProtected?: boolean; watermarkEnabled?: boolean }>;
+    relatedProjectConfig?: Record<string, { image?: string; href?: string; titleAr?: string; titleEn?: string; isProtected?: boolean; watermarkEnabled?: boolean }>;
+    relatedProjectsDesign?: { titleVisible?: boolean; showArrows?: boolean; showDots?: boolean; columns?: number; gap?: number; radius?: number; cardHeight?: number; transition?: string };
   } | null;
 
   if (!body) return NextResponse.json({ ok: false, message: "بيانات غير صالحة." }, { status: 400 });
@@ -39,12 +40,14 @@ export async function POST(request: Request) {
     if (relatedIndex >= 0) sections[relatedIndex] = { ...sections[relatedIndex], ...relatedState };
     else sections.push(relatedState);
 
-    const config: Record<string, { image: string; href: string; isProtected: boolean; watermarkEnabled: boolean }> = {};
+    const config: Record<string, { image: string; href: string; titleAr: string; titleEn: string; isProtected: boolean; watermarkEnabled: boolean }> = {};
     for (const slug of slugs) {
       const value = body.relatedProjectConfig?.[slug];
       config[slug] = {
         image: typeof value?.image === "string" ? value.image.trim() : "",
         href: typeof value?.href === "string" ? value.href.trim() : "",
+        titleAr: typeof value?.titleAr === "string" ? value.titleAr : "",
+        titleEn: typeof value?.titleEn === "string" ? value.titleEn : "",
         isProtected: value?.isProtected !== false,
         watermarkEnabled: value?.watermarkEnabled === true
       };
@@ -70,11 +73,21 @@ export async function POST(request: Request) {
         relatedProjectsConfigured: true,
         relatedProjectConfig: config,
         relatedProjectsHeading: {
-          ar: typeof body.titleAr === "string" && body.titleAr.trim() ? body.titleAr.trim() : "المشاريع ذات الصلة",
-          en: typeof body.titleEn === "string" && body.titleEn.trim() ? body.titleEn.trim() : "Related Projects"
+          ar: typeof body.titleAr === "string" ? body.titleAr.trim() : "",
+          en: typeof body.titleEn === "string" ? body.titleEn.trim() : ""
         },
         relatedProjectsAutoPlay: body.autoPlay !== false,
-        relatedProjectsInterval: Math.max(3, Math.min(60, Number(body.interval) || 8))
+        relatedProjectsInterval: Math.max(3, Math.min(60, Number(body.interval) || 8)),
+        relatedProjectsDesign: {
+          titleVisible: body.relatedProjectsDesign?.titleVisible !== false,
+          showArrows: body.relatedProjectsDesign?.showArrows !== false,
+          showDots: body.relatedProjectsDesign?.showDots !== false,
+          columns: Math.max(1, Math.min(4, Number(body.relatedProjectsDesign?.columns) || 3)),
+          gap: Math.max(8, Math.min(48, Number(body.relatedProjectsDesign?.gap) || 22)),
+          radius: Math.max(0, Math.min(40, Number(body.relatedProjectsDesign?.radius) || 22)),
+          cardHeight: Math.max(180, Math.min(500, Number(body.relatedProjectsDesign?.cardHeight) || 286)),
+          transition: ["slide","fade","zoom"].includes(body.relatedProjectsDesign?.transition || "") ? body.relatedProjectsDesign?.transition : "slide"
+        }
       }
     });
 
