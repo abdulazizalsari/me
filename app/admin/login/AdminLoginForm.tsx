@@ -31,13 +31,13 @@ export function AdminLoginForm() {
       <section className="admin-login-card">
         <p className="eyebrow">لوحة التحكم</p>
         <h1>تسجيل الدخول</h1>
-        <p className="admin-muted">الدخول متاح للمدير والمحررين المصرح لهم.</p>
+        <p className="admin-muted">الدخول متاح لكل حساب مصرح له: المدير، المساعد، المحرر، الكاتب والمراجع.</p>
         <form onSubmit={submit}>
           <label>البريد الإلكتروني<input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
           <label>كلمة المرور<input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></label>
           {message && <p className="cms-form-error">{message}</p>}
           <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? "جار التحقق..." : "دخول"}</button>
-        </form>
+        <p><a href="/admin/forgot-password">نسيت كلمة المرور؟</a></p>\n        </form>
       </section>
     </main>
   );
