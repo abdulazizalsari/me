@@ -65,6 +65,7 @@ export async function POST(request: Request) {
         ...existingMeta,
         homeSections: sections,
         relatedProjectSlugs: slugs,
+        relatedProjectsConfigured: true,
         relatedProjectConfig: config,
         relatedProjectsHeading: {
           ar: typeof body.titleAr === "string" && body.titleAr.trim() ? body.titleAr.trim() : "المشاريع ذات الصلة",
