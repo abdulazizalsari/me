@@ -67,6 +67,7 @@ export type CmsUser = {
   role: CmsRole;
   displayName?: string;
   createdAt: string;
+  permissions: string[];
 };
 
 export type CmsRevision = {
