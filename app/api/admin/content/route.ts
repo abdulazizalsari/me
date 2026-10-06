@@ -17,6 +17,25 @@ export async function POST(request: Request) {
   if (user.role === "editor" && !editorTypes.includes(type)) {
     return NextResponse.json({ ok: false, message: "المحرر يستطيع تعديل المقالات والدورات والخدمات فقط." }, { status: 403 });
   }
+  if (user.role === "writer" && type !== "article") {
+    return NextResponse.json({ ok: false, message: "كاتب المقالات يستطيع العمل على المقالات فقط." }, { status: 403 });
+  }
+  if (user.role === "writer" && type === "article" && !user.permissions.some((p) => ["articles_create", "articles_edit"].includes(p))) {
+    return NextResponse.json({ ok: false, message: "لا تملك صلاحية تعديل المقالات." }, { status: 403 });
+  }
+  if (user.role === "reviewer" && type !== "article") {
+    return NextResponse.json({ ok: false, message: "المراجع والناشر يعمل على المقالات فقط." }, { status: 403 });
+  }
+  if (user.role === "reviewer" && type === "article" && !user.permissions.some((p) => ["articles_edit", "articles_publish"].includes(p))) {
+    return NextResponse.json({ ok: false, message: "لا تملك صلاحية مراجعة المقالات." }, { status: 403 });
+  }
+  if (user.role === "writer" && body.status && body.status !== "draft") {
+    return NextResponse.json({ ok: false, message: "كاتب المقالات يحفظ كمسودة ويرسلها للمراجعة فقط." }, { status: 403 });
+  }
+  if (user.role === "reviewer" && body.status === "published" && !user.permissions.includes("articles_publish")) {
+    return NextResponse.json({ ok: false, message: "لا تملك صلاحية نشر المقالات." }, { status: 403 });
+  }
+
   let meta: Record<string, unknown> = {};
   if (body.metaText?.trim()) {
     try { meta = JSON.parse(body.metaText) as Record<string, unknown>; }
