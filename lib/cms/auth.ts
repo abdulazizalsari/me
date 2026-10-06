@@ -37,7 +37,7 @@ export async function loginCmsUser(email: string, password: string) {
   const data = await response.json() as AuthResponse;
   if (!data.access_token || !data.user?.id) return null;
   const profile = await profileFor(data.user.id, data.access_token).catch(() => null);
-  if (!profile || !["admin", "editor", "writer", "reviewer"].includes(profile.role)) return null;
+  if (!profile || !["admin", "assistant", "editor", "writer", "reviewer"].includes(profile.role)) return null;
   await setAuthCookies(data);
   return {
     id: data.user.id,
@@ -89,7 +89,7 @@ export async function getCurrentCmsUser() {
   const user = await userResponse.json() as { id: string; email?: string; created_at?: string };
   if (!user.id) return null;
   const profile = await profileFor(user.id, token).catch(() => null);
-  if (!profile || !["admin", "editor", "writer", "reviewer"].includes(profile.role)) return null;
+  if (!profile || !["admin", "assistant", "editor", "writer", "reviewer"].includes(profile.role)) return null;
   return {
     id: user.id,
     email: user.email ?? profile.email ?? "",
