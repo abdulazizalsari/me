@@ -7,13 +7,15 @@ import { useEffect, useState } from "react";
 import type { CmsRole } from "@/lib/cms/types";
 
 const items = [
-  { href: "/admin", label: "نظرة عامة", icon: Home, roles: ["admin","editor"] },
-  { href: "/admin/content", label: "المحتوى", icon: FileText, roles: ["admin","editor"] },
-  { href: "/admin/pages", label: "محرر الصفحات", icon: PanelsTopLeft, roles: ["admin","editor"] },
+  { href: "/admin", label: "الرئيسية", icon: Home, roles: ["admin","editor"] },
+  { href: "/admin/homepage", label: "الصفحة الرئيسية", icon: Home, roles: ["admin","editor"] },
   { href: "/admin/related-projects", label: "المشاريع ذات الصلة", icon: BriefcaseBusiness, roles: ["admin","editor"] },
+  { href: "/admin/content", label: "المحتوى", icon: FileText, roles: ["admin","editor"] },
+  { href: "/admin/pages", label: "إدارة الصفحات", icon: PanelsTopLeft, roles: ["admin","editor"] },
+  { href: "/admin/media", label: "مكتبة الوسائط", icon: FileText, roles: ["admin","editor"] },
+  { href: "/admin/requests", label: "الطلبات", icon: Inbox, roles: ["admin","editor"] },
   { href: "/admin/translations", label: "الترجمة", icon: Languages, roles: ["admin","editor"] },
   { href: "/admin/languages", label: "اللغات", icon: Globe2, roles: ["admin"] },
-  { href: "/admin/requests", label: "الطلبات", icon: Inbox, roles: ["admin","editor"] },
   { href: "/admin/users", label: "المستخدمون", icon: Users, roles: ["admin"] },
   { href: "/admin/backup", label: "النسخ الاحتياطي", icon: Save, roles: ["admin"] }
 ] as const;
