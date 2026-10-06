@@ -5817,3 +5817,34 @@ html[data-theme="dark"] .home-page-sections .signature-service-card:not(.signatu
     max-width: 100%;
   }
 }
+
+
+/* Training cards: show complete source image */
+.home-page-sections .project-media {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  min-height: 300px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--surface-muted);
+}
+.home-page-sections .project-media img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  padding: 18px;
+}
+@media (max-width: 760px) {
+  .home-page-sections .project-media {
+    height: 250px;
+    min-height: 250px;
+  }
+  .home-page-sections .project-media img {
+    padding: 14px;
+  }
+}
