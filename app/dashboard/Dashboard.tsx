@@ -964,8 +964,15 @@ export function Dashboard({
   }
 
   const activeIsContent = contentTypes.includes(active as CmsContentType) && active !== "integration" && active !== "whatsapp";
+  const canUse = (type: DashboardTab) => {
+    if (user.role === "admin") return true;
+    if (user.role === "editor") return editorTabs.has(type);
+    if (user.role === "writer") return type === "overview" || (type === "article" && user.permissions.some((p) => ["articles_create", "articles_edit", "articles_submit"].includes(p)));
+    if (user.role === "reviewer") return type === "overview" || (type === "article" && user.permissions.includes("articles_publish"));
+    return false;
+  };
   const visibleNavGroups = navGroups
-    .map((group) => ({ ...group, items: group.items.filter((item) => user.role === "admin" || editorTabs.has(item.type)) }))
+    .map((group) => ({ ...group, items: group.items.filter((item) => canUse(item.type)) }))
     .filter((group) => group.items.length > 0);
   const visibleAdvancedLinks = advancedLinks.filter((item) => item.roles.some((role) => role === user.role));
   const integrationItem = items.find((item) => item.type === "integration" && item.slug === "site-integrations") ?? items.find((item) => item.type === "integration");
