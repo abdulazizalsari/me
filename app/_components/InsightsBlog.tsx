@@ -210,8 +210,7 @@ function FeaturedArticle({ article, locale, compact = false, settings }: { artic
     <article className={compact ? "featured-mini-story" : "featured-editorial-card"}>
       <a className="featured-editorial-media" href={withLocale(locale, `/ruaa/${article.slug}`)} aria-label={article.title[locale]}>
         <Image src={article.image} alt={article.imageAlt?.[locale] || article.title[locale]} fill priority={!compact} sizes={compact ? "(max-width: 760px) 100vw, 28vw" : "(max-width: 1024px) 100vw, 58vw"} />
-        <span className="insight-card-category">{article.category[locale]}</span>
-      </a>
+              </a>
       <div className="featured-editorial-copy">
         <CardMeta article={article} locale={locale} settings={settings} />
         <h2 className={compact ? "h3" : "h2"}><a href={withLocale(locale, `/ruaa/${article.slug}`)}>{article.title[locale]}</a></h2>
@@ -228,8 +227,7 @@ function StandardArticleCard({ article, locale, index = 0, settings }: { article
     <article className="card article-card insight-card editorial-card" style={{ "--reveal-index": index } as CSSProperties}>
       <a className="insight-card-media" href={withLocale(locale, `/ruaa/${article.slug}`)} aria-label={article.title[locale]}>
         <Image src={article.image} alt={article.imageAlt?.[locale] || article.title[locale]} fill sizes="(max-width: 760px) 100vw, 33vw" />
-        <span className="insight-card-category">{article.category[locale]}</span>
-      </a>
+              </a>
       <div className="insight-card-body">
         <CardMeta article={article} locale={locale} settings={settings} />
         <h3 className="h3"><a href={withLocale(locale, `/ruaa/${article.slug}`)}>{article.title[locale]}</a></h3>
@@ -747,7 +745,7 @@ export function EditorialArticlePage({ locale, slug, cmsItems = [] }: { locale: 
         <section className="section related-articles" aria-labelledby="related-articles-title">
           <div className="container">
             <h2 className="h2" id="related-articles-title">{ar ? "مقالات ذات صلة" : "Related articles"}</h2>
-            <div className="grid related-articles-grid">{related.map((item) => <StandardArticleCard article={item} locale={locale} settings={settings} key={item.slug} />)}</div>
+            <div className="grid related-articles-grid">{related.map((item, index) => <div className="related-article-motion" style={{ "--related-index": index } as CSSProperties} key={item.slug}><StandardArticleCard article={item} locale={locale} settings={settings} /></div>)}</div>
           </div>
         </section>
       )}
