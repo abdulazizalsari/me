@@ -74,6 +74,9 @@ const navGroups: { label: string; items: typeof tabs }[] = [
 ];
 
 const editorTabs = new Set<DashboardTab>(["overview", "article", "service", "course", "form", "page-manager"]);
+const tabPermissions: Partial<Record<DashboardTab,string[]>> = {
+ article:["articles_create","articles_edit","articles_submit","articles_publish"], service:["pages_manage"], course:["pages_manage"], project:["pages_manage"], experience:["pages_manage"], skill:["pages_manage"], homepage:["pages_manage"], "page-manager":["pages_manage"], media:["media_manage"], "related-projects":["related_projects_manage"], seo:["seo_manage"], integration:["settings_manage"], navigation:["pages_manage"], footer:["pages_manage"], settings:["settings_manage"], form:["requests_manage"], redirects:["settings_manage"], trash:["settings_manage"], "wordpress-import":["pages_manage"], "blog-settings":["pages_manage"], cv:["pages_manage"], education:["pages_manage"], qualification:["pages_manage"], cta:["pages_manage"], contact:["pages_manage"], consultation:["pages_manage"], whatsapp:["settings_manage"], privacy:["pages_manage"]
+};
 
 const advancedLinks = [
   
@@ -967,26 +970,26 @@ export function Dashboard({
   const activeIsContent = contentTypes.includes(active as CmsContentType) && active !== "integration" && active !== "whatsapp";
   const canUse = (type: DashboardTab) => {
     if (user.role === "admin") return true;
-    if (user.role === "editor") return editorTabs.has(type);
-    if (user.role === "writer") return type === "overview" || (type === "article" && user.permissions.some((p) => ["articles_create", "articles_edit", "articles_submit"].includes(p)));
-    if (user.role === "reviewer") return type === "overview" || (type === "article" && user.permissions.includes("articles_publish"));
-    return false;
+    if (type === "overview") return true;
+    if (type === "article") return user.permissions.some((p) => tabPermissions.article?.includes(p));
+    if (user.role === "editor" && editorTabs.has(type)) return true;
+    return Boolean(tabPermissions[type]?.some((p) => user.permissions.includes(p)));
   };
   const visibleNavGroups = navGroups
     .map((group) => ({ ...group, items: group.items.filter((item) => canUse(item.type)) }))
     .filter((group) => group.items.length > 0);
-  const visibleAdvancedLinks = advancedLinks.filter((item) => item.roles.some((role) => role === user.role));
+  const visibleAdvancedLinks = advancedLinks.filter((item) => item.roles.some((role) => role === user.role) && (user.role === "admin" || (item.href === "/admin/translations" ? user.permissions.includes("pages_manage") : item.href === "/admin/requests" ? user.permissions.includes("requests_manage") : item.href === "/admin/languages" ? user.permissions.includes("languages_manage") : item.href === "/admin/users" ? user.permissions.includes("users_manage") : item.href === "/admin/backup" ? user.permissions.includes("settings_manage") : false)));
   const integrationItem = items.find((item) => item.type === "integration" && item.slug === "site-integrations") ?? items.find((item) => item.type === "integration");
   const whatsappItem = items.find((item) => item.type === "whatsapp" && item.slug === "whatsapp-settings") ?? items.find((item) => item.type === "whatsapp");
   const blogSettingsItem = items.find((item) => item.type === "blog-settings" && item.slug === "blog-settings") ?? items.find((item) => item.type === "blog-settings");
   const blogCategories = Array.isArray(blogSettingsItem?.meta?.categories) ? blogSettingsItem.meta.categories.filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === "object" && !Array.isArray(entry) && entry.enabled !== false) : [];
 
   return (
-    <main className="dashboard-shell cms-shell" dir="rtl">
+    <main className={`dashboard-shell cms-shell role-${user.role}`} dir="rtl">
       <aside className={`dashboard-sidebar cms-sidebar ${sidebarOpen ? "is-open" : ""}`}>
         <div className="dashboard-brand">
           <span className="dashboard-brand-mark">ع</span>
-          <span><strong>عبدالعزيز الصاري</strong><small>نظام إدارة المحتوى</small></span>
+          <span><strong>عبدالعزيز الصاري</strong><small>{user.role === "admin" ? "لوحة المدير" : user.role === "assistant" ? "لوحة المساعد" : user.role === "editor" ? "لوحة المحرر" : user.role === "writer" ? "لوحة الكاتب" : "لوحة المراجع والناشر"}</small></span>
         </div>
         <button className="dashboard-close" type="button" aria-label="إغلاق القائمة" onClick={() => setSidebarOpen(false)}>
           <X size={20} />
