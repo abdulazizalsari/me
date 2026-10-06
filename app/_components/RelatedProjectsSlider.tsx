@@ -9,6 +9,8 @@ type RelatedProject = {
   title: string;
   image: string;
   href?: string;
+  isProtected?: boolean;
+  watermarkEnabled?: boolean;
 };
 
 function columnsForWidth(width: number) {
@@ -89,18 +91,26 @@ export function RelatedProjectsSlider({
             >
               {current.map((project) => {
                 const content = (
+                  <span className="related-projects-image-shell" onContextMenu={(event) => project.isProtected !== false && event.preventDefault()}>
+                    {project.image ? (
+                      <Image
+                        src={project.image}
+                        alt={project.title}
+                        fill
+                        draggable={project.isProtected === false}
+                        sizes="(max-width: 699px) 72vw, (max-width: 1023px) 38vw, 24vw"
+                        className="related-projects-image"
+                      />
+                    ) : (
+                      <span className="related-projects-fallback">{project.title.slice(0, 2)}</span>
+                    )}
+                    {project.watermarkEnabled ? <span className="related-projects-watermark" aria-hidden="true">AbdulAziz Alsari</span> : null}
+                  </span>
+                );
+                const cardContent = (
                   <>
                     <span className="related-projects-logo">
-                      {project.image ? (
-                        <Image
-                          src={project.image}
-                          alt={project.title}
-                          fill
-                          sizes="(max-width: 699px) 72vw, (max-width: 1023px) 38vw, 24vw"
-                        />
-                      ) : (
-                        <span className="related-projects-fallback">{project.title.slice(0, 2)}</span>
-                      )}
+                      {content}
                     </span>
                     <strong>{project.title}</strong>
                   </>
@@ -108,11 +118,11 @@ export function RelatedProjectsSlider({
 
                 return project.href ? (
                   <a className="related-project-card" href={project.href} key={project.slug}>
-                    {content}
+                    {cardContent}
                   </a>
                 ) : (
                   <article className="related-project-card" key={project.slug}>
-                    {content}
+                    {cardContent}
                   </article>
                 );
               })}
