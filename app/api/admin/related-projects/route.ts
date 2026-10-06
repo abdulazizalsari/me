@@ -45,7 +45,8 @@ export async function POST(request: Request) {
       config[slug] = {
         image: typeof value?.image === "string" ? value.image.trim() : "",
         href: typeof value?.href === "string" ? value.href.trim() : "",
-        isProtected: value?.isProtected !== false,\n        watermarkEnabled: value?.watermarkEnabled === true
+        isProtected: value?.isProtected !== false,
+        watermarkEnabled: value?.watermarkEnabled === true
       };
     }
 
