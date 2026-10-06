@@ -55,7 +55,7 @@ function field(v:unknown,f:string,locale:"ar"|"en"){return txt(v, {ar:"",en:""})
 export function HomepageAdminClient({homepage,role}:{homepage:CmsContentItem|null;role:CmsRole}){
   const raw=(homepage?.meta??{}) as Record<string,unknown>;
   const initialSections=Array.isArray(raw.homeSections)?(raw.homeSections as Record<string,unknown>[]).map((s,i)=>({key:String(s.key),label:sectionDefaults.find(x=>x.key===s.key)?.label||String(s.key),visible:s.visible!==false,order:typeof s.order==="number"?s.order:i+1})):sectionDefaults;
-  const [content,setContent]=useState<HomeContent>(mergeDefaults(raw.homepageContent));
+  const [content,setContent]=useState<HomeContent>(mergeDefaults(raw.homepageContent as Record<string, unknown> | undefined));
   const [sections,setSections]=useState<Section[]>(initialSections);
   const [active,setActive]=useState("hero");
   const [locale,setLocale]=useState<"ar"|"en">("ar");
