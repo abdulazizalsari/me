@@ -29,8 +29,9 @@ import { IntegrationSettings } from "./IntegrationSettings";
 import { WordPressImportPanel } from "./WordPressImportPanel";
 import { BlogSettingsPanel } from "./BlogSettingsPanel";
 import { WhatsAppSettingsPanel } from "./WhatsAppSettingsPanel";
+import { PageManagerPanel } from "./PageManagerPanel";
 
-const tabs: { type: "overview" | CmsContentType | "related-projects" | "media" | "redirects" | "trash" | "settings" | "wordpress-import"; label: string; icon: typeof LayoutDashboard }[] = [
+const tabs: { type: "overview" | CmsContentType | "related-projects" | "page-manager" | "media" | "redirects" | "trash" | "settings" | "wordpress-import"; label: string; icon: typeof LayoutDashboard }[] = [
   { type: "overview", label: "نظرة عامة", icon: LayoutDashboard },
   { type: "article", label: "رؤى", icon: FileText },
   { type: "wordpress-import", label: "استيراد WordPress", icon: Upload },
@@ -41,7 +42,8 @@ const tabs: { type: "overview" | CmsContentType | "related-projects" | "media" |
   { type: "project", label: "المشاريع", icon: LayoutDashboard },
   { type: "experience", label: "الخبرات", icon: BriefcaseBusiness },
   { type: "skill", label: "المهارات", icon: BarChart3 },
-  { type: "homepage", label: "الصفحات", icon: LayoutDashboard },
+  { type: "homepage", label: "محتوى الصفحات", icon: LayoutDashboard },
+  { type: "page-manager", label: "إدارة الصفحات", icon: LayoutDashboard },
   { type: "media", label: "مكتبة الوسائط", icon: ImageIcon },
   { type: "seo", label: "SEO", icon: BarChart3 },
   { type: "integration", label: "التكاملات والتتبع", icon: Waypoints },
@@ -64,16 +66,17 @@ const tabs: { type: "overview" | CmsContentType | "related-projects" | "media" |
 const navGroups: { label: string; items: typeof tabs }[] = [
   { label: "الرئيسية", items: tabs.filter((tab) => tab.type === "overview") },
   { label: "المحتوى", items: tabs.filter((tab) => ["article", "wordpress-import", "related-projects", "blog-settings", "service", "course", "project", "cv", "experience", "education", "qualification", "skill"].includes(tab.type)) },
-  { label: "الصفحات", items: tabs.filter((tab) => ["homepage", "contact", "consultation", "privacy", "cta"].includes(tab.type)) },
+  { label: "إدارة الصفحات", items: tabs.filter((tab) => tab.type === "page-manager") },
+  { label: "الصفحات", items: tabs.filter((tab) => ["homepage", "page-manager", "contact", "consultation", "privacy", "cta"].includes(tab.type)) },
   { label: "الوسائط", items: tabs.filter((tab) => tab.type === "media") },
   { label: "الرسائل", items: tabs.filter((tab) => tab.type === "form") },
   { label: "الإعدادات", items: tabs.filter((tab) => ["settings", "navigation", "footer", "whatsapp", "seo", "integration", "redirects", "trash"].includes(tab.type)) }
 ];
 
-const editorTabs = new Set<DashboardTab>(["overview", "article", "service", "course", "form"]);
+const editorTabs = new Set<DashboardTab>(["overview", "article", "service", "course", "form", "page-manager"]);
 
 const advancedLinks = [
-  { href: "/admin/pages", label: "محرر الصفحات", icon: LayoutDashboard, roles: ["admin", "editor"] as const },
+  
   { href: "/admin/translations", label: "الترجمات", icon: FileText, roles: ["admin", "editor"] as const },
   { href: "/admin/requests", label: "مركز الطلبات", icon: FileText, roles: ["admin", "editor"] as const },
   { href: "/admin/languages", label: "اللغات", icon: Settings, roles: ["admin"] as const },
@@ -1762,6 +1765,7 @@ export function Dashboard({
               </section>
             );
           })()}
+          {active === "page-manager" && <section className="dashboard-panel cms-panel"><div className="panel-heading"><div><h2>إدارة الصفحات</h2><p>إنشاء الصفحات وإدارتها وفتح محرر السحب والإفلات من داخل لوحة التحكم.</p></div></div><PageManagerPanel /></section>}
           {active === "integration" && <IntegrationSettings initialMeta={integrationItem?.meta ?? {}} />}
 
           {active === "redirects" && (
