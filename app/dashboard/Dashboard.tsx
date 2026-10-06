@@ -983,6 +983,52 @@ export function Dashboard({
   const blogSettingsItem = items.find((item) => item.type === "blog-settings" && item.slug === "blog-settings") ?? items.find((item) => item.type === "blog-settings");
   const blogCategories = Array.isArray(blogSettingsItem?.meta?.categories) ? blogSettingsItem.meta.categories.filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === "object" && !Array.isArray(entry) && entry.enabled !== false) : [];
 
+
+  async function sendArticleForReview() {
+    if (selected.type !== "article" || !selected.id) {
+      setMessage("احفظ المقال أولاً ثم أرسله للمراجعة.");
+      return;
+    }
+    setBusy(true);
+    setMessage("");
+    let meta: Record<string, unknown> = {};
+    try { meta = metaText.trim() ? JSON.parse(metaText) : {}; } catch { setBusy(false); setMessage("بيانات المقال الإضافية غير صحيحة."); return; }
+    meta = { ...meta, workflowStatus: "pending_review", submittedForReviewAt: new Date().toISOString(), submittedBy: user.id };
+    const response = await fetch("/api/admin/content", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...selected, status: "draft", metaText: JSON.stringify(meta) })
+    });
+    const data = await response.json().catch(() => ({}));
+    setBusy(false);
+    if (!response.ok || !data.item) { setMessage(data.message ?? "تعذر إرسال المقال للمراجعة."); return; }
+    setItems((current) => [...current.filter((item) => item.id !== data.item.id), data.item].sort((a,b)=>a.sortOrder-b.sortOrder));
+    setSelected(data.item);
+    setMetaText(formatMeta(data.item.meta));
+    setMessage("تم إرسال المقال إلى قائمة المراجعة والنشر.");
+  }
+
+  async function publishArticle() {
+    if (selected.type !== "article" || !selected.id) return;
+    setBusy(true);
+    setMessage("");
+    let meta: Record<string, unknown> = {};
+    try { meta = metaText.trim() ? JSON.parse(metaText) : {}; } catch { setBusy(false); setMessage("بيانات المقال الإضافية غير صحيحة."); return; }
+    meta = { ...meta, workflowStatus: "published", publishedAt: new Date().toISOString(), publishedBy: user.id };
+    const response = await fetch("/api/admin/content", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...selected, status: "published", metaText: JSON.stringify(meta) })
+    });
+    const data = await response.json().catch(() => ({}));
+    setBusy(false);
+    if (!response.ok || !data.item) { setMessage(data.message ?? "تعذر نشر المقال."); return; }
+    setItems((current) => [...current.filter((item) => item.id !== data.item.id), data.item].sort((a,b)=>a.sortOrder-b.sortOrder));
+    setSelected(data.item);
+    setMetaText(formatMeta(data.item.meta));
+    setMessage("تم نشر المقال بنجاح.");
+  }
+
   return (
     <main className={`dashboard-shell cms-shell role-${user.role}`} dir="rtl">
       <aside className={`dashboard-sidebar cms-sidebar ${sidebarOpen ? "is-open" : ""}`}>
@@ -2004,47 +2050,3 @@ function ContentTable({
   );
 }
 
-  async function sendArticleForReview() {
-    if (selected.type !== "article" || !selected.id) {
-      setMessage("احفظ المقال أولاً ثم أرسله للمراجعة.");
-      return;
-    }
-    setBusy(true);
-    setMessage("");
-    let meta: Record<string, unknown> = {};
-    try { meta = metaText.trim() ? JSON.parse(metaText) : {}; } catch { setBusy(false); setMessage("بيانات المقال الإضافية غير صحيحة."); return; }
-    meta = { ...meta, workflowStatus: "pending_review", submittedForReviewAt: new Date().toISOString(), submittedBy: user.id };
-    const response = await fetch("/api/admin/content", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...selected, status: "draft", metaText: JSON.stringify(meta) })
-    });
-    const data = await response.json().catch(() => ({}));
-    setBusy(false);
-    if (!response.ok || !data.item) { setMessage(data.message ?? "تعذر إرسال المقال للمراجعة."); return; }
-    setItems((current) => [...current.filter((item) => item.id !== data.item.id), data.item].sort((a,b)=>a.sortOrder-b.sortOrder));
-    setSelected(data.item);
-    setMetaText(formatMeta(data.item.meta));
-    setMessage("تم إرسال المقال إلى قائمة المراجعة والنشر.");
-  }
-
-  async function publishArticle() {
-    if (selected.type !== "article" || !selected.id) return;
-    setBusy(true);
-    setMessage("");
-    let meta: Record<string, unknown> = {};
-    try { meta = metaText.trim() ? JSON.parse(metaText) : {}; } catch { setBusy(false); setMessage("بيانات المقال الإضافية غير صحيحة."); return; }
-    meta = { ...meta, workflowStatus: "published", publishedAt: new Date().toISOString(), publishedBy: user.id };
-    const response = await fetch("/api/admin/content", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...selected, status: "published", metaText: JSON.stringify(meta) })
-    });
-    const data = await response.json().catch(() => ({}));
-    setBusy(false);
-    if (!response.ok || !data.item) { setMessage(data.message ?? "تعذر نشر المقال."); return; }
-    setItems((current) => [...current.filter((item) => item.id !== data.item.id), data.item].sort((a,b)=>a.sortOrder-b.sortOrder));
-    setSelected(data.item);
-    setMetaText(formatMeta(data.item.meta));
-    setMessage("تم نشر المقال بنجاح.");
-  }
