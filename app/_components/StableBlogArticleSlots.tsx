@@ -12,17 +12,17 @@ function readingMinutes(article: InsightArticle, locale: Locale) {
   return Math.max(1, Math.ceil(words / (locale === "ar" ? 170 : 210)));
 }
 
-function useStableSlots(articles: InsightArticle[], count: number, intervalSeconds: number, initialOffset = 0) {
+function useStableSlots(articles: InsightArticle[], count: number, intervalSeconds: number, initialOffset = 0, rotate = true) {
   const source = useMemo(() => articles.filter(Boolean), [articles]);
   const [offset, setOffset] = useState(initialOffset);
 
   useEffect(() => {
-    if (source.length <= count) return;
+    if (!rotate || source.length <= count) return;
     const timer = window.setInterval(() => {
       setOffset((current) => (current + count) % source.length);
     }, Math.max(5, intervalSeconds) * 1000);
     return () => window.clearInterval(timer);
-  }, [count, intervalSeconds, source.length]);
+  }, [count, intervalSeconds, source.length, rotate]);
 
   return useMemo(() => {
     if (!source.length) return [];
@@ -83,7 +83,7 @@ export function StableLightArticleSlots({
   intervalSeconds?: number;
 }) {
   const ar = locale === "ar";
-  const slots = useStableSlots(articles, 4, intervalSeconds, 4);
+  const slots = useStableSlots(articles, 4, intervalSeconds, 4, false);
   return (
     <div className="blog-reference-two-grid">
       {slots.map((article, index) => (
@@ -112,7 +112,7 @@ export function StableDarkArticleSlots({
   intervalSeconds?: number;
 }) {
   const ar = locale === "ar";
-  const slots = useStableSlots(articles, 4, intervalSeconds, 8);
+  const slots = useStableSlots(articles, 4, intervalSeconds, 8, false);
   return (
     <div className="blog-dark-card-grid">
       {slots.map((article, index) => (
