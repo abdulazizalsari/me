@@ -1,0 +1,1 @@
+import type {Metadata} from "next";import {ForgotPasswordForm} from "@/app/auth/ForgotPasswordForm";export const metadata:Metadata={title:"نسيت كلمة المرور"};export default function Page(){return <ForgotPasswordForm backHref="/admin/login"/>}
