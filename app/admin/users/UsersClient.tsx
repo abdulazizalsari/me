@@ -19,7 +19,7 @@ export function UsersClient(){
  const [users,setUsers]=useState<UserRow[]>([]);
  const [message,setMessage]=useState("");
  const [loading,setLoading]=useState(true);
- const [busy,setBusy]=useState(false);
+ const [busy,setBusy]=useState(false);\n const [inviteLink,setInviteLink]=useState("");
 
  async function load(){
   setLoading(true);
@@ -70,7 +70,7 @@ export function UsersClient(){
     {permissionOptions.map(([key,label])=><label key={key}><input name="permissions" value={key} type="checkbox" defaultChecked={["articles_create","articles_edit","articles_submit"].includes(key)}/>{label}</label>)}
    </div>
    <button className="admin-primary-button" disabled={busy}>{busy?"جاري الإرسال...":"إرسال الدعوة"}</button>
-   {message&&<p className="admin-message">{message}</p>}
+   {message&&<p className="admin-message">{message}</p>}\n   {inviteLink&&<div className="admin-message"><strong>رابط الدعوة:</strong><input dir="ltr" readOnly value={inviteLink}/><button type="button" className="admin-primary-button" onClick={()=>navigator.clipboard.writeText(inviteLink)}>نسخ الرابط</button></div>}
   </form>
   <section className="admin-card"><div className="admin-table-wrap"><table><thead><tr><th>المستخدم</th><th>البريد</th><th>الدور</th><th>الصلاحيات</th><th>آخر دخول</th><th>إجراء</th></tr></thead><tbody>
    {users.map(u=><tr key={u.id}>
