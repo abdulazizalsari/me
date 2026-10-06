@@ -44,7 +44,8 @@ export async function loginCmsUser(email: string, password: string) {
     email: data.user.email ?? profile.email ?? email,
     role: profile.role,
     displayName: profile.display_name ?? "",
-    createdAt: data.user.created_at ?? ""
+    createdAt: data.user.created_at ?? "",
+    permissions: Array.isArray(profile.permissions) ? profile.permissions : []
   } satisfies CmsUser;
 }
 
@@ -88,13 +89,14 @@ export async function getCurrentCmsUser() {
   const user = await userResponse.json() as { id: string; email?: string; created_at?: string };
   if (!user.id) return null;
   const profile = await profileFor(user.id, token).catch(() => null);
-  if (!profile || !["admin", "editor"].includes(profile.role)) return null;
+  if (!profile || !["admin", "editor", "writer", "reviewer"].includes(profile.role)) return null;
   return {
     id: user.id,
     email: user.email ?? profile.email ?? "",
     role: profile.role,
     displayName: profile.display_name ?? "",
-    createdAt: user.created_at ?? ""
+    createdAt: user.created_at ?? "",
+    permissions: Array.isArray(profile.permissions) ? profile.permissions : []
   } satisfies CmsUser;
 }
 
