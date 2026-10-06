@@ -53,7 +53,7 @@ function cmsProjects(items: CmsContentItem[]) {
 }
 
 function cmsCourses(items: CmsContentItem[]) {
-  const trainingSlugs = Array.isArray(trainingContent.slugs) && trainingContent.slugs.length ? trainingContent.slugs.filter((v): v is string => typeof v === "string") : ["digital-marketing-course", "graphic-design-course", "wordpress-course"];
+  const trainingSlugs = ["digital-marketing-course", "graphic-design-course", "wordpress-course"];
   const rows = items.filter((item) => item.type === "course");
   const sourceRows = rows.length ? rows : items.filter((item) => item.type === "project" && trainingSlugs.includes(item.slug));
   return sourceRows.map((item) => ({
