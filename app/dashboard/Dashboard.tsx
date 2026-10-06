@@ -742,8 +742,7 @@ export function Dashboard({
 
   function applyRichFormat(field: RichField, before: string, after = before) {
     const current = selected[field] ?? "";
-    setSelected({ ...selected, [field]: `${current}${current ? "
-" : ""}${before}النص${after}` });
+    setSelected({ ...selected, [field]: `${current}${current ? "\n" : ""}${before}النص${after}` });
   }
 
   function updateImageSetting(field: MediaField, key: string, value: string) {
